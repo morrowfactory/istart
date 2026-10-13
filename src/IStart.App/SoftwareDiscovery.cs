@@ -9,6 +9,7 @@ internal static class SoftwareDiscovery
 {
     public static List<SoftwareCandidate> Read(CancellationToken token, IEnumerable<string>? roots = null)
     {
+        var includePackagedApps = roots is null;
         var found = new Dictionary<string, SoftwareCandidate>(StringComparer.OrdinalIgnoreCase);
         roots ??= new[] { Environment.GetFolderPath(Environment.SpecialFolder.Programs), Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms) };
         foreach (var root in roots)
@@ -31,6 +32,40 @@ internal static class SoftwareDiscovery
                 catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException or ArgumentException) { }
             }
         }
+        if (includePackagedApps) ReadPackagedApps(found, token);
         return found.Values.OrderBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+    private static void ReadPackagedApps(Dictionary<string, SoftwareCandidate> found, CancellationToken token)
+    {
+        object? shell = null, folder = null, items = null;
+        try
+        {
+            shell = Activator.CreateInstance(Type.GetTypeFromProgID("Shell.Application")!);
+            folder = ((dynamic)shell!).NameSpace("shell:AppsFolder");
+            if (folder is null) return;
+            items = ((dynamic)folder).Items();
+            var count = (int)((dynamic)items).Count;
+            for (var i = 0; i < count; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                object item = ((dynamic)items).Item(i);
+                try
+                {
+                    string id = ((dynamic)item).Path;
+                    string title = ((dynamic)item).Name;
+                    // Packaged application IDs have a package-family/application separator.
+                    if (id.Contains('!') && !string.IsNullOrWhiteSpace(title))
+                        found.TryAdd(id, new(title, "shell:AppsFolder\\" + id));
+                }
+                finally { Marshal.FinalReleaseComObject(item); }
+            }
+        }
+        catch (COMException) { }
+        finally
+        {
+            if (items is not null) Marshal.FinalReleaseComObject(items);
+            if (folder is not null) Marshal.FinalReleaseComObject(folder);
+            if (shell is not null) Marshal.FinalReleaseComObject(shell);
+        }
     }
 }

@@ -18,7 +18,7 @@ public partial class MainWindow : Window
     private Guid? draggedCategory;
     private Guid? activeCategory;
     private bool ready;
-    private List<SoftwareCandidate> candidates = [];
+    internal List<SoftwareCandidate> candidates = [];
     private CancellationTokenSource? discovery;
     private bool recentView;
     private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
@@ -41,15 +41,14 @@ public partial class MainWindow : Window
 
     private async Task DiscoverSoftware()
     {
-        if (!store.Library.RecommendationsEnabled) return;
         discovery?.Cancel();
         var current = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         discovery = current;
-        RecommendationStatus.Text = "正在本机整理软件入口…可点击关闭跳过。";
+        RecommendationStatus.Text = "正在本机整理可搜索的软件入口…";
         try
         {
             candidates = await Task.Run(() => SoftwareDiscovery.Read(current.Token), current.Token).WaitAsync(current.Token);
-            if (discovery != current || !store.Library.RecommendationsEnabled) return;
+            if (discovery != current) return;
             RefreshRecommendations();
         }
         catch (OperationCanceledException)
@@ -62,13 +61,16 @@ public partial class MainWindow : Window
     private void RefreshRecommendations()
     {
         Recommendations.Children.Clear();
-        if (!store.Library.RecommendationsEnabled) return;
+        var keyword = SearchBox.Text.Trim();
+        RecommendationTitle.Text = keyword.Length == 0 ? "软件推荐" : "软件搜索结果";
+        if (!store.Library.RecommendationsEnabled && keyword.Length == 0) { RecommendationStatus.Text = "推荐已关闭；仍可搜索本机软件。"; return; }
         var records = store.Library.Launches.ToDictionary(l => l.Target, StringComparer.OrdinalIgnoreCase);
-        foreach (var candidate in candidates.Where(c => !store.Library.ExcludedRecommendations.Contains(c.Shortcut, StringComparer.OrdinalIgnoreCase))
+        foreach (var candidate in candidates.Where(c => keyword.Length > 0 ? c.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || c.Shortcut.Contains(keyword, StringComparison.OrdinalIgnoreCase) : !store.Library.ExcludedRecommendations.Contains(c.Shortcut, StringComparer.OrdinalIgnoreCase))
             .OrderByDescending(c => records.GetValueOrDefault(c.Shortcut)?.Count ?? 0)
             .ThenByDescending(c => records.GetValueOrDefault(c.Shortcut)?.OpenedAt ?? DateTimeOffset.MinValue)
-            .ThenBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).Take(12))
+            .ThenBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).Take(keyword.Length == 0 ? 12 : int.MaxValue))
         {
+            var packaged = candidate.Shortcut.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal);
             var content = new StackPanel();
             content.Children.Add(new Image { Width = 24, Height = 24, Source = (System.Windows.Media.ImageSource?)new ShellIconConverter().Convert(candidate.Shortcut, typeof(System.Windows.Media.ImageSource), null!, System.Globalization.CultureInfo.CurrentCulture), Margin = new Thickness(0, 0, 0, 4) });
             content.Children.Add(new TextBlock { Text = candidate.Title, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center });
@@ -78,13 +80,14 @@ public partial class MainWindow : Window
             button.PreviewMouseLeftButtonDown += (_, e) => origin = e.GetPosition(button);
             button.PreviewMouseMove += (_, e) =>
             {
+                if (packaged) return;
                 if (e.LeftButton != MouseButtonState.Pressed) return;
                 var point = e.GetPosition(button);
                 if (Math.Abs(point.X - origin.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(point.Y - origin.Y) < SystemParameters.MinimumVerticalDragDistance) return;
                 DragDrop.DoDragDrop(button, new DataObject(DataFormats.FileDrop, new[] { candidate.Shortcut }), DragDropEffects.Link);
             };
             var menu = new ContextMenu();
-            var pin = new MenuItem { Header = "固定到当前分类" };
+            var pin = new MenuItem { Header = packaged ? "商店应用暂不支持固定" : "固定到当前分类", IsEnabled = !packaged };
             pin.Click += (_, _) => AddPaths([candidate.Shortcut], activeCategory ?? Guid.Empty, null);
             var remove = new MenuItem { Header = "不再推荐" };
             remove.Click += (_, _) => Perform(() => { store.Change(s => s.ExcludedRecommendations.Add(candidate.Shortcut)); RefreshRecommendations(); }, "已移除推荐，不会自动重新出现。");
@@ -93,7 +96,7 @@ public partial class MainWindow : Window
             button.ContextMenu = menu;
             Recommendations.Children.Add(button);
         }
-        RecommendationStatus.Text = Recommendations.Children.Count == 0 ? "没有找到可确认的软件入口，可手动拖入。"
+        RecommendationStatus.Text = keyword.Length > 0 ? $"找到 {Recommendations.Children.Count} 个软件；下方同时搜索全部收藏。" : Recommendations.Children.Count == 0 ? "没有找到可确认的软件入口，可手动拖入。"
             : records.Count == 0 ? "已安装软件候选 · 按名称排列；拖动即可收藏。" : "优先参考 iStart 启动次数；未读取系统历史频率。";
     }
     private async void ToggleRecommendations(object sender, RoutedEventArgs e)
@@ -101,7 +104,7 @@ public partial class MainWindow : Window
         Perform(() => store.Change(s => s.RecommendationsEnabled = !s.RecommendationsEnabled), "推荐设置已保存。");
         RecommendationToggle.Content = store.Library.RecommendationsEnabled ? "关闭推荐" : "启用推荐";
         if (store.Library.RecommendationsEnabled) await DiscoverSoftware();
-        else { discovery?.Cancel(); Recommendations.Children.Clear(); RecommendationStatus.Text = "推荐已关闭。你可以继续手动添加入口。"; }
+        else RefreshRecommendations();
     }
 
     private void RefreshCategories()
@@ -113,11 +116,19 @@ public partial class MainWindow : Window
     {
         if (!ready) return;
         var keyword = SearchBox.Text.Trim();
-        IEnumerable<MenuEntry> source = recentView ? store.Library.Launches.Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
-        EntryList.ItemsSource = source.Where(e => (activeCategory is null || e.CategoryId == activeCategory)
+        IEnumerable<MenuEntry> source = recentView && keyword.Length == 0 ? store.Library.Launches.Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
+        EntryList.ItemsSource = source.Where(e => (keyword.Length > 0 || activeCategory is null || e.CategoryId == activeCategory)
             && (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
     }
-    private void SearchChanged(object sender, TextChangedEventArgs e) => RefreshEntries();
+    private void SearchChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!ready) return;
+        RefreshEntries();
+        RefreshRecommendations();
+        var searching = SearchBox.Text.Trim().Length > 0;
+        SectionTitle.Text = searching ? "收藏搜索结果" : (CategoryList.SelectedItem as MenuCategory)?.Name ?? "全部收藏";
+        SearchStatus.Text = searching && EntryList.Items.Count == 0 ? "没有匹配的收藏。软件结果显示在上方；文件需先添加到收藏。" : "";
+    }
     private void CategoryChanged(object sender, SelectionChangedEventArgs e)
     {
         if (CategoryList.SelectedItem is not MenuCategory category) return;
@@ -247,14 +258,16 @@ public partial class MainWindow : Window
     {
         var entry = ItemAt<MenuEntry>(EntryList, e.OriginalSource);
         if (entry is null || IsButton(e.OriginalSource)) return;
-        if (!File.Exists(entry.Target) && !Directory.Exists(entry.Target)) { StatusText.Text = "目标已移动、删除或暂时离线，可右键重新定位，或移除此入口。"; return; }
+        if (!entry.Target.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal) && !File.Exists(entry.Target) && !Directory.Exists(entry.Target)) { StatusText.Text = "目标已移动、删除或暂时离线，可右键重新定位，或移除此入口。"; return; }
         OpenTarget(entry.Target, entry.Title);
     }
     private void OpenTarget(string target, string? title = null)
     {
         try
         {
-            Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+            if (target.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal))
+                Process.Start(new ProcessStartInfo("explorer.exe") { UseShellExecute = true, ArgumentList = { target } });
+            else Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
             StatusText.Text = "已交给 Windows 打开。";
             try { store.RecordLaunch(target, title ?? Path.GetFileName(target)); RefreshEntries(); RefreshRecommendations(); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StatusText.Text = "已打开，但本次启动记录暂时无法保存。"; }

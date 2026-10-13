@@ -124,6 +124,28 @@ internal static class SmokeTest
         var compactEncoder = new PngBitmapEncoder(); compactEncoder.Frames.Add(BitmapFrame.Create(compact));
         using (var stream = File.Create(Path.Combine(output, "menu-compact.png"))) compactEncoder.Save(stream);
         var search = (System.Windows.Controls.TextBox)window.FindName("SearchBox");
+        window.candidates = Enumerable.Range(0, 20).Select(i => new SoftwareCandidate("应用" + i, "missing-" + i)).Append(new("Codex", "missing-codex")).ToList();
+        search.Text = "codex";
+        var softwareResults = (System.Windows.Controls.WrapPanel)window.FindName("Recommendations");
+        Check(softwareResults.Children.Count == 1, "搜索全部软件而非推荐前十二项，忽略大小写");
+        search.Text = "应用";
+        Check(softwareResults.Children.Count == 20, "软件搜索不受推荐数量限制");
+        search.Text = "没有匹配项";
+        Check(softwareResults.Children.Count == 0 && ((System.Windows.Controls.TextBlock)window.FindName("SearchStatus")).Text.Length > 0, "无结果提示");
+        store.Change(s => s.RecommendationsEnabled = false);
+        search.Text = "codex";
+        Check(softwareResults.Children.Count == 1, "关闭推荐仍可搜索软件");
+        window.candidates = [new("ChatGPT", "shell:AppsFolder\\OpenAI.Codex_test!App")];
+        search.Text = "Codex";
+        Check(softwareResults.Children.Count == 1, "商店显示名不同仍可按应用标识搜索");
+        store.Change(s => s.RecommendationsEnabled = true);
+        search.Clear();
+        window.candidates = [];
+        using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+        {
+            var actual = SoftwareDiscovery.Read(timeout.Token);
+            File.WriteAllText(Path.Combine(output, "software-discovery.txt"), $"实际本机软件入口数量：{actual.Count}；Codex 标识匹配数量：{actual.Count(c => c.Shortcut.Contains("OpenAI.Codex", StringComparison.OrdinalIgnoreCase))}");
+        }
         var inputSurface = (System.Windows.Controls.Border)search.Template.FindName("Surface", search);
         Check(inputSurface.CornerRadius.TopLeft == 14, "旧配置默认 Google 风格");
         var originalEntries = store.Library.Entries.ToArray();
