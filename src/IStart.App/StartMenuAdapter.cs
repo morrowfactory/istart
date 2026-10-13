@@ -41,6 +41,7 @@ internal sealed class StartMenuAdapter : IDisposable
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindow callback, nint parameter);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(nint window, System.Text.StringBuilder name, int max);
     private readonly Dispatcher dispatcher;
+    private readonly Func<StartTarget[]> scanTargets;
     private readonly Action<WinInput.Point?> toggle;
     private readonly Hook keyboardCallback, mouseCallback;
     private readonly WinKeyGesture gesture = new();
@@ -49,14 +50,16 @@ internal sealed class StartMenuAdapter : IDisposable
     private StartTarget[] targets = [];
     private long updated;
     private bool scanning, suppressMouseUp, disposed;
+    private bool waitingForTaskbar;
     private Task<StartTarget[]>? pendingScan;
     public bool Enabled => keyboard != 0 && mouse != 0;
-    public event Action<string>? Failed;
+    public event Action<string>? StatusChanged;
     internal IReadOnlyList<StartTarget> Targets => targets;
-    public StartMenuAdapter(Dispatcher dispatcher, Action<WinInput.Point?> toggle)
+    public StartMenuAdapter(Dispatcher dispatcher, Action<WinInput.Point?> toggle, Func<StartTarget[]>? scanTargets = null)
     {
         this.dispatcher = dispatcher;
         this.toggle = toggle;
+        this.scanTargets = scanTargets ?? FindTargets;
         keyboardCallback = KeyboardHook;
         mouseCallback = MouseHook;
         timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background, async (_, _) => await RefreshTargets(), dispatcher);
@@ -79,27 +82,40 @@ internal sealed class StartMenuAdapter : IDisposable
         }
         catch { Disable(); throw; }
     }
-    private async Task RefreshTargets()
+    internal async Task RefreshTargets()
     {
         if (scanning || disposed) return;
         scanning = true;
         try
         {
-            pendingScan ??= Task.Run(FindTargets);
+            pendingScan ??= Task.Run(scanTargets);
             var snapshot = await pendingScan.WaitAsync(TimeSpan.FromSeconds(2));
             pendingScan = null;
             if (disposed) return;
-            targets = snapshot;
-            updated = Environment.TickCount64;
-            if (Enabled && targets.Length == 0) { Disable(); Failed?.Invoke("开始按钮暂时不可用，已切回原生模式。请重新启用自定义菜单。"); }
+            if (snapshot.Length > 0)
+            {
+                targets = snapshot;
+                updated = Environment.TickCount64;
+                SetWaitingForTaskbar(false);
+            }
+            else SetWaitingForTaskbar(true);
         }
         catch (Exception ex) when (ex is TimeoutException or COMException or ElementNotAvailableException or InvalidOperationException)
         {
             if (pendingScan?.IsCompleted == true) pendingScan = null;
-            targets = [];
-            if (Enabled) { Disable(); Failed?.Invoke("任务栏检测失败，已切回原生模式。"); }
+            SetWaitingForTaskbar(true);
         }
         finally { scanning = false; }
+    }
+    private void SetWaitingForTaskbar(bool waiting)
+    {
+        // 保留上次成功快照，但鼠标钩子仍严格执行 1.5 秒新鲜度与窗口校验。
+        // 短暂 UIAutomation 空结果不能撤销用户偏好或停用独立的键盘接入。
+        if (waitingForTaskbar == waiting) return;
+        waitingForTaskbar = waiting;
+        StatusChanged?.Invoke(waiting
+            ? "开始按钮检测暂时不可用，正在重试；Win 键接入保留。"
+            : "开始按钮检测已恢复，自定义菜单继续可用。");
     }
     internal static StartTarget[] FindTargets()
     {
@@ -172,6 +188,8 @@ internal sealed class StartMenuAdapter : IDisposable
         keyboard = mouse = 0;
         suppressMouseUp = false;
         gesture.Reset();
+        targets = [];
+        waitingForTaskbar = false;
     }
     public void Dispose() { if (disposed) return; disposed = true; Disable(); }
 }

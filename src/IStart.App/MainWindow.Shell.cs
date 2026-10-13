@@ -10,16 +10,17 @@ public partial class MainWindow
 {
     private StartMenuAdapter? adapter;
     private Forms.NotifyIcon? tray;
+    private bool exitRequested;
     private string SessionMarker => Path.Combine(store.DirectoryPath, "session.active");
     private void InitializeShell()
     {
         adapter = new StartMenuAdapter(Dispatcher, ToggleMenu);
-        adapter.Failed += message => { SetNativeMode(); StatusText.Text = message; };
+        adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("打开 iStart", null, (_, _) => ShowMenu(null));
         menu.Items.Add("切回 Windows 原生菜单", null, (_, _) => { SetNativeMode(); OpenNative(this, new RoutedEventArgs()); });
         menu.Items.Add("设置", null, (_, _) => { ShowMenu(null); OpenSettings(this, new RoutedEventArgs()); });
-        menu.Items.Add("退出 iStart", null, (_, _) => Close());
+        menu.Items.Add("退出 iStart", null, (_, _) => RequestExit("tray"));
         tray = new Forms.NotifyIcon { Icon = System.Drawing.SystemIcons.Application, Text = "iStart · 个人开始菜单", ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += (_, _) => ShowMenu(null);
         Loaded += async (_, _) =>
@@ -33,13 +34,28 @@ public partial class MainWindow
             if (App.BackgroundRequested) Hide();
         };
         Deactivated += (_, _) => { if (adapter.Enabled && OwnedWindows.Count == 0 && !IsMouseCaptureWithin) Hide(); };
+        Closing += (_, e) =>
+        {
+            RuntimeLog.Write($"window-closing explicit={exitRequested} sessionEnding={App.IsSessionEnding}");
+            if (exitRequested || App.IsSessionEnding) return;
+            e.Cancel = true;
+            Hide();
+            RuntimeLog.Write("window-hidden-to-tray");
+        };
         Closed += (_, _) =>
         {
+            RuntimeLog.Write("window-closed");
             adapter.Dispose();
             tray.Dispose();
             undoTimer?.Stop();
             try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         };
+    }
+    internal void RequestExit(string reason)
+    {
+        RuntimeLog.Write("exit-request " + reason);
+        exitRequested = true;
+        Close();
     }
     private async Task<bool> SetCustomMode()
     {
@@ -49,6 +65,7 @@ public partial class MainWindow
             Directory.CreateDirectory(store.DirectoryPath);
             File.WriteAllText(SessionMarker, "active");
             await adapter.Enable();
+            RuntimeLog.Write("adapter-enabled");
             store.Change(s => s.CustomMenuEnabled = true);
             ModeStatus.Text = "自定义菜单 · 试用";
             StatusText.Text = "开始按钮和 Win 键已接入。原生菜单和托盘恢复入口随时可用。";
@@ -56,6 +73,7 @@ public partial class MainWindow
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or System.ComponentModel.Win32Exception)
         {
+            RuntimeLog.Write($"adapter-enable-failed {ex.GetType().Name} 0x{ex.HResult:X8}");
             SetNativeMode();
             StatusText.Text = ex is NotSupportedException ? ex.Message : "入口启用失败，已恢复 Windows 原生菜单。";
             return false;
@@ -63,6 +81,7 @@ public partial class MainWindow
     }
     private void SetNativeMode()
     {
+        RuntimeLog.Write("native-mode");
         adapter?.Disable();
         ModeStatus.Text = "原生菜单模式";
         try

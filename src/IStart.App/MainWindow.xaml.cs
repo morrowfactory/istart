@@ -269,5 +269,5 @@ public partial class MainWindow : Window
             catch (System.ComponentModel.Win32Exception) { Show(); StatusText.Text = "Windows 暂未响应，请直接点击开始按钮或切回原生模式。"; }
         });
     }
-    private void Exit(object sender, RoutedEventArgs e) => Close();
+    private void Exit(object sender, RoutedEventArgs e) => RequestExit("menu");
 }

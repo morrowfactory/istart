@@ -112,6 +112,16 @@ internal static class SmokeTest
         compact.Render(backdrop); compact.Render(content);
         var compactEncoder = new PngBitmapEncoder(); compactEncoder.Frames.Add(BitmapFrame.Create(compact));
         using (var stream = File.Create(Path.Combine(output, "menu-compact.png"))) compactEncoder.Save(stream);
+        // 生命周期检查不启用系统接入，也不发送键盘或鼠标输入。
+        store.Change(s => { s.CustomMenuEnabled = false; s.RecommendationsEnabled = false; });
+        var resident = new MainWindow(store);
+        var closed = false;
+        resident.Closed += (_, _) => closed = true;
+        resident.Show();
+        resident.Close();
+        Check(!closed && !resident.IsVisible, "关闭窗口收起到托盘");
+        resident.RequestExit("smoke");
+        Check(closed, "显式退出结束窗口");
         File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
         window.Close();
     }
