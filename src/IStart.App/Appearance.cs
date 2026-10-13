@@ -37,7 +37,6 @@ internal static class Appearance
         resources["ItemRadius"] = new CornerRadius(windows ? 8 : 12);
         resources["CardRadius"] = new CornerRadius(windows ? 12 : 20);
         resources["StatusRadius"] = new CornerRadius(windows ? 8 : 12);
-        resources["BrandRadius"] = new CornerRadius(windows ? 6 : 10);
         resources["WindowPadding"] = new Thickness(windows ? 20 : 16);
         resources["ContentPadding"] = new Thickness(windows ? 16 : 14);
         resources["ButtonPadding"] = new Thickness(12, windows ? 6 : 7, 12, windows ? 6 : 7);
@@ -46,7 +45,6 @@ internal static class Appearance
         resources["TileWidth"] = windows ? 64.0 : 78.0;
         resources["TileHeight"] = windows ? 62.0 : 68.0;
         resources["TileFontSize"] = windows ? 12.0 : 13.0;
-        resources["BrandIconSize"] = windows ? 20.0 : 18.0;
         resources["BrandTitleSize"] = windows ? 21.0 : 23.0;
         resources["StatusPadding"] = new Thickness(windows ? 6 : 10);
         resources["StatusFontSize"] = windows ? 11.0 : 13.0;

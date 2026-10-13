@@ -20,7 +20,7 @@
 
 进程不注入 Explorer、不修改系统二进制、不替换登录认证、不添加服务或驱动。临时原生打开与默认原生切换是独立操作。
 
-Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml 与 MainWindow.xaml 通过 DynamicResource 即时更新按钮、输入框、列表选择、品牌图案与内容卡片。设置中的外观选择单独保存并调用 SetTheme，不重启适配器，也不改写隐私或开机启动选项。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](docs/MATERIAL_VALIDATION.md)。
+Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml 与 MainWindow.xaml 通过 DynamicResource 即时更新按钮、输入框、列表选择与内容卡片。设置中的外观选择单独保存并调用 SetTheme，不重启适配器，也不改写隐私或开机启动选项。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](docs/MATERIAL_VALIDATION.md)。
 
 ## 本地数据
 
@@ -88,3 +88,5 @@ Windows 11 Fluent（preview.13）：Appearance 继续统一管理双主题，增
 窗口继续使用系统标题栏、边框和阴影；本版应用浅色层次，未启用原生 Mica 模糊。Figma 字体环境只有 Noto Sans SC，设计稿使用该替代字体；Windows 程序使用 Segoe UI Variable 并回退 Microsoft YaHei UI。Google 字体沿用原值。运行时文字和文件夹内容保持真实数据，不替换成稿中的示例名称。
 
 GitHub 发布边界：build.yml 将 ProductVersion 绑定检出 SHA；release.yml 手动接收最新 main SHA、成功 push/main 构建编号与授权记录，仅下载安装包允许清单。Publish-GitHubRelease.ps1 校验版本、SHA256 和源工作流，先草稿后公开，并下载公开文件复验；release-manifest.json 保存精确来源和保护状态。发布串行、GitHub Token 最小权限，无远程服务器或新增生产密钥。当前缺少强制分支/环境审批，本次使用会话授权，详见 docs/GITHUB_RELEASE.md。
+
+统一品牌资源（preview.14）：Assets/Brand 保存 Figma 矢量源与透明 PNG、九档 ICO。MainWindow 在双主题中共用品牌 PNG，窗口 Icon 与托盘使用嵌入 ICO，ApplicationIcon 将同一图标编译进 EXE；安装器使用该 ICO，并将独立 istart.ico 安装给桌面/开始菜单快捷方式和卸载列表。托盘退出时释放克隆图标。SVG 仅在维护时转换，无新增运行时依赖，详见 docs/BRAND_ICON.md。

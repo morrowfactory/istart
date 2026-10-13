@@ -10,6 +10,7 @@ public partial class MainWindow
 {
     private StartMenuAdapter? adapter;
     private Forms.NotifyIcon? tray;
+    private System.Drawing.Icon? trayIcon;
     private bool exitRequested;
     private bool presentingMenu;
     private bool searchFocusPending;
@@ -23,7 +24,10 @@ public partial class MainWindow
         menu.Items.Add("切回 Windows 原生菜单", null, (_, _) => { SetNativeMode(); OpenNative(this, new RoutedEventArgs()); });
         menu.Items.Add("设置", null, (_, _) => { ShowMenu(null); OpenSettings(this, new RoutedEventArgs()); });
         menu.Items.Add("退出 iStart", null, (_, _) => RequestExit("tray"));
-        tray = new Forms.NotifyIcon { Icon = System.Drawing.SystemIcons.Application, Text = "iStart · 个人开始菜单", ContextMenuStrip = menu, Visible = true };
+        using (var stream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Brand/istart.ico")).Stream)
+        using (var icon = new System.Drawing.Icon(stream, 16, 16))
+            trayIcon = (System.Drawing.Icon)icon.Clone();
+        tray = new Forms.NotifyIcon { Icon = trayIcon, Text = "iStart · 个人开始菜单", ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += (_, _) => ShowMenu(null);
         Loaded += async (_, _) =>
         {
@@ -53,6 +57,7 @@ public partial class MainWindow
             RuntimeLog.Write("window-closed");
             adapter.Dispose();
             tray.Dispose();
+            trayIcon.Dispose();
             undoTimer?.Stop();
             try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         };

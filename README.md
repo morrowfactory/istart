@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-当前为 **0.2.0-preview.13 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
+当前为 **0.2.0-preview.14 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
 
 界面已按 [Figma 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=1-1245) 应用 Material 风格：浅色背景、蓝色重点、圆角搜索/分类/按钮和内容卡片；继续使用 Windows 本机真实软件图标与中文字体，无新增 UI 依赖。查看 [Google 风格预览](docs/prototypes/theme-google.png)、[Windows 风格预览](docs/prototypes/theme-windows.png) 与 [双风格验证记录](docs/THEME_VALIDATION.md)。
 
@@ -16,7 +16,7 @@
 
 ## 安装与使用
 
-运行 `iStart-Setup-0.2.0-preview.6.exe`，按中文向导选择位置与选项；显示实际安装进度。安装到当前账户，无需管理员权限，无需另装 .NET。默认不创建桌面图标、不启用开机启动、不接管开始入口；这些选项可按需选择。安装包当前未签名。
+运行对应版本的 `iStart-Setup-*.exe`，按中文向导选择位置与选项；显示实际安装进度。安装到当前账户，无需管理员权限，无需另装 .NET。默认不创建桌面图标、不启用开机启动、不接管开始入口；这些选项可按需选择。安装包当前未签名。
 
 - 把文件、文件夹或软件快捷方式拖入收藏，添加的是引用，原文件保持原位。
 - 拖动条目调整顺序，拖到分类上归类；搜索结果禁止重排。分类可拖动排序。
@@ -78,3 +78,5 @@ preview.12 在全部收藏同时包含程序和文件/文件夹时分组显示�
 preview.13 的 Windows 风格按 [Win11 Fluent 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=10-173) 更新：灰白层次、细边框与圆角、蓝色选中短线、分类图标、紧凑六列入口和搜索焦点底线；保留 Google 风格和全部功能。应用/文件夹图标仍从本机动态读取。查看 [程序预览](docs/prototypes/win11-fluent-app.png) 与 [验证记录](docs/WIN11_FLUENT_VALIDATION.md)。
 
 安装包公开发布通过 [GitHub Release 流程](docs/GITHUB_RELEASE.md)：只接受最新 main 已验证的 CI 安装包，校验来源 SHA 与哈希后发布预览版。发布不包括个人配置与历史记录。
+
+preview.14 统一桌面快捷方式、任务栏、窗口、托盘、安装器和菜单品牌图标；Windows/Google 风格共用蓝色「i + 菜单」标志。查看 [Figma 图标稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=15-204)、[多尺寸预览](docs/prototypes/brand-icon.png) 与 [图标资源说明](docs/BRAND_ICON.md)。
