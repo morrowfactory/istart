@@ -20,6 +20,8 @@
 
 进程不注入 Explorer、不修改系统二进制、不替换登录认证、不添加服务或驱动。临时原生打开与默认原生切换是独立操作。
 
+界面资源在 App.xaml 统一定义圆角按钮、输入框和列表项状态；MainWindow.xaml 负责 Material 风格的品牌搜索区、分类栏、白色内容卡片和底部系统入口。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](docs/MATERIAL_VALIDATION.md)。
+
 ## 本地数据
 
 `%LOCALAPPDATA%\iStart\library.json` 当前 schemaVersion=2，支持读取 schema 1 并迁移；未知版本拒绝加载。JSON 结构无效时读 `.bak`，不把未知新版本悄悄换成旧备份。

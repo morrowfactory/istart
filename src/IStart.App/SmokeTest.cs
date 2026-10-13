@@ -98,7 +98,21 @@ internal static class SmokeTest
         icons.Render(backdrop); icons.Render(content);
         var iconEncoder = new PngBitmapEncoder(); iconEncoder.Frames.Add(BitmapFrame.Create(icons));
         using (var stream = File.Create(Path.Combine(output, "menu-icons.png"))) iconEncoder.Save(stream);
-        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 布局。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
+        content.Measure(new Size(592, 484));
+        content.Arrange(new Rect(0, 0, 592, 484));
+        content.UpdateLayout();
+        foreach (var name in new[] { "SearchBox", "ViewToggle", "ModeStatus", "EntryList" })
+        {
+            var control = (FrameworkElement)window.FindName(name);
+            var bounds = control.TransformToAncestor(content).TransformBounds(new Rect(control.RenderSize));
+            Check(bounds.Left >= 0 && bounds.Top >= 0 && bounds.Right <= 592 && bounds.Bottom <= 484,
+                "紧凑尺寸控件边界：" + name);
+        }
+        var compact = new RenderTargetBitmap(620, 540, 96, 96, PixelFormats.Pbgra32);
+        compact.Render(backdrop); compact.Render(content);
+        var compactEncoder = new PngBitmapEncoder(); compactEncoder.Frames.Add(BitmapFrame.Create(compact));
+        using (var stream = File.Create(Path.Combine(output, "menu-compact.png"))) compactEncoder.Save(stream);
+        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
         window.Close();
     }
 

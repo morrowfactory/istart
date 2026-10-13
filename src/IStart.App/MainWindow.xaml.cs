@@ -71,7 +71,7 @@ public partial class MainWindow : Window
             var content = new StackPanel();
             content.Children.Add(new Image { Width = 24, Height = 24, Source = (System.Windows.Media.ImageSource?)new ShellIconConverter().Convert(candidate.Shortcut, typeof(System.Windows.Media.ImageSource), null!, System.Globalization.CultureInfo.CurrentCulture), Margin = new Thickness(0, 0, 0, 4) });
             content.Children.Add(new TextBlock { Text = candidate.Title, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center });
-            var button = new Button { Width = 78, Height = 62, Padding = new Thickness(4), ToolTip = candidate.Title + "\n单击打开；拖动收藏；右键固定或移除", Content = content };
+            var button = new Button { Width = 78, Height = 64, Padding = new Thickness(3), Margin = new Thickness(2), Background = System.Windows.Media.Brushes.Transparent, BorderThickness = new Thickness(0), FontSize = 11, ToolTip = candidate.Title + "\n单击打开；拖动收藏；右键固定或移除", Content = content };
             button.Click += (_, _) => OpenTarget(candidate.Shortcut, candidate.Title);
             var origin = new Point();
             button.PreviewMouseLeftButtonDown += (_, e) => origin = e.GetPosition(button);
