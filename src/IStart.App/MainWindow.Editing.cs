@@ -31,7 +31,9 @@ public partial class MainWindow
         listTemplate ??= EntryList.ItemTemplate;
         listPanel ??= EntryList.ItemsPanel;
         EntryList.ItemTemplate = store.Library.IconView && !recentView ? (DataTemplate)Resources["EntryTile"] : listTemplate;
-        EntryList.ItemsPanel = store.Library.IconView && !recentView ? (ItemsPanelTemplate)Resources["IconPanel"] : listPanel;
+        var panel = store.Library.IconView && !recentView ? (ItemsPanelTemplate)Resources["IconPanel"] : listPanel;
+        EntryList.ItemsPanel = panel;
+        EntryList.GroupStyle[0].Panel = listPanel;
         ViewToggle.Content = store.Library.IconView ? "列表" : "图标";
     }
     private void RemoveById(Guid id)

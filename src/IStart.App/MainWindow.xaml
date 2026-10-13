@@ -23,6 +23,7 @@
         <ListBox x:Name="CategoryList" BorderThickness="0" Background="Transparent" SelectionChanged="CategoryChanged" AllowDrop="True" Drop="CategoryDrop" DragOver="CategoryDragOver" PreviewMouseLeftButtonDown="CategoryMouseDown" PreviewMouseMove="CategoryMouseMove" DisplayMemberPath="Name" ContextMenuOpening="CategoryContextMenu" AutomationProperties.Name="分类">
           <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="Padding" Value="8,9"/></Style></ListBox.ItemContainerStyle>
           <ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
+
         </ListBox>
       </DockPanel>
       <Border Grid.Column="1" Background="{DynamicResource ContentSurface}" CornerRadius="{DynamicResource CardRadius}" BorderBrush="{DynamicResource CardOutline}" BorderThickness="1" Padding="14"><DockPanel>
@@ -37,6 +38,14 @@
         </StackPanel>
         <TextBlock x:Name="SearchStatus" DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/><ListBox x:Name="EntryList" BorderThickness="0" Background="{DynamicResource ContentSurface}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="EntryDrop" DragOver="EntryDragOver" DragLeave="EntryDragLeave" PreviewMouseLeftButtonDown="EntryMouseLeftButtonDown" PreviewMouseMove="EntryMouseMove" MouseDoubleClick="OpenSelected" KeyDown="EntryKeyDown" ContextMenuOpening="EntryContextMenu" AutomationProperties.Name="收藏入口">
           <ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
+          <ListBox.GroupStyle><GroupStyle>
+            <GroupStyle.ContainerStyle><Style TargetType="GroupItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style></GroupStyle.ContainerStyle>
+            <GroupStyle.HeaderTemplate><DataTemplate>
+              <Border Height="1" Background="{DynamicResource TextMuted}" Opacity="0.35" Margin="6,10,6,12">
+                <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Name}" Value="文件和文件夹"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>
+              </Border>
+            </DataTemplate></GroupStyle.HeaderTemplate>
+          </GroupStyle></ListBox.GroupStyle>
           <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="5,7"/></Style></ListBox.ItemContainerStyle>
           <ListBox.ItemTemplate>
             <DataTemplate>

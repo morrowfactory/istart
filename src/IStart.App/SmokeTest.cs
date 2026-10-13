@@ -109,7 +109,15 @@ internal static class SmokeTest
             Check(!arguments.Contains("/f") && arguments[^1] == "0", "电源不强制结束应用");
         }
 
+        var program = Path.Combine(fixture, "示例程序.exe");
+        File.WriteAllText(program, "fixture only, never executed");
+        store.AddPaths([program], Guid.Empty);
+        var originalOrder = store.Library.Entries.ToArray();
         var window = new MainWindow(store, false);
+        var groupedList = (System.Windows.Controls.ListBox)window.FindName("EntryList");
+        var groupedView = (System.Windows.Data.ListCollectionView)groupedList.ItemsSource;
+        Check(groupedView.Groups?.Count == 2 && ((System.Windows.Data.CollectionViewGroup)groupedView.Groups[0]).Name.Equals("程序")
+            && store.Library.Entries.SequenceEqual(originalOrder), "软件与文件视觉分组且不改持久化顺序");
         var content = (FrameworkElement)window.Content;
         content.Measure(new Size(712, 604));
         content.Arrange(new Rect(0, 0, 712, 604));

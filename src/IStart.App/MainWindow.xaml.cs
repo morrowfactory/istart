@@ -21,6 +21,8 @@ public partial class MainWindow : Window
     internal List<SoftwareCandidate> candidates = [];
     private CancellationTokenSource? discovery;
     private bool recentView;
+    private bool groupedEntries;
+    private readonly EntryGroups entryGroups = new();
     private List<LaunchRecord> windowsRecent = [];
     private bool readingRecent;
     private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
@@ -112,8 +114,14 @@ public partial class MainWindow : Window
         var keyword = SearchBox.Text.Trim();
         IEnumerable<MenuEntry> source = recentView ? RecentDocuments.Merge(store.Library.Launches,
             store.Library.ShowWindowsRecentDocuments ? windowsRecent : []).Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
-        EntryList.ItemsSource = source.Where(e => (keyword.Length > 0 || activeCategory is null || e.CategoryId == activeCategory)
+        var entries = source.Where(e => (keyword.Length > 0 || activeCategory is null || e.CategoryId == activeCategory)
             && (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
+        groupedEntries = !recentView && activeCategory is null && keyword.Length == 0
+            && entries.Any(entryGroups.IsApplication) && entries.Any(e => !entryGroups.IsApplication(e));
+        var view = new System.Windows.Data.ListCollectionView(entries);
+        if (groupedEntries) view.GroupDescriptions.Add(entryGroups);
+        EntryList.ItemsSource = view;
+        ApplyView();
         if (recentView) SearchStatus.Text = EntryList.Items.Count == 0 ? "暂无有效记录。仅显示软件或 Windows 已保存、且仍存在的本机文件。" : "合并 Windows、软件历史与 iStart 记录；外部历史时间为近似排序。";
         else SearchStatus.Text = "";
     }

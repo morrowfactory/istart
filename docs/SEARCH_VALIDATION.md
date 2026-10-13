@@ -15,3 +15,5 @@ README、ARCHITECTURE、执行计划同步；VISION 复核，方向未变。界�
 API 依据：[微软 SHGetFileInfo 文档](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfow)。
 
 preview.11：推荐默认关闭，整个容器收起并无占位；菜单内不再有启用/关闭按钮，设置为唯一开启入口。正常推荐模式也隐藏标题/说明；搜索时才显示搜索结果标题。默认值、关闭时搜索可见、清空时容器与标题收起回归通过。README/ARCHITECTURE/执行计划同步；VISION 复核无方向变化。
+
+preview.12 收藏视觉分组：全部收藏无搜索且两类入口并存时，程序组在上、文件组在下，第二组显示一条细横线，无新标题。图标/列表预览已目视核对，不改变 Entries 保存顺序；搜索和最近视图不分组。README、ARCHITECTURE、执行计划同步，VISION 复核无方向变化。
