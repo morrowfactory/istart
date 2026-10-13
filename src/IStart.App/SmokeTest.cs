@@ -5,7 +5,7 @@ using System.Windows.Media.Imaging;
 
 namespace IStart;
 
-internal static class SmokeTest
+internal static partial class SmokeTest
 {
     public static void Run(string output)
     {
@@ -45,6 +45,7 @@ internal static class SmokeTest
         catch (IOException) { Check(failed.Library.Entries.Count == 0, "保存失败回退内存状态"); }
 
         VerifySoftwareDiscovery(fixture);
+        VerifyWebsiteHistory(fixture);
         var recentFolder = Path.Combine(fixture, "recent");
         Directory.CreateDirectory(recentFolder);
         ShellShortcut.CreateFixture(Path.Combine(recentFolder, "文档.lnk"), file);
@@ -78,10 +79,12 @@ internal static class SmokeTest
         LaunchRecord[] folderExternal = [new(newFolder, "新近", DateTimeOffset.UtcNow, 1),
             new(highFolder, "重复", DateTimeOffset.UtcNow, 1), new(fixture, "已固定", DateTimeOffset.UtcNow, 1)];
         var folderResults = FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 3, Guid.Empty, new HashSet<string>());
-        Check(folderResults.Select(e => e.Target).SequenceEqual(new[] { fixture, highFolder, newFolder })
-            && folderResults[0] == pinnedFolder, "固定项不重排，高频优先、最近补空并去重");
-        Check(FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 1, Guid.Empty, new HashSet<string>()).Single() == pinnedFolder,
-            "常用文件夹满额不增加自动建议");
+        Check(folderResults.Count == 3 && folderResults[0].Target == highFolder && folderResults.Contains(pinnedFolder),
+            "常用文件夹高频在前，固定入口保留且去重");
+        Check(FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 1, Guid.Empty, new HashSet<string>()).Single().Target == highFolder,
+            "常用文件夹容量限制与频率排序");
+        Check(FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 3, Guid.Empty, new HashSet<string>(), recent: true)[0].Target == fixture,
+            "最近文件夹按实际目录记录时间排序");
         Check(FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 3, Guid.Empty, new HashSet<string> { highFolder }).All(e => e.Target != highFolder),
             "隐藏本次文件夹建议");
         store.Change(s => s.ShowWindowsRecentDocuments = false);
@@ -98,9 +101,9 @@ internal static class SmokeTest
         var negative = new Rect(-1280, 0, 1280, 984);
         Check(negative.Contains(MenuPlacement.Calculate(negative, new Rect(-20, 984, 20, 40), size)),
             "负坐标屏幕边缘约束");
-        store.Change(s => { s.RecommendationsEnabled = false; s.ExcludedRecommendations.Add("excluded-shortcut"); });
+        store.Change(s => s.HiddenSoftware.Add("hidden-shortcut"));
         var preferences = new LibraryStore(config);
-        Check(!preferences.Library.RecommendationsEnabled && preferences.Library.ExcludedRecommendations.Contains("excluded-shortcut"), "推荐偏好持久化");
+        Check(preferences.Library.HiddenSoftware.Contains("hidden-shortcut"), "软件隐藏项持久化");
 
         var upgrade = Path.Combine(fixture, "upgrade.json");
         File.WriteAllText(upgrade, System.Text.Json.JsonSerializer.Serialize(store.Library).Replace("\"SchemaVersion\":2", "\"SchemaVersion\":1"));
@@ -133,11 +136,15 @@ internal static class SmokeTest
         File.WriteAllText(program, "fixture only, never executed");
         store.AddPaths([program], Guid.Empty);
         var originalOrder = store.Library.Entries.ToArray();
+        var appCandidates = Enumerable.Range(0, 40).Select(i => new SoftwareCandidate("软件" + i, "app-" + i, "exe-" + i)).ToList();
+        var usage = Enumerable.Range(0, 40).ToDictionary(i => "exe-" + i, i => i + 1, StringComparer.OrdinalIgnoreCase);
+        var appResults = MySoftware.Build([], appCandidates, [], usage, new HashSet<string>());
+        Check(appResults.Count == 30 && appResults[0].Target == "app-39" && appResults[^1].Target == "app-10", "我的软件按使用活动降序且最多三十项");
+        Check(MySoftware.Build([], appCandidates, [], new Dictionary<string, int>(), new HashSet<string>()).Count == 0, "无活动依据不填充已安装软件推荐");
+        Check(MySoftware.Build([], appCandidates, [], usage, new HashSet<string> { "app-39" })[0].Target == "app-38", "我的软件隐藏项排除");
         var window = new MainWindow(store, false);
         var groupedList = (System.Windows.Controls.ListBox)window.FindName("EntryList");
-        var groupedView = (System.Windows.Data.ListCollectionView)groupedList.ItemsSource;
-        Check(groupedView.Groups?.Count == 2 && ((System.Windows.Data.CollectionViewGroup)groupedView.Groups[0]).Name.Equals("程序")
-            && store.Library.Entries.SequenceEqual(originalOrder), "软件与文件视觉分组且不改持久化顺序");
+        Check(groupedList.Items.OfType<MenuEntry>().Single().Target == program && store.Library.Entries.SequenceEqual(originalOrder), "我的软件仅显示程序，不改原入口顺序");
         var navigation = (System.Windows.Controls.ListBox)window.FindName("CategoryList");
         var priorLaunches = store.Library.Launches.ToList();
         store.Change(s =>
@@ -149,6 +156,15 @@ internal static class SmokeTest
         Check(groupedList.Items.OfType<MenuEntry>().Single().Target == file, "最近打开界面仅显示文件，不显示目录和程序");
         navigation.SelectedItem = navigation.Items.OfType<MenuCategory>().Single(c => c.Name == "常用文件夹");
         Check(groupedList.Items.OfType<MenuEntry>().Single().Target == fixture, "常用文件夹界面过滤程序与文件并保留固定目录");
+        var activitySort = (System.Windows.Controls.Button)window.FindName("ActivitySortButton");
+        activitySort.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        Check(store.Library.FoldersRecentFirst && activitySort.Content.ToString()!.Contains("最近打开"), "文件夹同页切换最近并保存");
+        window.websiteHistory = WebsiteHistory.Read(CancellationToken.None, [Path.Combine(fixture, "Chrome History"), Path.Combine(fixture, "Edge History")]);
+        navigation.SelectedItem = navigation.Items.OfType<MenuCategory>().Single(c => c.Name == "我的网站");
+        Check(groupedList.Items.OfType<MenuEntry>().First().Target == "https://work.example/", "网站页面默认常用排序");
+        activitySort.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        Check(store.Library.WebsitesRecentFirst && groupedList.Items.OfType<MenuEntry>().First().Target == "https://recent.example/", "网站同页切换最近并保存");
+        Check(navigation.Items.OfType<MenuCategory>().Select(c => c.Name).SequenceEqual(new[] { "我的软件", "最近打开", "常用文件夹", "我的网站" }), "四个固定入口，无未分类和自定义分类");
         navigation.SelectedIndex = 0;
         store.Change(s => { s.ShowWindowsRecentDocuments = true; s.Launches = priorLaunches; });
         var content = (FrameworkElement)window.Content;
@@ -187,27 +203,18 @@ internal static class SmokeTest
         var compactEncoder = new PngBitmapEncoder(); compactEncoder.Frames.Add(BitmapFrame.Create(compact));
         using (var stream = File.Create(Path.Combine(output, "menu-compact.png"))) compactEncoder.Save(stream);
         var search = (System.Windows.Controls.TextBox)window.FindName("SearchBox");
-        Check(!new MenuLibrary().RecommendationsEnabled, "软件推荐默认关闭");
-        window.candidates = Enumerable.Range(0, 20).Select(i => new SoftwareCandidate("应用" + i, "missing-" + i)).Append(new("Codex", "missing-codex")).ToList();
+        window.candidates = Enumerable.Range(0, 40).Select(i => new SoftwareCandidate("应用" + i, "missing-" + i)).Append(new("Codex", "missing-codex")).ToList();
         search.Text = "codex";
-        var softwareResults = (System.Windows.Controls.WrapPanel)window.FindName("Recommendations");
-        Check(softwareResults.Children.Count == 1, "搜索全部软件而非推荐前十二项，忽略大小写");
+        Check(groupedList.Items.Count == 1, "搜索软件忽略大小写");
         search.Text = "应用";
-        Check(softwareResults.Children.Count == 20, "软件搜索不受推荐数量限制");
+        Check(groupedList.Items.Count == 30, "我的软件搜索最多三十项");
         search.Text = "没有匹配项";
-        Check(softwareResults.Children.Count == 0 && ((System.Windows.Controls.TextBlock)window.FindName("SearchStatus")).Text.Length > 0, "无结果提示");
-        store.Change(s => s.RecommendationsEnabled = false);
-        search.Text = "codex";
-        Check(softwareResults.Children.Count == 1, "关闭推荐仍可搜索软件");
-        Check(((System.Windows.Controls.StackPanel)window.FindName("SoftwarePanel")).Visibility == Visibility.Visible, "隐藏推荐不隐藏主动搜索结果");
-        window.candidates = [new("ChatGPT", "shell:AppsFolder\\OpenAI.Codex_test!App")];
+        Check(groupedList.Items.Count == 0, "软件无匹配结果");
+        window.candidates = [new("ChatGPT", @"shell:AppsFolder\OpenAI.Codex_test!App")];
         search.Text = "Codex";
-        Check(softwareResults.Children.Count == 1, "商店显示名不同仍可按应用标识搜索");
-        store.Change(s => s.RecommendationsEnabled = false);
+        Check(groupedList.Items.Count == 1, "商店应用标识搜索");
         search.Clear();
-        Check(((System.Windows.Controls.StackPanel)window.FindName("SoftwarePanel")).Visibility == Visibility.Collapsed
-            && ((System.Windows.Controls.TextBlock)window.FindName("RecommendationTitle")).Visibility == Visibility.Collapsed,
-            "清空搜索后整个软件推荐区和标题收起");
+        Check(window.FindName("SoftwarePanel") is null && window.FindName("CategoryName") is null, "软件推荐和分类输入控件已移除");
         window.candidates = [];
         using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
         {
@@ -244,6 +251,13 @@ internal static class SmokeTest
         windowsBitmap.Render(backdrop); windowsBitmap.Render(content);
         var windowsEncoder = new PngBitmapEncoder(); windowsEncoder.Frames.Add(BitmapFrame.Create(windowsBitmap));
         using (var stream = File.Create(Path.Combine(output, "menu-windows.png"))) windowsEncoder.Save(stream);
+        navigation.SelectedItem = navigation.Items.OfType<MenuCategory>().Single(c => c.Name == "我的网站");
+        content.UpdateLayout();
+        var sitesBitmap = new RenderTargetBitmap(740, 660, 96, 96, PixelFormats.Pbgra32);
+        sitesBitmap.Render(backdrop); sitesBitmap.Render(content);
+        var sitesEncoder = new PngBitmapEncoder(); sitesEncoder.Frames.Add(BitmapFrame.Create(sitesBitmap));
+        using (var stream = File.Create(Path.Combine(output, "menu-websites.png"))) sitesEncoder.Save(stream);
+        navigation.SelectedIndex = 0;
         window.SetTheme("Google");
         content.UpdateLayout();
         Check(inputSurface.CornerRadius.TopLeft == 14, "往返切换即时生效");
@@ -254,7 +268,7 @@ internal static class SmokeTest
         File.WriteAllText(futureTheme, "{\"SchemaVersion\":2,\"Theme\":\"future\"}");
         Check(new LibraryStore(futureTheme).Library.Theme == "Google", "未知主题回退默认风格");
         // 生命周期检查不启用系统接入，也不发送键盘或鼠标输入。
-        store.Change(s => { s.CustomMenuEnabled = false; s.RecommendationsEnabled = false; });
+        store.Change(s => { s.CustomMenuEnabled = false; });
         var resident = new MainWindow(store);
         var closed = false;
         resident.Closed += (_, _) => closed = true;

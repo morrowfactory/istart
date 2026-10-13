@@ -15,6 +15,13 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.Length == 2 && e.Args[0] == "--probe-activity")
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            ActivityProbe.Write(Path.GetFullPath(e.Args[1]));
+            Shutdown();
+            return;
+        }
         DispatcherUnhandledException += (_, args) => RuntimeLog.Write($"unhandled-ui {args.Exception.GetType().Name} 0x{args.Exception.HResult:X8}");
         AppDomain.CurrentDomain.UnhandledException += (_, args) => RuntimeLog.Write($"unhandled-process {args.ExceptionObject.GetType().Name}");
         if (e.Args.Length == 2 && e.Args[0] == "--ui-test")

@@ -29,10 +29,10 @@ internal static class FrequentFolders
     }
 
     internal static List<MenuEntry> Build(IEnumerable<MenuEntry> pinned, IEnumerable<LaunchRecord> own,
-        IEnumerable<LaunchRecord> external, int capacity, Guid category, ISet<string> hidden)
+        IEnumerable<LaunchRecord> external, int capacity, Guid category, ISet<string> hidden, bool recent = false)
     {
         var result = pinned.Where(e => IsLocalFolder(e.Target)).ToList();
-        var known = result.Select(e => Path.TrimEndingDirectorySeparator(e.Target)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var known = result.ToDictionary(e => Path.TrimEndingDirectorySeparator(e.Target), StringComparer.OrdinalIgnoreCase);
         var ownRecords = own.ToList();
         var ownCounts = ownRecords.ToDictionary(r => r.Target, r => r.Count, StringComparer.OrdinalIgnoreCase);
         var ranked = new Dictionary<string, (long Count, DateTimeOffset Latest)>(StringComparer.OrdinalIgnoreCase);
@@ -41,16 +41,20 @@ internal static class FrequentFolders
         {
             var folder = IsLocalFolder(record.Target) ? Path.TrimEndingDirectorySeparator(record.Target)
                 : RecentDocuments.IsDocument(record.Target) ? Path.GetDirectoryName(record.Target) : null;
-            if (folder is null || !IsLocalFolder(folder) || known.Contains(folder) || hidden.Contains(folder)) continue;
+            if (recent && !IsLocalFolder(record.Target)) continue;
+            if (folder is null || !IsLocalFolder(folder) || hidden.Contains(folder)) continue;
             var previous = ranked.GetValueOrDefault(folder);
             ranked[folder] = (previous.Count + Math.Max(record.Count, ownCounts.GetValueOrDefault(record.Target)), previous.Latest > record.OpenedAt ? previous.Latest : record.OpenedAt);
         }
         // Counts represent iStart launches or distinct recent-file activity, not system-wide visits.
-        foreach (var item in ranked.OrderByDescending(p => p.Value.Count).ThenByDescending(p => p.Value.Latest)
-            .ThenBy(p => p.Key, StringComparer.OrdinalIgnoreCase).Take(Math.Max(0, capacity - result.Count)))
+        if (!recent) foreach (var entry in known.Keys.Where(path => !hidden.Contains(path))) ranked.TryAdd(entry, (0, DateTimeOffset.MinValue));
+        result.Clear();
+        var sorted = recent ? ranked.OrderByDescending(p => p.Value.Latest).ThenByDescending(p => p.Value.Count)
+            : ranked.OrderByDescending(p => p.Value.Count).ThenByDescending(p => p.Value.Latest);
+        foreach (var item in sorted.ThenBy(p => p.Key, StringComparer.OrdinalIgnoreCase).Take(Math.Max(capacity, known.Count)))
         {
             var title = Path.GetFileName(item.Key.TrimEnd('\\'));
-            result.Add(new(Guid.NewGuid(), item.Key, title.Length == 0 ? item.Key : title, category));
+            result.Add(known.GetValueOrDefault(item.Key) ?? new(Guid.NewGuid(), item.Key, title.Length == 0 ? item.Key : title, category));
         }
         return result;
     }

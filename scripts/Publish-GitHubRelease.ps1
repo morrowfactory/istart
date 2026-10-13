@@ -49,10 +49,11 @@ $manifest = Join-Path $directory 'release-manifest.json'
 } | ConvertTo-Json | Set-Content -LiteralPath $manifest -Encoding utf8
 $notes = Join-Path $env:RUNNER_TEMP "istart-$version-notes.md"
 @"
-Windows 个人开始菜单预览版，提供 Windows 11 Fluent / Google 双风格、软件与文件收藏、拖入排序、跨软件最近文件和原生菜单恢复。
+Windows 个人开始菜单预览版，提供 Windows 11 Fluent / Google 双风格、常用软件、跨软件最近文件、文件夹/网站活动排序和原生菜单恢复。
 
 - 下载安装包：$name。安装于当前账户，包含运行时，无需另装 .NET。
-- 推荐区默认隐藏，仅设置可开启；软件搜索保留。
+- 我的软件按本机使用活动排序，最多 30 项；移除旧推荐区与分类编辑。
+- 文件夹和网站提供常用/最近同页切换；网站合并 Chrome/Edge 本机历史，按域名显示。
 - 开始按钮接入目前仅在 Win11 26200 验证，其他系统保留原生入口。Win10、其他 Win11 和多屏等兼容验收仍未完成。
 - 安装包未签名。本版为预览版；卸载保留个人收藏，托盘可恢复 Windows 原生菜单。
 - 跨软件历史仅显示已有来源记录，不能保证所有应用完整历史或精确时间。

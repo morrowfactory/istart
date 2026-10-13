@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace IStart;
 
-internal sealed record SoftwareCandidate(string Title, string Shortcut);
+internal sealed record SoftwareCandidate(string Title, string Shortcut, string? Executable = null, string? AppId = null);
 
 internal static class SoftwareDiscovery
 {
@@ -27,13 +27,32 @@ internal static class SoftwareDiscovery
                     var target = ShellShortcut.ReadTarget(shortcut);
                     if (!string.Equals(Path.GetExtension(target), ".exe", StringComparison.OrdinalIgnoreCase) || !File.Exists(target)) continue;
                     // Keep the original shortcut so application arguments and working directory survive.
-                    found.TryAdd(Path.GetFullPath(target), new(title, shortcut));
+                    found.TryAdd(Path.GetFullPath(target), new(title, shortcut, target, ReadAppId(shortcut)));
                 }
                 catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException or ArgumentException) { }
             }
         }
         if (includePackagedApps) ReadPackagedApps(found, token);
         return found.Values.OrderBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+    private static string? ReadAppId(string shortcut)
+    {
+        object? shell = null, folder = null, item = null;
+        try
+        {
+            shell = Activator.CreateInstance(Type.GetTypeFromProgID("Shell.Application")!);
+            folder = ((dynamic)shell!).NameSpace(Path.GetDirectoryName(shortcut));
+            if (folder is null) return null;
+            item = ((dynamic)folder).ParseName(Path.GetFileName(shortcut));
+            return item is null ? null : ((dynamic)item).ExtendedProperty("System.AppUserModel.ID") as string;
+        }
+        catch (COMException) { return null; }
+        finally
+        {
+            if (item is not null) Marshal.FinalReleaseComObject(item);
+            if (folder is not null) Marshal.FinalReleaseComObject(folder);
+            if (shell is not null) Marshal.FinalReleaseComObject(shell);
+        }
     }
     private static void ReadPackagedApps(Dictionary<string, SoftwareCandidate> found, CancellationToken token)
     {

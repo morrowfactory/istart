@@ -1,13 +1,10 @@
-using System.Globalization;
 using System.IO;
-using System.ComponentModel;
 
 namespace IStart;
 
-internal sealed class EntryGroups : GroupDescription
+internal sealed class EntryGroups
 {
     private readonly Dictionary<string, bool> applications = new(StringComparer.OrdinalIgnoreCase);
-    internal EntryGroups() { GroupNames.Add("程序"); GroupNames.Add("文件和文件夹"); }
     internal bool IsApplication(MenuEntry entry)
     {
         if (applications.TryGetValue(entry.Target, out var cached)) return cached;
@@ -20,6 +17,4 @@ internal sealed class EntryGroups : GroupDescription
         if (applications.Count < 256) applications[entry.Target] = application;
         return application;
     }
-    public override object GroupNameFromItem(object item, int level, CultureInfo culture)
-        => IsApplication((MenuEntry)item) ? "程序" : "文件和文件夹";
 }
