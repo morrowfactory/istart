@@ -112,6 +112,31 @@ internal static class SmokeTest
         compact.Render(backdrop); compact.Render(content);
         var compactEncoder = new PngBitmapEncoder(); compactEncoder.Frames.Add(BitmapFrame.Create(compact));
         using (var stream = File.Create(Path.Combine(output, "menu-compact.png"))) compactEncoder.Save(stream);
+        var search = (System.Windows.Controls.TextBox)window.FindName("SearchBox");
+        var inputSurface = (System.Windows.Controls.Border)search.Template.FindName("Surface", search);
+        Check(inputSurface.CornerRadius.TopLeft == 14, "旧配置默认 Google 风格");
+        var originalEntries = store.Library.Entries.ToArray();
+        store.Change(s => s.CustomMenuEnabled = true);
+        window.SetTheme("Windows");
+        Check(new LibraryStore(Path.Combine(store.DirectoryPath, "library.json")).Library.Theme == "Windows", "Windows 风格保存重开");
+        ((System.Windows.Controls.Button)window.FindName("ViewToggle")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        content.Measure(new Size(712, 604));
+        content.Arrange(new Rect(0, 0, 712, 604));
+        content.UpdateLayout();
+        Check(inputSurface.CornerRadius.TopLeft == 4, "动态更新输入框形状");
+        var windowsBitmap = new RenderTargetBitmap(740, 660, 96, 96, PixelFormats.Pbgra32);
+        windowsBitmap.Render(backdrop); windowsBitmap.Render(content);
+        var windowsEncoder = new PngBitmapEncoder(); windowsEncoder.Frames.Add(BitmapFrame.Create(windowsBitmap));
+        using (var stream = File.Create(Path.Combine(output, "menu-windows.png"))) windowsEncoder.Save(stream);
+        window.SetTheme("Google");
+        content.UpdateLayout();
+        Check(inputSurface.CornerRadius.TopLeft == 14, "往返切换即时生效");
+        Check(new LibraryStore(Path.Combine(store.DirectoryPath, "library.json")).Library.Theme == "Google"
+            && store.Library.Entries.SequenceEqual(originalEntries) && store.Library.CustomMenuEnabled,
+            "往返主题保存且收藏顺序与自定义接入不变");
+        var futureTheme = Path.Combine(output, "future-theme.json");
+        File.WriteAllText(futureTheme, "{\"SchemaVersion\":2,\"Theme\":\"future\"}");
+        Check(new LibraryStore(futureTheme).Library.Theme == "Google", "未知主题回退默认风格");
         // 生命周期检查不启用系统接入，也不发送键盘或鼠标输入。
         store.Change(s => { s.CustomMenuEnabled = false; s.RecommendationsEnabled = false; });
         var resident = new MainWindow(store);
@@ -122,7 +147,7 @@ internal static class SmokeTest
         Check(!closed && !resident.IsVisible, "关闭窗口收起到托盘");
         resident.RequestExit("smoke");
         Check(closed, "显式退出结束窗口");
-        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
+        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界、Windows/Google 即时往返切换、主题保存重开与未知值回退。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
         window.Close();
     }
 

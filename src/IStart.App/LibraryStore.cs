@@ -18,6 +18,7 @@ public sealed class MenuLibrary
     public bool CustomMenuEnabled { get; set; }
     public bool StartWithWindows { get; set; }
     public bool IconView { get; set; }
+    public string Theme { get; set; } = "Google";
 }
 
 public sealed class LibraryStore
@@ -46,6 +47,7 @@ public sealed class LibraryStore
         var state = JsonSerializer.Deserialize<MenuLibrary>(File.ReadAllText(file), JsonOptions) ?? throw new JsonException("配置为空");
         if (state.SchemaVersion is not (1 or 2)) throw new NotSupportedException("不支持此配置版本");
         state.SchemaVersion = 2;
+        if (state.Theme is not ("Windows" or "Google")) state.Theme = "Google";
         if (state.Categories is null || state.Entries is null || state.ExcludedRecommendations is null || state.Launches is null
             || state.Launches.Any(l => l is null || string.IsNullOrWhiteSpace(l.Target) || string.IsNullOrWhiteSpace(l.Title) || l.Count < 1)
             || state.Launches.Count > 100 || state.Launches.Select(l => l.Target).Distinct(StringComparer.OrdinalIgnoreCase).Count() != state.Launches.Count

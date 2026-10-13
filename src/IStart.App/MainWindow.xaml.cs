@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     public MainWindow(LibraryStore store, bool enableShell = true)
     {
         this.store = store;
+        Appearance.Apply(store.Library.Theme);
         InitializeComponent();
         ready = true;
         ApplyView();

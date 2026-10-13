@@ -20,7 +20,7 @@
 
 进程不注入 Explorer、不修改系统二进制、不替换登录认证、不添加服务或驱动。临时原生打开与默认原生切换是独立操作。
 
-界面资源在 App.xaml 统一定义圆角按钮、输入框和列表项状态；MainWindow.xaml 负责 Material 风格的品牌搜索区、分类栏、白色内容卡片和底部系统入口。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](docs/MATERIAL_VALIDATION.md)。
+Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml 与 MainWindow.xaml 通过 DynamicResource 即时更新按钮、输入框、列表选择、品牌图案与内容卡片。设置中的外观选择单独保存并调用 SetTheme，不重启适配器，也不改写隐私或开机启动选项。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](docs/MATERIAL_VALIDATION.md)。
 
 ## 本地数据
 
@@ -29,7 +29,7 @@
 - Entries：id、target、title、categoryId，数组顺序表示手动排序。
 - Categories：id、name，数组顺序表示分类排序，未分类不可删除。
 - Launches：target、title、openedAt、count，最多 100 个唯一目标，只表示成功交给系统启动。
-- 偏好：推荐开关与排除项、记录开关、自定义入口、开机启动、图标视图。
+- 偏好：推荐开关与排除项、记录开关、自定义入口、开机启动、图标视图、Theme（Windows/Google；缺失或未知值回退 Google）。
 
 配置仅保存在本机；移除入口不删除源文件，删除分类将收藏移至未分类。手动排序与推荐排序独立。推荐候选不持久化，最多显示 12 项；可靠系统历史尚无来源，不读取 UserAssist 或宣称完整使用频率。Store 应用与无快捷方式软件不保证发现。
 

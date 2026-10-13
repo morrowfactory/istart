@@ -123,6 +123,20 @@ public partial class MainWindow
     {
         var panel = new StackPanel { Margin = new Thickness(22) };
         var window = new Window { Owner = this, Title = "iStart 设置", Width = 430, SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel, Background = Background, Foreground = Foreground, FontFamily = FontFamily };
+        window.SetResourceReference(BackgroundProperty, "Surface");
+        window.SetResourceReference(ForegroundProperty, "TextPrimary");
+        panel.Children.Add(new TextBlock { Text = "外观风格", FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) });
+        var theme = new ComboBox { ItemsSource = new[] { "Windows 风格", "Google 风格" }, SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(10, 7, 10, 7) };
+        System.Windows.Automation.AutomationProperties.SetName(theme, "外观风格");
+        panel.Children.Add(theme);
+        panel.Children.Add(new TextBlock { Text = "选择后立即应用并记住，不改变开始菜单接入模式。", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 0, 0, 18) });
+        theme.SelectionChanged += (_, _) =>
+        {
+            var selected = theme.SelectedIndex == 0 ? "Windows" : "Google";
+            if (selected == store.Library.Theme) return;
+            Perform(() => SetTheme(selected), "外观已切换并保存。");
+            theme.SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1;
+        };
         panel.Children.Add(new TextBlock { Text = "菜单与隐私", FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 14) });
         CheckBox Option(string label, bool selected)
         {
@@ -170,6 +184,11 @@ public partial class MainWindow
         };
         panel.Children.Add(save);
         window.ShowDialog();
+    }
+    internal void SetTheme(string theme)
+    {
+        store.Change(s => s.Theme = theme);
+        Appearance.Apply(theme);
     }
     private void AccountMenu(object sender, RoutedEventArgs e) => ShowSystemMenu((Button)sender, [("锁定", SystemAction.Lock), ("注销", SystemAction.SignOut), ("切换用户", SystemAction.SwitchUser)]);
     private void PowerMenu(object sender, RoutedEventArgs e) => ShowSystemMenu((Button)sender, [("睡眠", SystemAction.Sleep), ("休眠", SystemAction.Hibernate), ("重启", SystemAction.Restart), ("关机", SystemAction.ShutDown)]);
