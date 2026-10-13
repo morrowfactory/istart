@@ -7,3 +7,9 @@
 本机只读样本：AppsFolder 显示名 ChatGPT，标识 OpenAI.Codex_2p2nqsd0c76g0!App。程序发现 166 个候选、Codex 标识 1 个。回归检查覆盖软件第 13 项以后、大小写、无结果、关闭推荐后搜索、显示名不同的商店标识。构建 0 警告、0 错误。测试未自动输入系统按键或启动 Codex。
 
 README、ARCHITECTURE、执行计划同步；VISION 复核，方向未变。界面实际搜索与点击启动仍需用户反馈，不以只读发现冒充启动验收。
+
+## preview.8 商店图标
+
+用户截图确认商店结果只有文字、图标空白。改为解析 Shell PIDL 后读取原生图标；失败回退通用应用图标。HICON 和 PIDL 均释放，冻结位图沿用有界缓存。本机实际 Codex 32×32 图标保存为测试输出 codex-icon.png，白底预览确认原应用标志；构建与核心回归通过。VISION 复核，方向不变。
+
+API 依据：[微软 SHGetFileInfo 文档](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfow)。

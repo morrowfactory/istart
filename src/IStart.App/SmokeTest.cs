@@ -145,6 +145,16 @@ internal static class SmokeTest
         {
             var actual = SoftwareDiscovery.Read(timeout.Token);
             File.WriteAllText(Path.Combine(output, "software-discovery.txt"), $"实际本机软件入口数量：{actual.Count}；Codex 标识匹配数量：{actual.Count(c => c.Shortcut.Contains("OpenAI.Codex", StringComparison.OrdinalIgnoreCase))}");
+            var codex = actual.FirstOrDefault(c => c.Shortcut.Contains("OpenAI.Codex", StringComparison.OrdinalIgnoreCase));
+            if (codex is not null)
+            {
+                var appIcon = new ShellIconConverter().Convert(codex.Shortcut, typeof(ImageSource), null!, System.Globalization.CultureInfo.CurrentCulture) as BitmapSource;
+                Check(appIcon is not null && appIcon.IsFrozen, "本机 Codex 商店图标读取并冻结");
+                var appIconEncoder = new PngBitmapEncoder();
+                appIconEncoder.Frames.Add(BitmapFrame.Create(appIcon!));
+                using var iconStream = File.Create(Path.Combine(output, "codex-icon.png"));
+                appIconEncoder.Save(iconStream);
+            }
         }
         var inputSurface = (System.Windows.Controls.Border)search.Template.FindName("Surface", search);
         Check(inputSurface.CornerRadius.TopLeft == 14, "旧配置默认 Google 风格");

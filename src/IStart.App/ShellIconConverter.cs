@@ -20,6 +20,8 @@ public sealed class ShellIconConverter : IValueConverter
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)] public string Type;
     }
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern nint SHGetFileInfo(string path, uint attributes, out FileInfo info, uint size, uint flags);
+    [DllImport("shell32.dll", EntryPoint = "SHGetFileInfoW")] private static extern nint SHGetFileInfo(nint item, uint attributes, out FileInfo info, uint size, uint flags);
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern int SHParseDisplayName(string name, nint context, out nint item, uint attributes, out uint found);
     [DllImport("user32.dll")] private static extern bool DestroyIcon(nint icon);
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern uint ExtractIconEx(string path, int index, out nint large, out nint small, uint count);
     private static readonly ConcurrentDictionary<string, ImageSource> Cache = new(StringComparer.OrdinalIgnoreCase);
@@ -28,6 +30,28 @@ public sealed class ShellIconConverter : IValueConverter
         if (value is not string path) return null;
         var cacheKey = path;
         if (Cache.TryGetValue(path, out var icon)) return icon;
+        if (path.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal))
+        {
+            nint item = 0;
+            try
+            {
+                if (SHParseDisplayName(path, 0, out item, 0, out _) >= 0 && item != 0
+                    && SHGetFileInfo(item, 0, out var appInfo, (uint)Marshal.SizeOf<FileInfo>(), 0x108) != 0 && appInfo.Icon != 0)
+                {
+                    try
+                    {
+                        var bitmap = Imaging.CreateBitmapSourceFromHIcon(appInfo.Icon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        bitmap.Freeze();
+                        if (Cache.Count < 256) Cache.TryAdd(cacheKey, bitmap);
+                        return bitmap;
+                    }
+                    finally { DestroyIcon(appInfo.Icon); }
+                }
+            }
+            finally { if (item != 0) Marshal.FreeCoTaskMem(item); }
+            // A failed shell lookup must still display a recognizable generic application icon.
+            path = ".exe";
+        }
         if (!path.StartsWith("\\\\", StringComparison.Ordinal) && Path.GetExtension(path).Equals(".lnk", StringComparison.OrdinalIgnoreCase))
         {
             try
@@ -54,7 +78,7 @@ public sealed class ShellIconConverter : IValueConverter
             }
             catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException or ArgumentException) { return null; }
         }
-        var flags = path.StartsWith("\\\\", StringComparison.Ordinal) ? 0x111u : 0x101u;
+        var flags = path == ".exe" || path.StartsWith("\\\\", StringComparison.Ordinal) ? 0x111u : 0x101u;
         if (SHGetFileInfo(path, 0x80, out var info, (uint)Marshal.SizeOf<FileInfo>(), flags) == 0 || info.Icon == 0) return null;
         try
         {

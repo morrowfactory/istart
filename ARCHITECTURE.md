@@ -68,3 +68,5 @@ ShowMenu 为用户触发的统一显示入口：恢复 Normal、开启 ShowActiv
 搜索呈现完成后在本线程设置原生 HWND 焦点，再同步 WPF 键盘与逻辑焦点。前台请求失败且修饰键未按住时才使用带标记的平衡 Alt/Ctrl 序列重试。菜单位置按任务栏与物理工作区计算；快捷方式图标读取资源或目标，启动路径不变。
 
 软件发现补充只读 Shell.Application / AppsFolder 枚举，保留带 ! 的商店应用标识；COM 对象逐项释放，沿用取消令牌与五秒预算。传统快捷方式和商店应用共同组成搜索候选，输入时按名称及入口标识过滤，推荐仍限 12 项。商店应用通过 explorer.exe 的单个 ArgumentList 参数启动；不当作磁盘文件固定。关闭推荐不关闭本机搜索索引。收藏搜索跨分类，文件范围仅限收藏。
+
+商店应用图标：SHParseDisplayName 将 AppsFolder 入口解析为 PIDL，SHGetFileInfo 使用 SHGFI_PIDL 与 SHGFI_ICON 获取图标；转为冻结位图并沿用 256 项缓存，finally 释放 HICON 和 PIDL。失败回退通用 exe 图标，不把虚拟入口当作磁盘路径。
