@@ -1,0 +1,37 @@
+name: Windows 构建与核心验证
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  prototype:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: 构建并验证数据与布局
+        shell: pwsh
+        run: ./scripts/Test-Prototype.ps1
+      - name: 保存技术验证输出
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prototype-validation
+          path: |
+            artifacts/smoke-*/result.txt
+            artifacts/smoke-*/failure.txt
+            artifacts/smoke-*/menu.png
+            artifacts/smoke-*/shell-probe.txt
+          retention-days: 7
+      - name: 打包独立运行验证版
+        shell: pwsh
+        run: ./scripts/Publish-Preview.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iStart-preview-win-x64
+          path: artifacts/preview-win-x64/
+          retention-days: 7
