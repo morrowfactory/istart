@@ -20,6 +20,8 @@
 
 任务栏取证独立使用 `IStart.App.exe --probe-shell <输出目录>`，不纳入无交互桌面的 CI 核心检查。内部拖放传递字符串标识，避免依赖 .NET 已移除的任意对象 BinaryFormatter 序列化。[迁移说明](https://learn.microsoft.com/en-us/dotnet/standard/serialization/binaryformatter-migration-guide/winforms-wpf-ole-guidance)
 
+首次 GitHub 检查在英文系统创建中文快捷方式时失败；已将 WScript 快捷方式组件替换为 `IShellLinkW` + `IPersistFile` Unicode 接口，保留中文名称用例复验，不通过删除中文测试掩盖问题。
+
 ## 未通过或未执行
 
 - 真实鼠标拖入文件、文件夹、快捷方式及跨分类/分类排序交互仍需人工试用；代码与模型检查不等于鼠标测试。

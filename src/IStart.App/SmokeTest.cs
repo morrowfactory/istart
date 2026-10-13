@@ -74,23 +74,12 @@ internal static class SmokeTest
     {
         var folder = Path.Combine(fixture, "shortcuts");
         Directory.CreateDirectory(folder);
-        var type = Type.GetTypeFromProgID("WScript.Shell")!;
-        var shell = Activator.CreateInstance(type)!;
-        try
+        foreach (var name in new[] { "示例软件", "重复软件", "卸载工具", "失效软件", "文档" })
         {
-            foreach (var name in new[] { "示例软件", "重复软件", "卸载工具", "失效软件", "文档" })
-            {
-                var link = ((dynamic)shell).CreateShortcut(Path.Combine(folder, name + ".lnk"));
-                try
-                {
-                    link.TargetPath = name == "失效软件" ? Path.Combine(fixture, "missing.exe")
-                        : name == "文档" ? Path.Combine(fixture, "中文 文档.txt") : Environment.ProcessPath!;
-                    link.Save();
-                }
-                finally { System.Runtime.InteropServices.Marshal.FinalReleaseComObject(link); }
-            }
+            var target = name == "失效软件" ? Path.Combine(fixture, "missing.exe")
+                : name == "文档" ? Path.Combine(fixture, "中文 文档.txt") : Environment.ProcessPath!;
+            ShellShortcut.CreateFixture(Path.Combine(folder, name + ".lnk"), target);
         }
-        finally { System.Runtime.InteropServices.Marshal.FinalReleaseComObject(shell); }
         var result = SoftwareDiscovery.Read(CancellationToken.None, [folder]);
         Check(result.Count == 1 && File.Exists(result[0].Shortcut), "软件发现过滤与按目标去重");
     }
