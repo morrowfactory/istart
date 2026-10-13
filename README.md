@@ -1,36 +1,72 @@
 # iStart
 
-面向 Windows 10/11 的个人开始菜单：集中整理软件、文件与文件夹，减少桌面混乱。
+把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-## 当前状态
+**当前发布：0.2.0-preview.16 预览版**
 
-当前为 **0.2.0-preview.16 试用版**。提供“我的软件、最近打开、常用文件夹、我的网站”四个入口、图标/列表切换、搜索、活动排序、托盘、账户电源入口和中文安装向导。软件推荐和分类编辑已移除。
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.16/iStart-Setup-0.2.0-preview.16.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.16) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
-界面已按 [Figma 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=1-1245) 应用 Material 风格：浅色背景、蓝色重点、圆角搜索/分类/按钮和内容卡片；继续使用 Windows 本机真实软件图标与中文字体，无新增 UI 依赖。查看 [Google 风格预览](docs/prototypes/theme-google.png)、[Windows 风格预览](docs/prototypes/theme-windows.png) 与 [双风格验证记录](docs/THEME_VALIDATION.md)。
+## 当前功能
 
-0.2.0-preview.4 修复任务栏检测短暂空结果导致整个接入被停用的问题：保留 Win 键接入，开始按钮检测自动重试；鼠标快照仍受 1.5 秒有效期与窗口校验限制。用户一分钟连续交替操作反馈正常，长期稳定性仍待观察，见 [接入恢复记录](docs/RESIDENT_VALIDATION.md)。
+| 入口 | 显示内容 | 排序与限制 |
+| --- | --- | --- |
+| 我的软件 | 有本机活动依据或手动添加的软件 | 使用多的在前，最多 30 个；搜索也最多 30 个 |
+| 最近打开 | iStart、Windows、WPS、LibreOffice 等留下记录的有效文件 | 最近优先、去重，最多 100 项；不显示文件夹和程序 |
+| 常用文件夹 | 已添加目录及本机活动中的目录 | 默认常用优先，同页按钮切换最近打开；按窗口空位补充 |
+| 我的网站 | Chrome 和 Edge 的有限本机浏览历史，按域名合并 | 默认常用优先，同页按钮切换最近网址清单，最多 30 个 |
 
-开始按钮与单独 Win 键接入、Win+R 保留、临时原生菜单、禁用恢复及测试进程异常退出恢复，已在 **Windows 11 25H2 x64 26200.9457** 通过基本实机检查。接入仅对白名单内部版本 26200 开放，默认关闭。Windows 10、其他 Win11 版本仍保持原生入口；这不是已完成双系统兼容的正式版。详见 [验证记录](docs/P0_VALIDATION.md)。
+- Windows 11 Fluent / Google 两种风格，在设置中即时切换并保存。
+- 桌面、任务栏、窗口、托盘、安装器和菜单使用统一 iStart 图标。
+- 软件和文件夹可拖入添加；支持图标/列表显示、搜索和隐藏。
+- 保留 Windows 原生菜单恢复、账户、电源和托盘入口。
+- 已移除独立软件推荐区、未分类、新建分类和分类名称输入框；旧入口数据保留兼容。
 
-0.2.0-preview.5 新增 Windows 风格。在“设置 → 外观风格”选择 Windows 或 Google，立即生效并保存，下次启动继续使用；升级旧配置默认保留 Google 风格。主题不会改变开始菜单接入、开机启动、收藏或排序。
+![四个入口与网站最近清单](docs/prototypes/activity-websites.png)
+
+界面示意使用测试网址；实际内容来自当前账户的本机记录。详见[活动视图说明](docs/ACTIVITY_VIEWS.md)。
 
 ## 安装与使用
 
-运行对应版本的 `iStart-Setup-*.exe`，按中文向导选择位置与选项；显示实际安装进度。安装到当前账户，无需管理员权限，无需另装 .NET。默认不创建桌面图标、不启用开机启动、不接管开始入口；这些选项可按需选择。安装包当前未签名。
+1. 下载并运行安装包，按中文向导选择位置与选项，查看实际安装进度。
+2. 安装仅用于当前账户，无需管理员权限，也无需另装 .NET。新安装默认不创建桌面快捷方式、不启用开机启动、不接管开始入口；可按需勾选。
+3. 从四个入口访问内容，直接输入搜索文字；拖入软件快捷方式和文件夹可添加入口。
+4. 在“设置 → 外观风格”选择 Windows 或 Google。网站与文件夹页面的按钮可切换常用/最近，选择会保存。
 
-- 我的软件仅显示有本机活动依据或手动添加的软件，使用多的在前，最多 30 项；搜索也最多 30 项。移除仅隐藏，不卸载软件。
-- 最近打开只显示有效文件，合并 iStart、Windows Recent / 自动跳转列表、WPS 与 LibreOffice 记录，去重后最多 100 项。不显示文件夹或程序，不读取文档内容。
-- 常用文件夹默认按打开次数及近期文件目录活动排序，同页按钮可切换最近打开的目录；不承诺完整 Explorer 频率。
-- 我的网站合并 Chrome 与 Edge 的有限本机历史，按域名显示，默认常用排序，同页按钮切换最近网址清单，最多 30 项。设置可关闭浏览器历史读取；不读取 Cookie、密码或网页内容。
-- 软件/文件夹仍可拖入添加，列表按当前活动排序；旧收藏、分类数据保留兼容，不再提供未分类或新建分类界面。
-- 设置中可启用自定义菜单试用、开机启动及记录偏好；菜单底部可临时打开原生菜单，托盘可切回默认原生模式。
-- 账户与电源操作按系统能力和策略显示；注销、关机等需确认。登录认证、Windows Hello 与安全桌面仍由 Windows 管理。
+安装包目前未签名。升级保留原有入口、记录和有效设置；旧分类数据保留，但不再显示分类编辑界面。隐藏入口不会卸载软件、移动原文件或删除浏览器历史。
 
-窗口右上角“×”仅收起到托盘；菜单或托盘的“退出”才结束程序并释放接入；开机启动时显示托盘、隐藏主窗口。异常退出后的下次运行恢复原生模式。卸载保留 `%LOCALAPPDATA%\iStart\library.json` 和 `.bak`，不删除原始文件。配置 schema 1 升级到 2 后，旧验证版不支持读取新格式，请勿混用。
+## 原生菜单与退出
+
+- 底部“Windows 原生菜单”：临时打开系统菜单。
+- 托盘“切回 Windows 原生菜单”：停用自定义接入，恢复默认原生模式。
+- 右上角“×”：收起到托盘；菜单或托盘的“退出”才结束程序并释放接入。
+- 上次异常退出时，下次启动恢复原生模式；卸载默认保留个人配置。
+
+账户与电源操作遵循系统能力和策略，注销、关机等需要确认；登录认证、Windows Hello 和安全桌面仍由 Windows 管理。
+
+## 兼容性与已知限制
+
+目标为 Windows 10/11 x64，目前仍是预览版，不能视为已完成双系统兼容验收。
+
+| 系统 | 当前验证范围 |
+| --- | --- |
+| Windows 11 25H2 x64，26200.9457 | 开始按钮、单独 Win 键、Win+R 保留及基本恢复已实机检查；自定义接入仅对白名单内部版本 26200 开放 |
+| Windows 10、其他 Windows 11 版本 | 保持原生开始入口；完整兼容验收待完成 |
+
+Explorer 重启、多屏缩放、自动隐藏任务栏、长期稳定性，以及交互式安装取消/失败回退仍需进一步验证。运行时支持与应用实测需分别判断，参见 [.NET 官方系统矩阵](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md)。
+
+## 本地数据与隐私
+
+- 配置位于 `%LOCALAPPDATA%\iStart\library.json`，保留一份 `.bak`。卸载不主动删除个人入口和记录。
+- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。
+- 软件排序参考 Windows 累计应用切换与 iStart 打开记录；目录排序参考打开次数及近期文件活动，均不是完整系统频率或精确月统计。
+- 网站只读取 Chrome/Edge 保留的有限历史，不读取 Cookie、密码、网页内容或无痕会话；同域名合并后打开网站根地址。
+- 设置可关闭外部文件/文件夹活动或浏览器历史读取。“清除 iStart 记录”不会清除外部历史。
+- 浏览器历史快照仅在本机临时使用，正常读取后清理；不可读、部分失败或超时会提示。
+- `runtime.log` 记录运行与恢复诊断，不记录按键、网址或文件内容；超过 64 KiB 轮转，只保留一份旧日志。
 
 ## 构建与验证
 
-Windows + .NET 10 SDK；安装器使用 Inno Setup 7.1.0：
+需要 Windows、.NET 10 SDK；构建安装包另需 Inno Setup 7.1.0。
 
 ```powershell
 dotnet run --project src/IStart.App/IStart.App.csproj
@@ -38,49 +74,24 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package 'C:\path\iStart-QA-Setup-0.2.0-preview.6.exe' -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.16.exe" -Output "$PWD\artifacts\install-test"
 ```
 
-安装包及 SHA256 输出至 `artifacts/setup/`。`--ui-test <测试目录>` 使用独立配置打开交互验收窗口，不修改真实开机启动；一次只运行一个验收实例。`--input-test <输出目录>` 会短暂打开原生开始菜单/运行窗口，并强制结束它自己启动的测试子进程，须在空闲交互桌面手动执行，不纳入 CI。CI 检查构建、核心行为、布局及独立 QA 身份的安装/覆盖/卸载；产物保留 7 天，不自动发布 Release。
+安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
 
-Inno Setup 7 构建工具有商业使用许可要求，商业发行前需核对并取得适用授权；未复制 Open-Shell 代码。
+`--ui-test <目录>` 使用独立配置验收界面，不修改真实开机启动；`--probe-activity <目录>` 只输出活动来源数量。`--input-test <目录>` 会操作原生菜单/运行窗口并结束它自己启动的测试子进程，仅在空闲交互桌面手动执行，不纳入 CI。
 
-运行时支持与应用实测需分别判断：当前 .NET 10 官方 Windows 10 支持表以仍受支持的企业/LTSC 版本为主，不能据此承诺普通 Win10 Home/Pro 的长期支持；Win10 具体版本与运行时策略列为兼容验证项。[.NET 官方系统矩阵](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md) [Inno 许可](https://jrsoftware.org/isorder.php)
+GitHub CI 验证构建、核心行为、布局及隔离安装/覆盖/卸载，临时产物保留 7 天。公开安装包通过[发布流程](docs/GITHUB_RELEASE.md)使用最新 main 的已验证 CI 产物，核对来源 SHA 和哈希后发布；不包含个人配置或历史。
 
-## 文档与下一步
+Inno Setup 7 有商业使用许可要求，商业发行前需取得适用授权，参见 [Inno 许可](https://jrsoftware.org/isorder.php)。项目未复制 Open-Shell 代码。
 
-- [架构](ARCHITECTURE.md)：模块、数据、接入及恢复边界。
-- [愿景](VISION.md)：用户体验、隐私与兼容原则。
-- [执行计划](EXECUTION_PLAN.md)：阶段进展与未通过门槛。
-- [验证记录](docs/P0_VALIDATION.md)：真实结果、限制与回退。
-- [当前系统实机验收](docs/CURRENT_SYSTEM_VALIDATION.md)：真实鼠标操作、恢复、能力与未执行项。
+## 项目文档
 
-下一步优先补齐 Win10/其他 Win11、Explorer 重启、多屏缩放、自动隐藏、交互式安装取消及失败回退。当前不能将局部实机结果视为正式发布验收通过。
-
-本机 runtime.log 仅记录启停、模式和检测恢复事件，不记录按键、文件内容或收藏路径；超过 64 KiB 轮转并仅保留一份旧日志。
-
-0.2.0-preview.6 统一开始按钮、Win、托盘与重复启动的窗口显示路径：恢复最小化窗口、自定义菜单可见时使用浮层、收起后解除置顶，并记录前台激活结果。后台启动不申请焦点，也不会在异步初始化结束后再次隐藏用户刚打开的菜单。详见 [窗口显示验证](docs/FOREGROUND_VALIDATION.md)。
-
-preview.6 已在当前电脑确认：菜单贴近开始按钮、图标不带快捷箭头，打开后可直接输入英文与中文。详见 [窗口与焦点验收](docs/FOREGROUND_VALIDATION.md)。
-
-0.2.0-preview.7 搜索会即时匹配全部已发现软件及全部收藏，不受推荐前 12 项或当前分类限制；软件结果可滚动，无结果会提示。商店应用通过 Windows AppsFolder 发现，同时匹配显示名和应用标识（例如显示为 ChatGPT 的 Codex）。关闭推荐只关闭推荐展示，仍在本机整理软件搜索入口；不扫描全盘文件、不上传应用列表。商店应用支持打开，暂不支持拖入固定。
-
-preview.8 补齐商店应用的真实图标读取，读取失败显示通用应用图标；当前电脑的 Codex 图标已成功读取和检查。
-
-preview.9 补充 Windows 最近文档，在选择最近打开或重新打开该视图时刷新。系统没有提供记录时明确提示；不读取各软件内部历史或 Jump List，不扫描全盘。
-
-preview.10 将外部最近文件扩展至 Windows 自动 Jump List、LibreOffice PickList 和 WPS RecentFiles。本机实测合并 100 条有效记录，含 13 张图片和 45 个办公文档；不会扫描全盘或监控其他软件的打开动作。
-
-preview.11 默认隐藏整个软件推荐区域，不显示标题、说明、开关或空白占位。只能在设置中启用显示；启用后也不显示推荐标题。主动搜索时仍显示软件搜索结果，清空搜索后恢复隐藏。
-
-preview.12 在全部收藏同时包含程序和文件/文件夹时分组显示：程序在上，文件/文件夹在下，中间一条横线；两组各自保持收藏顺序。列表和图标视图均支持，不增加分组标题或修改保存顺序。
-
-preview.13 的 Windows 风格按 [Win11 Fluent 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=10-173) 更新：灰白层次、细边框与圆角、蓝色选中短线、分类图标、紧凑六列入口和搜索焦点底线；保留 Google 风格和全部功能。应用/文件夹图标仍从本机动态读取。查看 [程序预览](docs/prototypes/win11-fluent-app.png) 与 [验证记录](docs/WIN11_FLUENT_VALIDATION.md)。
-
-安装包公开发布通过 [GitHub Release 流程](docs/GITHUB_RELEASE.md)：只接受最新 main 已验证的 CI 安装包，校验来源 SHA 与哈希后发布预览版。发布不包括个人配置与历史记录。
-
-preview.14 统一桌面快捷方式、任务栏、窗口、托盘、安装器和菜单品牌图标；Windows/Google 风格共用蓝色「i + 菜单」标志。查看 [Figma 图标稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=15-204)、[多尺寸预览](docs/prototypes/brand-icon.png) 与 [图标资源说明](docs/BRAND_ICON.md)。
-
-preview.15 的“最近打开”只显示文件；“常用文件夹”保留手动固定项，按本机活动优先补充常用文件夹，再以最近目录补空。自动建议可右键固定或临时隐藏，不修改手动排序、不扫描全盘；外部活动不是完整系统频率。见 [最近文件与常用文件夹](docs/RECENT_FILES_FOLDERS.md)。
-
-preview.16 简化四个活动入口，并移除旧推荐及分类编辑。功能、频率边界、浏览器字段映射与隐私说明见 [活动视图](docs/ACTIVITY_VIEWS.md)。
+- [架构](ARCHITECTURE.md)：模块、存储、活动来源和恢复边界。
+- [愿景](VISION.md)：产品方向、体验与隐私原则。
+- [执行计划](EXECUTION_PLAN.md)：阶段进展和待完成验收。
+- [活动视图](docs/ACTIVITY_VIEWS.md)：软件、目录、网站的排序、字段与读取限制。
+- [统一图标](docs/BRAND_ICON.md)：Figma 来源和资源维护。
+- [窗口与焦点验证](docs/FOREGROUND_VALIDATION.md)：置前、定位与直接输入。
+- [当前系统实机验收](docs/CURRENT_SYSTEM_VALIDATION.md)：历史实测范围与未执行项。
+- [GitHub 发布](docs/GITHUB_RELEASE.md)：版本来源、完整性校验与回退。
