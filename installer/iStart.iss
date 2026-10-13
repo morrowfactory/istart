@@ -1,4 +1,4 @@
-#define AppVersion "0.2.0-preview.13"
+#define AppVersion "0.2.0-preview.14"
 #ifndef Payload
   #define Payload "..\artifacts\preview-win-x64"
 #endif
@@ -28,7 +28,8 @@ OutputBaseFilename={#Identity}-Setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 SetupLogging=yes
-UninstallDisplayIcon={app}\IStart.App.exe
+SetupIconFile=..\src\IStart.App\Assets\Brand\istart.ico
+UninstallDisplayIcon={app}\istart.ico
 CloseApplications=yes
 RestartApplications=no
 Uninstallable=yes
@@ -51,11 +52,12 @@ Name: "custommenu"; Description: "首次启动尝试接入开始按钮（仅 Win
 
 [Files]
 Source: "{#Payload}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\IStart.App\Assets\Brand\istart.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\iStart"; Filename: "{app}\IStart.App.exe"
+Name: "{group}\iStart"; Filename: "{app}\IStart.App.exe"; IconFilename: "{app}\istart.ico"
 Name: "{group}\卸载 iStart"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\iStart"; Filename: "{app}\IStart.App.exe"; Tasks: desktopicon
+Name: "{autodesktop}\iStart"; Filename: "{app}\IStart.App.exe"; IconFilename: "{app}\istart.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\IStart.App.exe"; Parameters: "{code:LaunchArguments}"; Description: "打开 iStart，开始整理"; Flags: nowait postinstall skipifsilent
