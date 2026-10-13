@@ -7,8 +7,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.2.0-preview.12</Version>
+    <Version>0.2.0-preview.13</Version>
     <!-- WPF 主程序通过清单控制 DPI；WinForms 仅提供托盘组件。 -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
+  <ItemGroup><Resource Include="Assets/Fluent/*.png" /></ItemGroup>
 </Project>

@@ -176,6 +176,7 @@ public partial class MainWindow
         var window = new Window { Owner = this, Title = "iStart 设置", Width = 430, SizeToContent = SizeToContent.Height, ResizeMode = ResizeMode.NoResize, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel, Background = Background, Foreground = Foreground, FontFamily = FontFamily };
         window.SetResourceReference(BackgroundProperty, "Surface");
         window.SetResourceReference(ForegroundProperty, "TextPrimary");
+        window.SetResourceReference(FontFamilyProperty, "MenuFont");
         panel.Children.Add(new TextBlock { Text = "外观风格", FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) });
         var theme = new ComboBox { ItemsSource = new[] { "Windows 风格", "Google 风格" }, SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(10, 7, 10, 7) };
         System.Windows.Automation.AutomationProperties.SetName(theme, "外观风格");

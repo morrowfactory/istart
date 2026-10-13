@@ -82,3 +82,7 @@ LibreOfficeDocuments 只读当前用户 4/user/registrymodifications.xcu（≤8 
 软件推荐展示（preview.11）：RecommendationsEnabled 新配置默认 false；SoftwarePanel 整体 Collapsed，不保留布局空间。移除菜单内推荐开关与对应处理器，设置是唯一启用入口。标题和说明只在主动搜索时显示，推荐模式仅展示图标。查询非空时搜索结果独立于推荐偏好，清空后按偏好收起。当前用户设置同步关闭，其他收藏、分类、主题和接入保留。
 
 收藏分隔（preview.12）：无搜索的全部收藏同时含两类入口时，ListCollectionView 使用 EntryGroups 视觉分组，程序在上，文件/文件夹在下。Shell 应用、可执行文件/脚本及指向程序的快捷方式归程序；其余归文件类。分类结果有界缓存，源 Entries 不排序改写。GroupStyle 外层纵排、组内沿用图标 WrapPanel 或列表面板，只有第二组渲染横线；单类视图、分类、最近和搜索不增加分隔。
+
+Windows 11 Fluent（preview.13）：Appearance 继续统一管理双主题，增加主题专属内边距、搜索边框、按钮文字、菜单字体、图标尺寸及状态区资源。Windows 入口宽度缩至 64 DIP（含列表容器边距后默认宽度六列），小窗口自动换行；Google 沿用原资源值。CategoryIconConverter 仅加载四个冻结导航位图，搜索/账户图标同样使用本地嵌入资源。Assets/Fluent 保留 Figma 导出的原 SVG 和派生 PNG；程序嵌入 PNG，无运行时网络请求、SVG 渲染库或新增应用依赖。搜索 PART_ContentHost 与焦点/接入逻辑不变。
+
+窗口继续使用系统标题栏、边框和阴影；本版应用浅色层次，未启用原生 Mica 模糊。Figma 字体环境只有 Noto Sans SC，设计稿使用该替代字体；Windows 程序使用 Segoe UI Variable 并回退 Microsoft YaHei UI。Google 字体沿用原值。运行时文字和文件夹内容保持真实数据，不替换成稿中的示例名称。

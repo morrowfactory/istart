@@ -196,12 +196,17 @@ internal static class SmokeTest
         var originalEntries = store.Library.Entries.ToArray();
         store.Change(s => s.CustomMenuEnabled = true);
         window.SetTheme("Windows");
+        foreach (var nav in new[] { new MenuCategory(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), "全部收藏"), new MenuCategory(new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), "最近打开"), new MenuCategory(Guid.Empty, "常用文件夹"), new MenuCategory(Guid.NewGuid(), "常用软件") })
+        {
+            var icon = new CategoryIconConverter().Convert(nav, typeof(ImageSource), null!, System.Globalization.CultureInfo.CurrentCulture) as BitmapSource;
+            Check(icon is not null && icon.IsFrozen && icon.PixelWidth == 36 && icon.PixelHeight == 36, "Fluent 导航图标嵌入与尺寸");
+        }
         Check(new LibraryStore(Path.Combine(store.DirectoryPath, "library.json")).Library.Theme == "Windows", "Windows 风格保存重开");
         ((System.Windows.Controls.Button)window.FindName("ViewToggle")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         content.Measure(new Size(712, 604));
         content.Arrange(new Rect(0, 0, 712, 604));
         content.UpdateLayout();
-        Check(inputSurface.CornerRadius.TopLeft == 4, "动态更新输入框形状");
+        Check(inputSurface.CornerRadius.TopLeft == 6, "动态更新输入框形状");
         var windowsBitmap = new RenderTargetBitmap(740, 660, 96, 96, PixelFormats.Pbgra32);
         windowsBitmap.Render(backdrop); windowsBitmap.Render(content);
         var windowsEncoder = new PngBitmapEncoder(); windowsEncoder.Frames.Add(BitmapFrame.Create(windowsBitmap));

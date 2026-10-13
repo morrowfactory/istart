@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-当前为 **0.2.0-preview.12 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
+当前为 **0.2.0-preview.13 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
 
 界面已按 [Figma 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=1-1245) 应用 Material 风格：浅色背景、蓝色重点、圆角搜索/分类/按钮和内容卡片；继续使用 Windows 本机真实软件图标与中文字体，无新增 UI 依赖。查看 [Google 风格预览](docs/prototypes/theme-google.png)、[Windows 风格预览](docs/prototypes/theme-windows.png) 与 [双风格验证记录](docs/THEME_VALIDATION.md)。
 
@@ -74,3 +74,5 @@ preview.10 将外部最近文件扩展至 Windows 自动 Jump List、LibreOffice
 preview.11 默认隐藏整个软件推荐区域，不显示标题、说明、开关或空白占位。只能在设置中启用显示；启用后也不显示推荐标题。主动搜索时仍显示软件搜索结果，清空搜索后恢复隐藏。
 
 preview.12 在全部收藏同时包含程序和文件/文件夹时分组显示：程序在上，文件/文件夹在下，中间一条横线；两组各自保持收藏顺序。列表和图标视图均支持，不增加分组标题或修改保存顺序。
+
+preview.13 的 Windows 风格按 [Win11 Fluent 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=10-173) 更新：灰白层次、细边框与圆角、蓝色选中短线、分类图标、紧凑六列入口和搜索焦点底线；保留 Google 风格和全部功能。应用/文件夹图标仍从本机动态读取。查看 [程序预览](docs/prototypes/win11-fluent-app.png) 与 [验证记录](docs/WIN11_FLUENT_VALIDATION.md)。
