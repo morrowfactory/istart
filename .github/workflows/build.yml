@@ -1,0 +1,74 @@
+name: Windows 构建与核心验证
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  prototype:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: 构建并验证数据与布局
+        shell: pwsh
+        run: ./scripts/Test-Prototype.ps1
+      - name: 保存技术验证输出
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prototype-validation
+          path: |
+            artifacts/smoke-*/result.txt
+            artifacts/smoke-*/failure.txt
+            artifacts/smoke-*/menu.png
+            artifacts/smoke-*/menu-icons.png
+            artifacts/smoke-*/shell-probe.txt
+          retention-days: 7
+      - name: 打包独立运行验证版
+        shell: pwsh
+        run: |
+          ./scripts/Publish-Preview.ps1
+          $sha = git rev-parse HEAD
+          $version = (Get-Item 'artifacts/preview-win-x64/IStart.App.dll').VersionInfo.ProductVersion
+          if (!$version.EndsWith("+$sha")) { throw '程序版本没有绑定当前提交' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iStart-preview-win-x64
+          path: artifacts/preview-win-x64/
+          retention-days: 7
+      - name: 安装官方 Inno Setup 编译器
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'inno.exe'
+          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature $installer
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'O=Pyrsys B.V.') { throw '安装器签名验证失败' }
+          $process = Start-Process $installer -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CURRENTUSER /NOICONS' -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw '编译器安装失败' }
+      - name: 构建中文安装包并验证隔离安装卸载
+        shell: pwsh
+        run: |
+          $compiler = Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 7\ISCC.exe'
+          ./scripts/Build-Installer.ps1 -Compiler $compiler -SkipPublish
+          ./scripts/Build-Installer.ps1 -Compiler $compiler -SkipPublish -TestInstall
+          ./scripts/Test-Installer.ps1 -Package (Resolve-Path 'artifacts/setup/iStart-QA-Setup-0.2.0-preview.13.exe') -Output (Join-Path $PWD 'artifacts/install-ci')
+      - name: 保存安装包和校验值
+        uses: actions/upload-artifact@v4
+        with:
+          name: iStart-setup-win-x64
+          path: |
+            artifacts/setup/iStart-Setup-*.exe
+            artifacts/setup/iStart-Setup-*.sha256
+          retention-days: 7
+      - name: 保存安装验收日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-validation
+          path: artifacts/install-ci/*.txt
+          retention-days: 7

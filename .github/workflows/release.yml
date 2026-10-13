@@ -1,0 +1,61 @@
+name: GitHub 发布预览安装包
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: 最新 main 的完整提交 SHA
+        required: true
+        type: string
+      build_run_id:
+        description: 此提交已成功的 main 构建运行编号
+        required: true
+        type: string
+      approval_note:
+        description: 本次明确发布授权的记录
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: github-preview-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    environment: github-release
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_SHA: ${{ inputs.release_sha }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      RELEASE_APPROVAL: ${{ inputs.approval_note }}
+    steps:
+      - name: 校验发布提交与构建来源
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          if ($env:RELEASE_SHA -notmatch '^[0-9a-f]{40}$' -or $env:BUILD_RUN_ID -notmatch '^\d+$') { throw '发布参数格式错误' }
+          $repo = $env:GITHUB_REPOSITORY
+          $main = gh api "repos/$repo/commits/main" --jq .sha
+          $run = gh api "repos/$repo/actions/runs/$env:BUILD_RUN_ID" | ConvertFrom-Json
+          $workflow = gh api "repos/$repo/actions/workflows/build.yml" | ConvertFrom-Json
+          if ($main -ne $env:RELEASE_SHA) { throw '发布提交不是最新 main' }
+          if ($run.head_sha -ne $main -or $run.head_branch -ne 'main' -or $run.event -ne 'push' -or $run.conclusion -ne 'success' -or $run.workflow_id -ne $workflow.id) { throw '构建来源或检查结果不符合要求' }
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_sha }}
+          persist-credentials: false
+      - name: 下载已验证的安装包
+        uses: actions/download-artifact@v4
+        with:
+          name: iStart-setup-win-x64
+          path: release-artifacts
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.build_run_id }}
+      - name: 校验并发布预览版
+        shell: pwsh
+        run: ./scripts/Publish-GitHubRelease.ps1 -ReleaseSha $env:RELEASE_SHA -BuildRunId $env:BUILD_RUN_ID -ArtifactDirectory (Join-Path $PWD 'release-artifacts') -ApprovalNote $env:RELEASE_APPROVAL
