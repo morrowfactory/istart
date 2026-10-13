@@ -64,6 +64,26 @@ internal static class SmokeTest
         }
         var ownRecent = new LaunchRecord(file, "自定义名称", DateTimeOffset.UtcNow.AddMinutes(1), 2);
         Check(RecentDocuments.Merge([ownRecent], recentFiles).Single() == ownRecent, "合并最近记录保留最新且去重");
+        Check(RecentDocuments.Files([ownRecent, new(fixture, "目录", DateTimeOffset.UtcNow, 9),
+            new(Path.Combine(fixture, "missing.txt"), "失效", DateTimeOffset.UtcNow, 1)], recentFiles).Single() == ownRecent,
+            "最近文件过滤自身文件夹与失效记录，保留文件去重");
+        Check(FrequentFolders.Read(CancellationToken.None, recentFolder).Single().Target == fixture,
+            "Windows 文件夹历史独立读取，不混入最近文件");
+        var highFolder = Path.Combine(fixture, "高频目录");
+        var newFolder = Path.Combine(fixture, "新近目录");
+        Directory.CreateDirectory(highFolder);
+        Directory.CreateDirectory(newFolder);
+        var pinnedFolder = new MenuEntry(Guid.NewGuid(), fixture, "手动固定", Guid.Empty);
+        LaunchRecord[] folderOwn = [new(highFolder, "高频", DateTimeOffset.UtcNow.AddDays(-1), 12)];
+        LaunchRecord[] folderExternal = [new(newFolder, "新近", DateTimeOffset.UtcNow, 1),
+            new(highFolder, "重复", DateTimeOffset.UtcNow, 1), new(fixture, "已固定", DateTimeOffset.UtcNow, 1)];
+        var folderResults = FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 3, Guid.Empty, new HashSet<string>());
+        Check(folderResults.Select(e => e.Target).SequenceEqual(new[] { fixture, highFolder, newFolder })
+            && folderResults[0] == pinnedFolder, "固定项不重排，高频优先、最近补空并去重");
+        Check(FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 1, Guid.Empty, new HashSet<string>()).Single() == pinnedFolder,
+            "常用文件夹满额不增加自动建议");
+        Check(FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 3, Guid.Empty, new HashSet<string> { highFolder }).All(e => e.Target != highFolder),
+            "隐藏本次文件夹建议");
         store.Change(s => s.ShowWindowsRecentDocuments = false);
         Check(!new LibraryStore(config).Library.ShowWindowsRecentDocuments, "Windows 最近文档开关持久化");
         store.Change(s => s.ShowWindowsRecentDocuments = true);
@@ -118,6 +138,19 @@ internal static class SmokeTest
         var groupedView = (System.Windows.Data.ListCollectionView)groupedList.ItemsSource;
         Check(groupedView.Groups?.Count == 2 && ((System.Windows.Data.CollectionViewGroup)groupedView.Groups[0]).Name.Equals("程序")
             && store.Library.Entries.SequenceEqual(originalOrder), "软件与文件视觉分组且不改持久化顺序");
+        var navigation = (System.Windows.Controls.ListBox)window.FindName("CategoryList");
+        var priorLaunches = store.Library.Launches.ToList();
+        store.Change(s =>
+        {
+            s.ShowWindowsRecentDocuments = false;
+            s.Launches = [new(file, "文件", DateTimeOffset.UtcNow, 1), new(fixture, "目录", DateTimeOffset.UtcNow, 9), new(program, "程序", DateTimeOffset.UtcNow, 3)];
+        });
+        navigation.SelectedIndex = 1;
+        Check(groupedList.Items.OfType<MenuEntry>().Single().Target == file, "最近打开界面仅显示文件，不显示目录和程序");
+        navigation.SelectedItem = navigation.Items.OfType<MenuCategory>().Single(c => c.Name == "常用文件夹");
+        Check(groupedList.Items.OfType<MenuEntry>().Single().Target == fixture, "常用文件夹界面过滤程序与文件并保留固定目录");
+        navigation.SelectedIndex = 0;
+        store.Change(s => { s.ShowWindowsRecentDocuments = true; s.Launches = priorLaunches; });
         var content = (FrameworkElement)window.Content;
         content.Measure(new Size(712, 604));
         content.Arrange(new Rect(0, 0, 712, 604));

@@ -38,4 +38,6 @@ internal static class RecentDocuments
     internal static IEnumerable<LaunchRecord> Merge(IEnumerable<LaunchRecord> own, IEnumerable<LaunchRecord> windows)
         => own.Concat(windows).OrderByDescending(r => r.OpenedAt)
             .DistinctBy(r => r.Target, StringComparer.OrdinalIgnoreCase).Take(100);
+    internal static IEnumerable<LaunchRecord> Files(IEnumerable<LaunchRecord> own, IEnumerable<LaunchRecord> windows)
+        => Merge(own.Where(r => IsDocument(r.Target)), windows.Where(r => IsDocument(r.Target)));
 }

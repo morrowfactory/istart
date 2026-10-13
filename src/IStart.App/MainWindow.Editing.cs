@@ -45,7 +45,17 @@ public partial class MainWindow
             return;
         }
         var entry = store.Library.Entries.FirstOrDefault(item => item.Id == id);
-        if (entry is null) return;
+        if (entry is null)
+        {
+            var suggestion = EntryList.Items.OfType<MenuEntry>().FirstOrDefault(item => item.Id == id);
+            if (folderView && suggestion is not null)
+            {
+                hiddenFolders.Add(Path.TrimEndingDirectorySeparator(suggestion.Target));
+                RefreshEntries();
+                StatusText.Text = "已隐藏本次文件夹建议；重新启动后可再次显示。原文件夹保持不变。";
+            }
+            return;
+        }
         var index = store.Library.Entries.IndexOf(entry);
         Perform(() =>
         {
@@ -92,9 +102,11 @@ public partial class MainWindow
         if (EntryList.SelectedItem is not MenuEntry entry) return;
         if (e.Key == Key.Enter) { OpenTarget(entry.Target, entry.Title); e.Handled = true; }
         else if (e.Key == Key.Delete) { RemoveById(entry.Id); e.Handled = true; }
-        else if ((Keyboard.Modifiers & ModifierKeys.Control) != 0 && e.Key is Key.Up or Key.Down && !recentView && SearchBox.Text.Trim().Length == 0)
+        else if ((Keyboard.Modifiers & ModifierKeys.Control) != 0 && e.Key is Key.Up or Key.Down && !recentView && SearchBox.Text.Trim().Length == 0
+            && store.Library.Entries.Any(item => item.Id == entry.Id))
         {
             var items = EntryList.Items.OfType<MenuEntry>().ToList();
+            items.RemoveAll(item => !store.Library.Entries.Any(pinned => pinned.Id == item.Id));
             var index = items.FindIndex(item => item.Id == entry.Id);
             var newIndex = index + (e.Key == Key.Up ? -1 : 1);
             if (newIndex < 0 || newIndex >= items.Count) return;
@@ -118,6 +130,18 @@ public partial class MainWindow
             return item;
         }
         Action("打开", () => OpenTarget(entry.Target, entry.Title));
+        if (folderView && !store.Library.Entries.Any(item => item.Id == entry.Id))
+        {
+            Action("固定到常用文件夹", () => Perform(() =>
+            {
+                var existing = store.Library.Entries.FirstOrDefault(item => item.Target.Equals(entry.Target, StringComparison.OrdinalIgnoreCase));
+                if (existing is null) store.AddPaths([entry.Target], activeCategory ?? Guid.Empty);
+                else store.Move(existing.Id, activeCategory ?? Guid.Empty, null);
+            }, "文件夹已固定，后续自动补充不会改变其顺序。"));
+            Action("隐藏本次建议", () => RemoveById(entry.Id));
+            EntryList.ContextMenu = menu;
+            return;
+        }
         if (recentView) Action("固定到未分类", () => AddPaths([entry.Target], Guid.Empty, null));
         else
         {
@@ -155,7 +179,7 @@ public partial class MainWindow
     private void CategoryContextMenu(object sender, ContextMenuEventArgs e)
     {
         var category = ItemAt<MenuCategory>(CategoryList, e.OriginalSource) ?? CategoryList.SelectedItem as MenuCategory;
-        if (category is null || category.Id == AllCategory || category.Id == RecentCategory || category.Id == Guid.Empty) { e.Handled = true; return; }
+        if (category is null || category.Id == AllCategory || category.Id == RecentCategory || category.Id == FoldersCategory || category.Id == Guid.Empty) { e.Handled = true; return; }
         var menu = new ContextMenu();
         var rename = new MenuItem { Header = "重命名分类" };
         rename.Click += (_, _) =>

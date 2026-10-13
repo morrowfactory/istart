@@ -21,12 +21,16 @@ public partial class MainWindow : Window
     internal List<SoftwareCandidate> candidates = [];
     private CancellationTokenSource? discovery;
     private bool recentView;
+    private bool folderView;
     private bool groupedEntries;
     private readonly EntryGroups entryGroups = new();
     private List<LaunchRecord> windowsRecent = [];
+    private List<LaunchRecord> recentFolders = [];
+    private readonly HashSet<string> hiddenFolders = new(StringComparer.OrdinalIgnoreCase);
     private bool readingRecent;
     private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
     private static readonly Guid RecentCategory = new("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+    private static readonly Guid FoldersCategory = new("dddddddd-dddd-dddd-dddd-dddddddddddd");
     public MainWindow(LibraryStore store, bool enableShell = true)
     {
         this.store = store;
@@ -35,6 +39,7 @@ public partial class MainWindow : Window
         ready = true;
         ApplyView();
         RefreshCategories();
+        EntryList.SizeChanged += (_, _) => { if (folderView) RefreshEntries(); };
         if (store.Recovered) StatusText.Text = "主配置损坏，已读取上一份配置。请核对收藏后再修改。";
         Loaded += async (_, _) => await DiscoverSoftware();
         Closed += (_, _) => discovery?.Cancel();
@@ -105,15 +110,26 @@ public partial class MainWindow : Window
     }
     private void RefreshCategories()
     {
-        CategoryList.ItemsSource = new[] { new MenuCategory(AllCategory, "全部收藏"), new MenuCategory(RecentCategory, "最近打开") }.Concat(store.Library.Categories).ToList();
+        var navigation = new List<MenuCategory> { new(AllCategory, "全部收藏"), new(RecentCategory, "最近打开") };
+        if (!store.Library.Categories.Any(c => c.Name == "常用文件夹")) navigation.Add(new(FoldersCategory, "常用文件夹"));
+        CategoryList.ItemsSource = navigation.Concat(store.Library.Categories).ToList();
         CategoryList.SelectedIndex = 0;
     }
     private void RefreshEntries()
     {
         if (!ready) return;
         var keyword = SearchBox.Text.Trim();
-        IEnumerable<MenuEntry> source = recentView ? RecentDocuments.Merge(store.Library.Launches,
+        IEnumerable<MenuEntry> source = recentView ? RecentDocuments.Files(store.Library.Launches,
             store.Library.ShowWindowsRecentDocuments ? windowsRecent : []).Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
+        if (folderView)
+        {
+            var columns = Math.Max(1, (int)(EntryList.ActualWidth / ((double)FindResource("TileWidth") + 10)));
+            var rows = Math.Max(1, (int)(EntryList.ActualHeight / ((double)FindResource("TileHeight") + 18)));
+            var capacity = keyword.Length > 0 ? 100 : Math.Clamp(columns * rows, 1, 48);
+            source = FrequentFolders.Build(store.Library.Entries.Where(e => activeCategory is null || e.CategoryId == activeCategory),
+                store.Library.Launches, store.Library.ShowWindowsRecentDocuments ? windowsRecent.Concat(recentFolders) : [],
+                capacity, activeCategory ?? Guid.Empty, hiddenFolders);
+        }
         var entries = source.Where(e => (keyword.Length > 0 || activeCategory is null || e.CategoryId == activeCategory)
             && (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
         groupedEntries = !recentView && activeCategory is null && keyword.Length == 0
@@ -123,7 +139,7 @@ public partial class MainWindow : Window
         EntryList.ItemsSource = view;
         ApplyView();
         if (recentView) SearchStatus.Text = EntryList.Items.Count == 0 ? "暂无有效记录。仅显示软件或 Windows 已保存、且仍存在的本机文件。" : "合并 Windows、软件历史与 iStart 记录；外部历史时间为近似排序。";
-        else SearchStatus.Text = "";
+        else SearchStatus.Text = folderView ? "固定入口在前；按本机活动补充常用及最近文件夹。右键可固定。" : "";
     }
     private async Task RefreshRecentDocuments()
     {
@@ -132,10 +148,11 @@ public partial class MainWindow : Window
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
-            var records = await Task.Run(() => RecentDocuments.Read(timeout.Token), timeout.Token).WaitAsync(timeout.Token);
+            var records = await Task.Run(() => (Files: RecentDocuments.Read(timeout.Token), Folders: FrequentFolders.Read(timeout.Token)), timeout.Token).WaitAsync(timeout.Token);
             if (!store.Library.ShowWindowsRecentDocuments) return;
-            windowsRecent = records;
-            if (recentView) RefreshEntries();
+            windowsRecent = records.Files;
+            recentFolders = records.Folders;
+            if (recentView || folderView) RefreshEntries();
         }
         catch (OperationCanceledException) { if (recentView) SearchStatus.Text = "Windows 最近文档读取超时；iStart 打开记录仍可使用。"; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { if (recentView) SearchStatus.Text = "暂时无法读取 Windows 最近文档；iStart 打开记录仍可使用。"; }
@@ -148,17 +165,18 @@ public partial class MainWindow : Window
         RefreshRecommendations();
         var searching = SearchBox.Text.Trim().Length > 0;
         SectionTitle.Text = searching ? recentView ? "最近记录搜索结果" : "收藏搜索结果" : (CategoryList.SelectedItem as MenuCategory)?.Name ?? "全部收藏";
-        if (!recentView) SearchStatus.Text = searching && EntryList.Items.Count == 0 ? "没有匹配的收藏。软件结果显示在上方；文件需先添加到收藏。" : "";
+        if (!recentView && !folderView) SearchStatus.Text = searching && EntryList.Items.Count == 0 ? "没有匹配的收藏。软件结果显示在上方；文件需先添加到收藏。" : "";
     }
     private void CategoryChanged(object sender, SelectionChangedEventArgs e)
     {
         if (CategoryList.SelectedItem is not MenuCategory category) return;
         recentView = category.Id == RecentCategory;
-        activeCategory = category.Id == AllCategory || recentView ? null : category.Id;
+        folderView = category.Id == FoldersCategory || category.Name == "常用文件夹";
+        activeCategory = category.Id == AllCategory || category.Id == FoldersCategory || recentView ? null : category.Id;
         SectionTitle.Text = category.Name;
         RefreshEntries();
         ApplyView();
-        if (recentView) _ = RefreshRecentDocuments();
+        if (recentView || folderView) _ = RefreshRecentDocuments();
     }
     private void Perform(Action action, string success)
     {
@@ -212,7 +230,8 @@ public partial class MainWindow : Window
     }
     private void EntryMouseMove(object sender, MouseEventArgs e)
     {
-        if (recentView || e.LeftButton != MouseButtonState.Pressed || draggedEntry is not Guid id || !Moved(e)) return;
+        if (recentView || e.LeftButton != MouseButtonState.Pressed || draggedEntry is not Guid id || !Moved(e)
+            || !store.Library.Entries.Any(entry => entry.Id == id)) return;
         draggedEntry = null;
         DragDrop.DoDragDrop(EntryList, new DataObject(EntryFormat, id.ToString()), DragDropEffects.Move);
     }
@@ -247,7 +266,7 @@ public partial class MainWindow : Window
     private void CategoryMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed || draggedCategory is not Guid id || !Moved(e)
-            || id == Guid.Empty || id == AllCategory || id == RecentCategory) return;
+            || id == Guid.Empty || id == AllCategory || id == RecentCategory || id == FoldersCategory) return;
         draggedCategory = null;
         DragDrop.DoDragDrop(CategoryList, new DataObject(CategoryFormat, id.ToString()), DragDropEffects.Move);
     }
@@ -256,9 +275,10 @@ public partial class MainWindow : Window
         e.Handled = true;
         var category = ItemAt<MenuCategory>(CategoryList, e.OriginalSource);
         if (category is null || category.Id == AllCategory || category.Id == RecentCategory) return;
-        if (e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), category.Id, null);
-        else if (ReadDragId(e.Data, EntryFormat) is Guid id && store.Library.Entries.Any(item => item.Id == id)) Perform(() => store.Move(id, category.Id, null), "已移入分类。");
-        else if (ReadDragId(e.Data, CategoryFormat) is Guid categoryId && store.Library.Categories.Any(item => item.Id == categoryId))
+        var targetCategory = category.Id == FoldersCategory ? Guid.Empty : category.Id;
+        if (e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), targetCategory, null);
+        else if (ReadDragId(e.Data, EntryFormat) is Guid id && store.Library.Entries.Any(item => item.Id == id)) Perform(() => store.Move(id, targetCategory, null), "已移入分类。");
+        else if (category.Id != FoldersCategory && ReadDragId(e.Data, CategoryFormat) is Guid categoryId && store.Library.Categories.Any(item => item.Id == categoryId))
             Perform(() => { store.MoveCategory(categoryId, category.Id); RefreshCategories(); }, "分类顺序已保存。");
     }
     private static Guid? ReadDragId(IDataObject data, string format) => data.GetDataPresent(format)

@@ -26,7 +26,7 @@ internal static class JumpListDocuments
     {
         [PreserveSig] int Next(uint count, [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] STATSTG[] values, out uint fetched);
     }
-    internal static List<LaunchRecord> Read(string recentFolder, CancellationToken token)
+    internal static List<LaunchRecord> Read(string recentFolder, CancellationToken token, bool folders = false)
     {
         var folder = Path.Combine(recentFolder, "AutomaticDestinations");
         if (!Directory.Exists(folder)) return [];
@@ -51,7 +51,7 @@ internal static class JumpListDocuments
                     {
                         storage.OpenStream(stat.pwcsName, 0, 0x10, 0, out stream);
                         var target = ShellShortcut.ReadTarget(stream);
-                        if (!RecentDocuments.IsDocument(target)) continue;
+                        if (!(folders ? FrequentFolders.IsLocalFolder(target) : RecentDocuments.IsDocument(target))) continue;
                         // Stream/container timestamps are approximate; do not claim exact access times.
                         var time = ((long)stat.mtime.dwHighDateTime << 32) | (uint)stat.mtime.dwLowDateTime;
                         var opened = time > 0 ? DateTimeOffset.FromFileTime(time) : new DateTimeOffset(file.LastWriteTimeUtc);

@@ -90,3 +90,5 @@ Windows 11 Fluent（preview.13）：Appearance 继续统一管理双主题，增
 GitHub 发布边界：build.yml 将 ProductVersion 绑定检出 SHA；release.yml 手动接收最新 main SHA、成功 push/main 构建编号与授权记录，仅下载安装包允许清单。Publish-GitHubRelease.ps1 校验版本、SHA256 和源工作流，先草稿后公开，并下载公开文件复验；release-manifest.json 保存精确来源和保护状态。发布串行、GitHub Token 最小权限，无远程服务器或新增生产密钥。当前缺少强制分支/环境审批，本次使用会话授权，详见 docs/GITHUB_RELEASE.md。
 
 统一品牌资源（preview.14）：Assets/Brand 保存 Figma 矢量源与透明 PNG、九档 ICO。MainWindow 在双主题中共用品牌 PNG，窗口 Icon 与托盘使用嵌入 ICO，ApplicationIcon 将同一图标编译进 EXE；安装器使用该 ICO，并将独立 istart.ico 安装给桌面/开始菜单快捷方式和卸载列表。托盘退出时释放克隆图标。SVG 仅在维护时转换，无新增运行时依赖，详见 docs/BRAND_ICON.md。
+
+最近文件与文件夹（preview.15）：RecentDocuments.Files 在合并前过滤自身及外部记录，仅让有效文档进入最近视图。FrequentFolders 复用 ShellShortcut 与 JumpListDocuments 的文件夹读取模式，独立读取有效本机目录；主窗口在现有 5 秒异步任务中刷新文件和目录缓存。常用文件夹视图保留手动项，再以打开次数/近期文档目录活动和近似时间补充空位；建议与本次隐藏仅驻留内存，固定时才保存入口。沿用外部历史开关，关闭时两类缓存一起清空；无配置 schema 变更。见 docs/RECENT_FILES_FOLDERS.md。
