@@ -7,4 +7,4 @@ if ($LASTEXITCODE -ne 0) { throw '验证版打包失败' }
 $zip = Join-Path $projectRoot 'artifacts\iStart-preview-win-x64.zip'
 Compress-Archive -Path (Join-Path $output '*') -DestinationPath $zip -Force
 Get-FileHash $zip -Algorithm SHA256
-Write-Output '仅供技术验证，不接管开始按钮或 Win 键，不是正式安装包。'
+Write-Output '试用版：默认保留原生菜单，接入须在设置中启用并通过兼容检查。'

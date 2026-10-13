@@ -20,17 +20,22 @@ public partial class MainWindow : Window
     private bool ready;
     private List<SoftwareCandidate> candidates = [];
     private CancellationTokenSource? discovery;
-    public MainWindow(LibraryStore store)
+    private bool recentView;
+    private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    private static readonly Guid RecentCategory = new("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+    public MainWindow(LibraryStore store, bool enableShell = true)
     {
         this.store = store;
         InitializeComponent();
         ready = true;
+        ApplyView();
         RefreshCategories();
         if (store.Recovered) StatusText.Text = "主配置损坏，已读取上一份配置。请核对收藏后再修改。";
         Loaded += async (_, _) => await DiscoverSoftware();
         Closed += (_, _) => discovery?.Cancel();
         RecommendationToggle.Content = store.Library.RecommendationsEnabled ? "关闭推荐" : "启用推荐";
         if (!store.Library.RecommendationsEnabled) RecommendationStatus.Text = "推荐已关闭。你可以继续手动添加入口。";
+        if (enableShell) InitializeShell();
     }
 
     private async Task DiscoverSoftware()
@@ -57,10 +62,17 @@ public partial class MainWindow : Window
     {
         Recommendations.Children.Clear();
         if (!store.Library.RecommendationsEnabled) return;
-        foreach (var candidate in candidates.Where(c => !store.Library.ExcludedRecommendations.Contains(c.Shortcut, StringComparer.OrdinalIgnoreCase)).Take(12))
+        var records = store.Library.Launches.ToDictionary(l => l.Target, StringComparer.OrdinalIgnoreCase);
+        foreach (var candidate in candidates.Where(c => !store.Library.ExcludedRecommendations.Contains(c.Shortcut, StringComparer.OrdinalIgnoreCase))
+            .OrderByDescending(c => records.GetValueOrDefault(c.Shortcut)?.Count ?? 0)
+            .ThenByDescending(c => records.GetValueOrDefault(c.Shortcut)?.OpenedAt ?? DateTimeOffset.MinValue)
+            .ThenBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).Take(12))
         {
-            var button = new Button { Width = 78, Height = 44, Padding = new Thickness(4), ToolTip = candidate.Title + "\n单击打开；右键固定或移除", Content = new TextBlock { Text = candidate.Title, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap } };
-            button.Click += (_, _) => OpenTarget(candidate.Shortcut);
+            var content = new StackPanel();
+            content.Children.Add(new Image { Width = 24, Height = 24, Source = (System.Windows.Media.ImageSource?)new ShellIconConverter().Convert(candidate.Shortcut, typeof(System.Windows.Media.ImageSource), null!, System.Globalization.CultureInfo.CurrentCulture), Margin = new Thickness(0, 0, 0, 4) });
+            content.Children.Add(new TextBlock { Text = candidate.Title, TextTrimming = TextTrimming.CharacterEllipsis, TextAlignment = TextAlignment.Center });
+            var button = new Button { Width = 78, Height = 62, Padding = new Thickness(4), ToolTip = candidate.Title + "\n单击打开；拖动收藏；右键固定或移除", Content = content };
+            button.Click += (_, _) => OpenTarget(candidate.Shortcut, candidate.Title);
             var origin = new Point();
             button.PreviewMouseLeftButtonDown += (_, e) => origin = e.GetPosition(button);
             button.PreviewMouseMove += (_, e) =>
@@ -80,7 +92,8 @@ public partial class MainWindow : Window
             button.ContextMenu = menu;
             Recommendations.Children.Add(button);
         }
-        RecommendationStatus.Text = Recommendations.Children.Count == 0 ? "没有找到可确认的软件入口，可手动拖入。" : "按名称排列，非使用频率；右键可固定或移除。";
+        RecommendationStatus.Text = Recommendations.Children.Count == 0 ? "没有找到可确认的软件入口，可手动拖入。"
+            : records.Count == 0 ? "已安装软件候选 · 按名称排列；拖动即可收藏。" : "优先参考 iStart 启动次数；未读取系统历史频率。";
     }
     private async void ToggleRecommendations(object sender, RoutedEventArgs e)
     {
@@ -92,23 +105,26 @@ public partial class MainWindow : Window
 
     private void RefreshCategories()
     {
-        CategoryList.ItemsSource = new[] { new MenuCategory(new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff"), "全部收藏") }.Concat(store.Library.Categories).ToList();
+        CategoryList.ItemsSource = new[] { new MenuCategory(AllCategory, "全部收藏"), new MenuCategory(RecentCategory, "最近打开") }.Concat(store.Library.Categories).ToList();
         CategoryList.SelectedIndex = 0;
     }
     private void RefreshEntries()
     {
         if (!ready) return;
         var keyword = SearchBox.Text.Trim();
-        EntryList.ItemsSource = store.Library.Entries.Where(e => (activeCategory is null || e.CategoryId == activeCategory)
+        IEnumerable<MenuEntry> source = recentView ? store.Library.Launches.Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
+        EntryList.ItemsSource = source.Where(e => (activeCategory is null || e.CategoryId == activeCategory)
             && (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
     }
     private void SearchChanged(object sender, TextChangedEventArgs e) => RefreshEntries();
     private void CategoryChanged(object sender, SelectionChangedEventArgs e)
     {
         if (CategoryList.SelectedItem is not MenuCategory category) return;
-        activeCategory = CategoryList.SelectedIndex == 0 ? null : category.Id;
+        recentView = category.Id == RecentCategory;
+        activeCategory = category.Id == AllCategory || recentView ? null : category.Id;
         SectionTitle.Text = category.Name;
         RefreshEntries();
+        ApplyView();
     }
     private void Perform(Action action, string success)
     {
@@ -131,6 +147,7 @@ public partial class MainWindow : Window
     private void AddPaths(string[] paths, Guid category, Guid? before)
     {
         Perform(() => store.AddPaths(paths, category, before), "入口已保存；重复或不存在的目标不会重复添加。");
+        if (recentView) CategoryList.SelectedIndex = 0;
     }
     private static T? ItemAt<T>(ItemsControl list, object source) where T : class
     {
@@ -161,7 +178,7 @@ public partial class MainWindow : Window
     }
     private void EntryMouseMove(object sender, MouseEventArgs e)
     {
-        if (e.LeftButton != MouseButtonState.Pressed || draggedEntry is not Guid id || !Moved(e)) return;
+        if (recentView || e.LeftButton != MouseButtonState.Pressed || draggedEntry is not Guid id || !Moved(e)) return;
         draggedEntry = null;
         DragDrop.DoDragDrop(EntryList, new DataObject(EntryFormat, id.ToString()), DragDropEffects.Move);
     }
@@ -172,14 +189,17 @@ public partial class MainWindow : Window
     }
     private void EntryDragOver(object sender, DragEventArgs e)
     {
-        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Link
+        e.Effects = recentView ? DragDropEffects.None : e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Link
             : e.Data.GetDataPresent(EntryFormat) && SearchBox.Text.Trim().Length == 0 ? DragDropEffects.Move : DragDropEffects.None;
         e.Handled = true;
         if (e.Effects != DragDropEffects.None) StatusText.Text = "松开后插入到目标入口之前；空白处为末尾。";
+        HighlightDropTarget(ItemAt<MenuEntry>(EntryList, e.OriginalSource));
     }
     private void EntryDrop(object sender, DragEventArgs e)
     {
         e.Handled = true;
+        ClearDropTarget();
+        if (recentView) return;
         var target = ItemAt<MenuEntry>(EntryList, e.OriginalSource);
         if (e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), activeCategory ?? target?.CategoryId ?? Guid.Empty, target?.Id);
         else if (ReadDragId(e.Data, EntryFormat) is Guid id && store.Library.Entries.Any(item => item.Id == id) && SearchBox.Text.Trim().Length == 0)
@@ -193,7 +213,7 @@ public partial class MainWindow : Window
     private void CategoryMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed || draggedCategory is not Guid id || !Moved(e)
-            || id == Guid.Empty || id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff")) return;
+            || id == Guid.Empty || id == AllCategory || id == RecentCategory) return;
         draggedCategory = null;
         DragDrop.DoDragDrop(CategoryList, new DataObject(CategoryFormat, id.ToString()), DragDropEffects.Move);
     }
@@ -201,7 +221,7 @@ public partial class MainWindow : Window
     {
         e.Handled = true;
         var category = ItemAt<MenuCategory>(CategoryList, e.OriginalSource);
-        if (category is null || category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff")) return;
+        if (category is null || category.Id == AllCategory || category.Id == RecentCategory) return;
         if (e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), category.Id, null);
         else if (ReadDragId(e.Data, EntryFormat) is Guid id && store.Library.Entries.Any(item => item.Id == id)) Perform(() => store.Move(id, category.Id, null), "已移入分类。");
         else if (ReadDragId(e.Data, CategoryFormat) is Guid categoryId && store.Library.Categories.Any(item => item.Id == categoryId))
@@ -212,14 +232,14 @@ public partial class MainWindow : Window
     private void CategoryDragOver(object sender, DragEventArgs e)
     {
         var category = ItemAt<MenuCategory>(CategoryList, e.OriginalSource);
-        var valid = category is not null && category.Id != new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff");
+        var valid = category is not null && category.Id != AllCategory && category.Id != RecentCategory;
         e.Effects = !valid ? DragDropEffects.None : e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Link
             : e.Data.GetDataPresent(EntryFormat) || (e.Data.GetDataPresent(CategoryFormat) && category!.Id != Guid.Empty) ? DragDropEffects.Move : DragDropEffects.None;
         e.Handled = true;
     }
     private void RemoveEntry(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: Guid id }) Perform(() => store.Change(s => s.Entries.RemoveAll(entry => entry.Id == id)), "已移除入口，原文件保持不变。");
+        if (sender is Button { Tag: Guid id }) RemoveById(id);
         e.Handled = true;
     }
     private void OpenSelected(object sender, MouseButtonEventArgs e)
@@ -227,17 +247,27 @@ public partial class MainWindow : Window
         var entry = ItemAt<MenuEntry>(EntryList, e.OriginalSource);
         if (entry is null || IsButton(e.OriginalSource)) return;
         if (!File.Exists(entry.Target) && !Directory.Exists(entry.Target)) { StatusText.Text = "目标已移动、删除或暂时离线，可以移除此入口后重新添加。"; return; }
-        OpenTarget(entry.Target);
+        OpenTarget(entry.Target, entry.Title);
     }
-    private void OpenTarget(string target)
+    private void OpenTarget(string target, string? title = null)
     {
-        try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); StatusText.Text = "已交给 Windows 打开。"; }
+        try
+        {
+            Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+            StatusText.Text = "已交给 Windows 打开。";
+            try { store.RecordLaunch(target, title ?? Path.GetFileName(target)); RefreshEntries(); RefreshRecommendations(); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StatusText.Text = "已打开，但本次启动记录暂时无法保存。"; }
+        }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { StatusText.Text = "Windows 未能打开此入口，请检查文件关联或目标是否可用。"; }
     }
     private void OpenNative(object sender, RoutedEventArgs e)
     {
-        WindowState = WindowState.Minimized;
-        Dispatcher.BeginInvoke(() => NativeMenu.Open());
+        Hide();
+        Dispatcher.BeginInvoke(() =>
+        {
+            try { NativeMenu.Open(); }
+            catch (System.ComponentModel.Win32Exception) { Show(); StatusText.Text = "Windows 暂未响应，请直接点击开始按钮或切回原生模式。"; }
+        });
     }
     private void Exit(object sender, RoutedEventArgs e) => Close();
 }

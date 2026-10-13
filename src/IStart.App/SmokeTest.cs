@@ -49,7 +49,34 @@ internal static class SmokeTest
         var preferences = new LibraryStore(config);
         Check(!preferences.Library.RecommendationsEnabled && preferences.Library.ExcludedRecommendations.Contains("excluded-shortcut"), "推荐偏好持久化");
 
-        var window = new MainWindow(store);
+        var upgrade = Path.Combine(fixture, "upgrade.json");
+        File.WriteAllText(upgrade, System.Text.Json.JsonSerializer.Serialize(store.Library).Replace("\"SchemaVersion\":2", "\"SchemaVersion\":1"));
+        var migrated = new LibraryStore(upgrade);
+        Check(migrated.Library.SchemaVersion == 2 && migrated.Library.Entries.Count == store.Library.Entries.Count, "版本一收藏迁移");
+        migrated.RecordLaunch(file, "测试");
+        migrated.RecordLaunch(file, "测试");
+        Check(new LibraryStore(upgrade).Library.Launches.Single().Count == 2, "自身启动次数持久化");
+        migrated.Change(s => s.RecordLaunches = false);
+        migrated.RecordLaunch(second, "不记录");
+        Check(migrated.Library.Launches.Count == 1, "关闭记录生效");
+        migrated.Change(s => s.RecordLaunches = true);
+        for (var i = 0; i < 101; i++) migrated.RecordLaunch("fixture-" + i, "测试 " + i);
+        Check(migrated.Library.Launches.Count == 100, "最近记录有界");
+        migrated.DeleteCategory(category);
+        Check(migrated.Library.Entries.All(e => e.CategoryId != category) && migrated.Library.Entries.Count == store.Library.Entries.Count, "删除分类保留收藏");
+        migrated.Change(s => s.Launches.Clear());
+        Check(migrated.Library.Entries.Count == store.Library.Entries.Count, "清除记录保留收藏");
+        var gesture = new WinKeyGesture();
+        Check(!gesture.Update(0x5B, true, false) && gesture.Update(0x5B, false, false), "单独 Win 键");
+        gesture.Update(0x5B, true, false); gesture.Update(0x52, true, false);
+        Check(!gesture.Update(0x5B, false, false), "Win 组合键保留");
+        foreach (var action in new[] { SystemAction.Restart, SystemAction.ShutDown })
+        {
+            var arguments = SystemActions.Arguments(action);
+            Check(!arguments.Contains("/f") && arguments[^1] == "0", "电源不强制结束应用");
+        }
+
+        var window = new MainWindow(store, false);
         var content = (FrameworkElement)window.Content;
         content.Measure(new Size(712, 604));
         content.Arrange(new Rect(0, 0, 712, 604));
@@ -62,7 +89,16 @@ internal static class SmokeTest
         var encoder = new PngBitmapEncoder();
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using (var stream = File.Create(Path.Combine(output, "menu.png"))) encoder.Save(stream);
-        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件快捷方式发现与过滤、推荐偏好持久化、WPF 布局渲染。\n真实鼠标拖放与开始菜单接入尚需人工验证。");
+        ((System.Windows.Controls.Button)window.FindName("ViewToggle")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+        content.Measure(new Size(712, 604));
+        content.Arrange(new Rect(0, 0, 712, 604));
+        content.UpdateLayout();
+        Check(store.Library.IconView, "图标视图切换持久化");
+        var icons = new RenderTargetBitmap(740, 660, 96, 96, PixelFormats.Pbgra32);
+        icons.Render(backdrop); icons.Render(content);
+        var iconEncoder = new PngBitmapEncoder(); iconEncoder.Frames.Add(BitmapFrame.Create(icons));
+        using (var stream = File.Create(Path.Combine(output, "menu-icons.png"))) iconEncoder.Save(stream);
+        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 布局。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
         window.Close();
     }
 

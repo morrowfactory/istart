@@ -1,10 +1,15 @@
-<Window x:Class="IStart.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="iStart · 技术验证版" Width="740" Height="660" MinWidth="620" MinHeight="440" Background="#FAFCFF" Foreground="#183250" FontFamily="Microsoft YaHei UI" FontSize="13" WindowStartupLocation="CenterScreen">
+<Window x:Class="IStart.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:IStart"
+        Title="iStart · 个人开始菜单" Width="740" Height="660" MinWidth="620" MinHeight="540" Background="#FAFCFF" Foreground="#183250" FontFamily="Microsoft YaHei UI" FontSize="13" WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <local:ShellIconConverter x:Key="ShellIcon"/>
+    <ItemsPanelTemplate x:Key="IconPanel"><WrapPanel/></ItemsPanelTemplate>
+    <DataTemplate x:Key="EntryTile"><StackPanel Width="78" Height="68" ToolTip="{Binding Target}"><Image Source="{Binding Target, Converter={StaticResource ShellIcon}}" Width="28" Height="28" Margin="0,4,0,6"/><TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" TextAlignment="Center"/></StackPanel></DataTemplate>
+  </Window.Resources>
   <Grid Margin="14" Background="#FAFCFF">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <DockPanel Margin="0,0,0,10">
       <TextBlock Text="▦ 我的开始菜单" FontSize="21" FontWeight="SemiBold" VerticalAlignment="Center"/>
-      <TextBlock Text="技术验证版 · 原生入口保持可用" Foreground="#64768E" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+      <Button Content="⚙ 设置" HorizontalAlignment="Right" Click="OpenSettings"/>
     </DockPanel>
     <TextBox Grid.Row="1" x:Name="SearchBox" TextChanged="SearchChanged" ToolTip="搜索已收藏入口" AutomationProperties.Name="搜索已收藏入口" Margin="0,0,0,10"/>
     <Grid Grid.Row="2">
@@ -14,31 +19,36 @@
           <TextBox x:Name="CategoryName" ToolTip="新分类名称" AutomationProperties.Name="新分类名称"/>
           <Button Content="＋ 新建分类" Click="AddCategory"/>
         </StackPanel>
-        <ListBox x:Name="CategoryList" BorderThickness="0" Background="#EFF5FD" SelectionChanged="CategoryChanged" AllowDrop="True" Drop="CategoryDrop" DragOver="CategoryDragOver" PreviewMouseLeftButtonDown="CategoryMouseDown" PreviewMouseMove="CategoryMouseMove" DisplayMemberPath="Name" AutomationProperties.Name="分类"/>
+        <ListBox x:Name="CategoryList" BorderThickness="0" Background="#EFF5FD" SelectionChanged="CategoryChanged" AllowDrop="True" Drop="CategoryDrop" DragOver="CategoryDragOver" PreviewMouseLeftButtonDown="CategoryMouseDown" PreviewMouseMove="CategoryMouseMove" DisplayMemberPath="Name" ContextMenuOpening="CategoryContextMenu" AutomationProperties.Name="分类">
+          <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="Padding" Value="8,9"/></Style></ListBox.ItemContainerStyle>
+          <ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
+        </ListBox>
       </DockPanel>
       <DockPanel Grid.Column="1">
         <StackPanel DockPanel.Dock="Top">
-          <DockPanel><Button x:Name="RecommendationToggle" Content="关闭推荐" DockPanel.Dock="Right" Click="ToggleRecommendations"/><TextBlock Text="已安装软件候选" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+          <DockPanel><Button x:Name="RecommendationToggle" Content="关闭推荐" DockPanel.Dock="Right" Click="ToggleRecommendations"/><TextBlock x:Name="RecommendationTitle" Text="软件推荐" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
           <TextBlock x:Name="RecommendationStatus" Text="仅在本机整理软件入口，可关闭。未读取历史使用记录。" Foreground="#64768E" FontSize="11" TextWrapping="Wrap"/>
           <WrapPanel x:Name="Recommendations" Margin="0,5,0,8"/>
-          <DockPanel><Button Content="添加文件…" DockPanel.Dock="Right" Click="AddFile"/><TextBlock x:Name="SectionTitle" Text="我的收藏" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+          <DockPanel><StackPanel Orientation="Horizontal" DockPanel.Dock="Right"><Button x:Name="ViewToggle" Content="图标" Click="ToggleView"/><Button Content="＋ 文件" Click="AddFile"/><Button Content="＋ 文件夹" Click="AddFolder"/></StackPanel><TextBlock x:Name="SectionTitle" Text="我的收藏" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
           <TextBlock Text="拖入文件、文件夹或软件快捷方式；拖动圆点调整顺序" Foreground="#64768E" FontSize="11" Margin="0,4,0,9" TextWrapping="Wrap"/>
         </StackPanel>
-        <ListBox x:Name="EntryList" BorderBrush="#DCE5F0" Background="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="EntryDrop" DragOver="EntryDragOver" PreviewMouseLeftButtonDown="EntryMouseLeftButtonDown" PreviewMouseMove="EntryMouseMove" MouseDoubleClick="OpenSelected" AutomationProperties.Name="收藏入口">
+        <ListBox x:Name="EntryList" BorderBrush="#DCE5F0" Background="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="EntryDrop" DragOver="EntryDragOver" DragLeave="EntryDragLeave" PreviewMouseLeftButtonDown="EntryMouseLeftButtonDown" PreviewMouseMove="EntryMouseMove" MouseDoubleClick="OpenSelected" KeyDown="EntryKeyDown" ContextMenuOpening="EntryContextMenu" AutomationProperties.Name="收藏入口">
+          <ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
           <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="5,7"/></Style></ListBox.ItemContainerStyle>
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="18"/><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <TextBlock Text="⠿" Foreground="#8295AE" Cursor="SizeAll" VerticalAlignment="Center"/>
-                <StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Target}" FontSize="10" Foreground="#78899E" TextTrimming="CharacterEllipsis"/></StackPanel>
-                <Button Grid.Column="2" Content="移除" Tag="{Binding Id}" Click="RemoveEntry" ToolTip="仅移除入口，不删除文件"/>
+                <Image Grid.Column="1" Source="{Binding Target, Converter={StaticResource ShellIcon}}" Width="24" Height="24" Margin="0,0,6,0"/>
+                <StackPanel Grid.Column="2"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Target}" FontSize="10" Foreground="#78899E" TextTrimming="CharacterEllipsis"/></StackPanel>
+                <Button Grid.Column="3" Content="移除" Tag="{Binding Id}" Click="RemoveEntry" ToolTip="仅移除入口，不删除文件"/>
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
       </DockPanel>
     </Grid>
-    <Border Grid.Row="3" Background="#EDF5FF" Padding="8" Margin="0,10,0,6"><TextBlock x:Name="StatusText" Text="拖入即可添加入口，原文件保持原位。双击入口打开。" TextWrapping="Wrap"/></Border>
-    <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Button Content="Windows 原生菜单" Click="OpenNative"/><TextBlock Grid.Column="1" Text="未接管开始按钮或 Win 键" Foreground="#64768E" VerticalAlignment="Center" HorizontalAlignment="Center"/><Button Grid.Column="2" Content="退出" Click="Exit"/></Grid>
+    <Border Grid.Row="3" Background="#EDF5FF" Padding="8" Margin="0,10,0,6"><DockPanel><Button x:Name="UndoButton" Content="撤销移除" Visibility="Collapsed" DockPanel.Dock="Right" Click="UndoRemove"/><TextBlock x:Name="StatusText" Text="拖入即可添加入口，原文件保持原位。双击或按 Enter 打开。" TextWrapping="Wrap" VerticalAlignment="Center"/></DockPanel></Border>
+    <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel Orientation="Horizontal"><Button Content="账户 ▾" Click="AccountMenu"/><Button Content="Windows 原生菜单" Click="OpenNative"/></StackPanel><TextBlock x:Name="ModeStatus" Grid.Column="1" Text="原生菜单模式" Foreground="#64768E" VerticalAlignment="Center" HorizontalAlignment="Center"/><StackPanel Grid.Column="2" Orientation="Horizontal"><Button Content="电源 ▾" Click="PowerMenu"/><Button Content="退出" Click="Exit"/></StackPanel></Grid>
   </Grid>
 </Window>

@@ -1,18 +1,11 @@
-using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace IStart;
 
 internal static class NativeMenu
 {
-    [DllImport("user32.dll")]
-    private static extern void keybd_event(byte key, byte scan, uint flags, nuint extraInfo);
-
-    // This prototype does not install hooks; Ctrl+Esc is handed directly to Windows.
     public static void Open()
     {
-        keybd_event(0x11, 0, 0, 0);
-        keybd_event(0x1B, 0, 0, 0);
-        keybd_event(0x1B, 0, 2, 0);
-        keybd_event(0x11, 0, 2, 0);
+        if (!WinInput.Keys((0x11, false), (0x1B, false), (0x1B, true), (0x11, true))) throw new Win32Exception();
     }
 }
