@@ -223,9 +223,8 @@ public partial class MainWindow
                 if (!store.Library.ShowWindowsRecentDocuments) windowsRecent.Clear();
                 else if (recentView) await RefreshRecentDocuments();
                 if (custom.IsChecked == true) await SetCustomMode(); else SetNativeMode();
-                RecommendationToggle.Content = store.Library.RecommendationsEnabled ? "关闭推荐" : "启用推荐";
                 if (store.Library.RecommendationsEnabled) await DiscoverSoftware();
-                else { discovery?.Cancel(); Recommendations.Children.Clear(); RecommendationStatus.Text = "推荐已关闭。"; }
+                else RefreshRecommendations();
                 RefreshEntries();
                 window.Close();
             }

@@ -36,7 +36,6 @@ public partial class MainWindow : Window
         if (store.Recovered) StatusText.Text = "主配置损坏，已读取上一份配置。请核对收藏后再修改。";
         Loaded += async (_, _) => await DiscoverSoftware();
         Closed += (_, _) => discovery?.Cancel();
-        RecommendationToggle.Content = store.Library.RecommendationsEnabled ? "关闭推荐" : "启用推荐";
         if (!store.Library.RecommendationsEnabled) RecommendationStatus.Text = "推荐已关闭。你可以继续手动添加入口。";
         if (enableShell) InitializeShell();
     }
@@ -64,7 +63,8 @@ public partial class MainWindow : Window
     {
         Recommendations.Children.Clear();
         var keyword = SearchBox.Text.Trim();
-        RecommendationTitle.Text = keyword.Length == 0 ? "软件推荐" : "软件搜索结果";
+        SoftwarePanel.Visibility = store.Library.RecommendationsEnabled || keyword.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        RecommendationTitle.Visibility = RecommendationStatus.Visibility = keyword.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         if (!store.Library.RecommendationsEnabled && keyword.Length == 0) { RecommendationStatus.Text = "推荐已关闭；仍可搜索本机软件。"; return; }
         var records = store.Library.Launches.ToDictionary(l => l.Target, StringComparer.OrdinalIgnoreCase);
         foreach (var candidate in candidates.Where(c => keyword.Length > 0 ? c.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || c.Shortcut.Contains(keyword, StringComparison.OrdinalIgnoreCase) : !store.Library.ExcludedRecommendations.Contains(c.Shortcut, StringComparer.OrdinalIgnoreCase))
@@ -101,14 +101,6 @@ public partial class MainWindow : Window
         RecommendationStatus.Text = keyword.Length > 0 ? $"找到 {Recommendations.Children.Count} 个软件；下方同时搜索全部收藏。" : Recommendations.Children.Count == 0 ? "没有找到可确认的软件入口，可手动拖入。"
             : records.Count == 0 ? "已安装软件候选 · 按名称排列；拖动即可收藏。" : "优先参考 iStart 启动次数；未读取系统历史频率。";
     }
-    private async void ToggleRecommendations(object sender, RoutedEventArgs e)
-    {
-        Perform(() => store.Change(s => s.RecommendationsEnabled = !s.RecommendationsEnabled), "推荐设置已保存。");
-        RecommendationToggle.Content = store.Library.RecommendationsEnabled ? "关闭推荐" : "启用推荐";
-        if (store.Library.RecommendationsEnabled) await DiscoverSoftware();
-        else RefreshRecommendations();
-    }
-
     private void RefreshCategories()
     {
         CategoryList.ItemsSource = new[] { new MenuCategory(AllCategory, "全部收藏"), new MenuCategory(RecentCategory, "最近打开") }.Concat(store.Library.Categories).ToList();

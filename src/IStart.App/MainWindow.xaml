@@ -27,9 +27,11 @@
       </DockPanel>
       <Border Grid.Column="1" Background="{DynamicResource ContentSurface}" CornerRadius="{DynamicResource CardRadius}" BorderBrush="{DynamicResource CardOutline}" BorderThickness="1" Padding="14"><DockPanel>
         <StackPanel DockPanel.Dock="Top">
-          <DockPanel><Button x:Name="RecommendationToggle" Content="关闭推荐" DockPanel.Dock="Right" Click="ToggleRecommendations"/><TextBlock x:Name="RecommendationTitle" Text="软件推荐" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+          <StackPanel x:Name="SoftwarePanel" Visibility="Collapsed">
+          <TextBlock x:Name="RecommendationTitle" Text="软件搜索结果" FontWeight="SemiBold" Visibility="Collapsed"/>
           <TextBlock x:Name="RecommendationStatus" Text="仅在本机整理软件入口，可关闭。未读取历史使用记录。" Foreground="{DynamicResource TextSecondary}" FontSize="11" TextWrapping="Wrap"/>
           <ScrollViewer MaxHeight="210" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><WrapPanel x:Name="Recommendations" Margin="0,5,0,8"/></ScrollViewer>
+          </StackPanel>
           <DockPanel><StackPanel Orientation="Horizontal" DockPanel.Dock="Right"><Button x:Name="ViewToggle" Content="图标" Click="ToggleView"/><Button Content="＋ 文件" Style="{StaticResource PrimaryButton}" Click="AddFile"/><Button Content="＋ 文件夹" Click="AddFolder"/></StackPanel><TextBlock x:Name="SectionTitle" Text="我的收藏" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
           <TextBlock Text="拖入文件、文件夹或软件快捷方式；拖动圆点调整顺序" Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,4,0,9" TextWrapping="Wrap"/>
         </StackPanel>

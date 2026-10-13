@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-当前为 **0.2.0-preview.10 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
+当前为 **0.2.0-preview.11 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
 
 界面已按 [Figma 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=1-1245) 应用 Material 风格：浅色背景、蓝色重点、圆角搜索/分类/按钮和内容卡片；继续使用 Windows 本机真实软件图标与中文字体，无新增 UI 依赖。查看 [Google 风格预览](docs/prototypes/theme-google.png)、[Windows 风格预览](docs/prototypes/theme-windows.png) 与 [双风格验证记录](docs/THEME_VALIDATION.md)。
 
@@ -70,3 +70,5 @@ preview.8 补齐商店应用的真实图标读取，读取失败显示通用应�
 preview.9 补充 Windows 最近文档，在选择最近打开或重新打开该视图时刷新。系统没有提供记录时明确提示；不读取各软件内部历史或 Jump List，不扫描全盘。
 
 preview.10 将外部最近文件扩展至 Windows 自动 Jump List、LibreOffice PickList 和 WPS RecentFiles。本机实测合并 100 条有效记录，含 13 张图片和 45 个办公文档；不会扫描全盘或监控其他软件的打开动作。
+
+preview.11 默认隐藏整个软件推荐区域，不显示标题、说明、开关或空白占位。只能在设置中启用显示；启用后也不显示推荐标题。主动搜索时仍显示软件搜索结果，清空搜索后恢复隐藏。

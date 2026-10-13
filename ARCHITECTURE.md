@@ -78,3 +78,5 @@ RecentDocuments 在最近视图中异步读取当前用户 Recent 文件夹的�
 LibreOfficeDocuments 只读当前用户 4/user/registrymodifications.xcu（≤8 MiB），禁用 XML DTD 与外部解析，只取 PickList/OrderList/HistoryItemRef 文件 URI；保留序号顺序，用配置修改时间作近似排序。WpsDocuments 只读 HKCU/Software/Kingsoft/Office/6.0/{wps,et,wpp,pdf,ofd}/RecentFiles/files 的最多 100 个数值子键 path；不读取关联账户、设备或云记录。WPS 未确认打开时间，因此使用未知时间并保留软件序号，不伪造时间戳。
 
 各来源分别容错；网络、已删除、文件夹和可执行/脚本目标不加入外部文档结果。合并最多 100 项，关闭外部历史后不保留迟到读取结果。读取配置和链接元数据，不读取用户文档内容、不写入外部软件数据或系统历史。
+
+软件推荐展示（preview.11）：RecommendationsEnabled 新配置默认 false；SoftwarePanel 整体 Collapsed，不保留布局空间。移除菜单内推荐开关与对应处理器，设置是唯一启用入口。标题和说明只在主动搜索时显示，推荐模式仅展示图标。查询非空时搜索结果独立于推荐偏好，清空后按偏好收起。当前用户设置同步关闭，其他收藏、分类、主题和接入保留。

@@ -13,3 +13,5 @@ README、ARCHITECTURE、执行计划同步；VISION 复核，方向未变。界�
 用户截图确认商店结果只有文字、图标空白。改为解析 Shell PIDL 后读取原生图标；失败回退通用应用图标。HICON 和 PIDL 均释放，冻结位图沿用有界缓存。本机实际 Codex 32×32 图标保存为测试输出 codex-icon.png，白底预览确认原应用标志；构建与核心回归通过。VISION 复核，方向不变。
 
 API 依据：[微软 SHGetFileInfo 文档](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfow)。
+
+preview.11：推荐默认关闭，整个容器收起并无占位；菜单内不再有启用/关闭按钮，设置为唯一开启入口。正常推荐模式也隐藏标题/说明；搜索时才显示搜索结果标题。默认值、关闭时搜索可见、清空时容器与标题收起回归通过。README/ARCHITECTURE/执行计划同步；VISION 复核无方向变化。

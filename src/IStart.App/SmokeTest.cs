@@ -146,6 +146,7 @@ internal static class SmokeTest
         var compactEncoder = new PngBitmapEncoder(); compactEncoder.Frames.Add(BitmapFrame.Create(compact));
         using (var stream = File.Create(Path.Combine(output, "menu-compact.png"))) compactEncoder.Save(stream);
         var search = (System.Windows.Controls.TextBox)window.FindName("SearchBox");
+        Check(!new MenuLibrary().RecommendationsEnabled, "软件推荐默认关闭");
         window.candidates = Enumerable.Range(0, 20).Select(i => new SoftwareCandidate("应用" + i, "missing-" + i)).Append(new("Codex", "missing-codex")).ToList();
         search.Text = "codex";
         var softwareResults = (System.Windows.Controls.WrapPanel)window.FindName("Recommendations");
@@ -157,11 +158,15 @@ internal static class SmokeTest
         store.Change(s => s.RecommendationsEnabled = false);
         search.Text = "codex";
         Check(softwareResults.Children.Count == 1, "关闭推荐仍可搜索软件");
+        Check(((System.Windows.Controls.StackPanel)window.FindName("SoftwarePanel")).Visibility == Visibility.Visible, "隐藏推荐不隐藏主动搜索结果");
         window.candidates = [new("ChatGPT", "shell:AppsFolder\\OpenAI.Codex_test!App")];
         search.Text = "Codex";
         Check(softwareResults.Children.Count == 1, "商店显示名不同仍可按应用标识搜索");
-        store.Change(s => s.RecommendationsEnabled = true);
+        store.Change(s => s.RecommendationsEnabled = false);
         search.Clear();
+        Check(((System.Windows.Controls.StackPanel)window.FindName("SoftwarePanel")).Visibility == Visibility.Collapsed
+            && ((System.Windows.Controls.TextBlock)window.FindName("RecommendationTitle")).Visibility == Visibility.Collapsed,
+            "清空搜索后整个软件推荐区和标题收起");
         window.candidates = [];
         using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
         {

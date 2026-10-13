@@ -11,7 +11,7 @@ public sealed class MenuLibrary
     public int SchemaVersion { get; set; } = 2;
     public List<MenuCategory> Categories { get; set; } = [new(Guid.Empty, "未分类")];
     public List<MenuEntry> Entries { get; set; } = [];
-    public bool RecommendationsEnabled { get; set; } = true;
+    public bool RecommendationsEnabled { get; set; }
     public List<string> ExcludedRecommendations { get; set; } = [];
     public List<LaunchRecord> Launches { get; set; } = [];
     public bool RecordLaunches { get; set; } = true;
