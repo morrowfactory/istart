@@ -16,11 +16,12 @@
 | 原生与快捷键 | Win+R 不触发自定义回调；Ctrl+Esc 临时原生交接不递归；禁用接入后 Win 恢复原生 |
 | 异常恢复 | 独立测试子进程启用钩子后被强制退出，Win 再次打开原生菜单；只结束该测试子进程 |
 | 安装打包 | Inno Setup 7.1.0 中文安装包、自包含 win-x64、SHA256 |
+| 安装页面 | 实际安装窗口截图：欢迎、位置、选项、准备、2% 文件安装进度和完成页；基础中文显示已检查，缩放仍待验证 |
 | 安装生命周期 | 独立 QA AppId、中文空格路径：静默首次安装、覆盖安装、卸载通过；日志 Removed all? Yes，无需重启 |
 
 核心验证脚本 `scripts/Test-Prototype.ps1`；开始入口专项结果位于本次本地产物 `artifacts/input-final/input-result.txt`，该检查安装回调而非打开真实菜单窗口，不能等同所有交互已验收。实测原生基线前台进程为 SearchHost，按当前基线比较，不硬编码所有系统的菜单进程名。
 
-安装检查 `scripts/Test-Installer.ps1` 使用 QA 安装器，不启动真实菜单、不写开机启动、不关闭正式实例；结果在 `artifacts/install-local-1/result.txt`。安装目录已由卸载清理，保留小型验收日志。没有生产服务器、生产备份或业务数据变更。
+安装检查 `scripts/Test-Installer.ps1` 使用 QA 安装器，不启动真实菜单、不写开机启动、不关闭正式实例；结果在 `artifacts/install-final/result.txt`。安装目录已由卸载清理，保留小型验收日志。没有生产服务器、生产备份或业务数据变更。
 
 ## 尚未通过或执行
 
@@ -47,3 +48,13 @@ Open-Shell 根许可证为 MIT，当前未复制或链接代码。[许可证](ht
 安装包 `iStart-Setup-0.2.0-preview.1.exe` 与 `.sha256` 输出在 `artifacts/setup/`，ZIP 继续提供完整目录独立运行。用户选择自定义入口后，兼容检查失败则保留原生入口。开机启动为当前账户可选项，默认关闭。
 
 Windows CI 验证构建、核心行为、布局、自包含打包及独立 QA 安装/覆盖/卸载，产物保留 7 天；不在无人值守 runner 执行桌面钩子测试，不自动创建 Release。当前开发通过中文 PR，尚未合并或公开正式发布。
+
+## 安装页面取证
+
+![欢迎页](installer/welcome.png)
+
+![选项页](installer/options.png)
+
+![实际安装进度](installer/progress.png)
+
+![完成页](installer/complete.png)
