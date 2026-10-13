@@ -31,7 +31,11 @@ jobs:
           retention-days: 7
       - name: 打包独立运行验证版
         shell: pwsh
-        run: ./scripts/Publish-Preview.ps1
+        run: |
+          ./scripts/Publish-Preview.ps1
+          $sha = git rev-parse HEAD
+          $version = (Get-Item 'artifacts/preview-win-x64/IStart.App.dll').VersionInfo.ProductVersion
+          if (!$version.EndsWith("+$sha")) { throw '程序版本没有绑定当前提交' }
       - uses: actions/upload-artifact@v4
         with:
           name: iStart-preview-win-x64

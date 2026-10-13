@@ -76,3 +76,5 @@ preview.11 默认隐藏整个软件推荐区域，不显示标题、说明、开
 preview.12 在全部收藏同时包含程序和文件/文件夹时分组显示：程序在上，文件/文件夹在下，中间一条横线；两组各自保持收藏顺序。列表和图标视图均支持，不增加分组标题或修改保存顺序。
 
 preview.13 的 Windows 风格按 [Win11 Fluent 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=10-173) 更新：灰白层次、细边框与圆角、蓝色选中短线、分类图标、紧凑六列入口和搜索焦点底线；保留 Google 风格和全部功能。应用/文件夹图标仍从本机动态读取。查看 [程序预览](docs/prototypes/win11-fluent-app.png) 与 [验证记录](docs/WIN11_FLUENT_VALIDATION.md)。
+
+安装包公开发布通过 [GitHub Release 流程](docs/GITHUB_RELEASE.md)：只接受最新 main 已验证的 CI 安装包，校验来源 SHA 与哈希后发布预览版。发布不包括个人配置与历史记录。

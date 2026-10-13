@@ -86,3 +86,5 @@ LibreOfficeDocuments 只读当前用户 4/user/registrymodifications.xcu（≤8 
 Windows 11 Fluent（preview.13）：Appearance 继续统一管理双主题，增加主题专属内边距、搜索边框、按钮文字、菜单字体、图标尺寸及状态区资源。Windows 入口宽度缩至 64 DIP（含列表容器边距后默认宽度六列），小窗口自动换行；Google 沿用原资源值。CategoryIconConverter 仅加载四个冻结导航位图，搜索/账户图标同样使用本地嵌入资源。Assets/Fluent 保留 Figma 导出的原 SVG 和派生 PNG；程序嵌入 PNG，无运行时网络请求、SVG 渲染库或新增应用依赖。搜索 PART_ContentHost 与焦点/接入逻辑不变。
 
 窗口继续使用系统标题栏、边框和阴影；本版应用浅色层次，未启用原生 Mica 模糊。Figma 字体环境只有 Noto Sans SC，设计稿使用该替代字体；Windows 程序使用 Segoe UI Variable 并回退 Microsoft YaHei UI。Google 字体沿用原值。运行时文字和文件夹内容保持真实数据，不替换成稿中的示例名称。
+
+GitHub 发布边界：build.yml 将 ProductVersion 绑定检出 SHA；release.yml 手动接收最新 main SHA、成功 push/main 构建编号与授权记录，仅下载安装包允许清单。Publish-GitHubRelease.ps1 校验版本、SHA256 和源工作流，先草稿后公开，并下载公开文件复验；release-manifest.json 保存精确来源和保护状态。发布串行、GitHub Token 最小权限，无远程服务器或新增生产密钥。当前缺少强制分支/环境审批，本次使用会话授权，详见 docs/GITHUB_RELEASE.md。
