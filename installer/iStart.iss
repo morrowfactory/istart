@@ -121,3 +121,12 @@ begin
       Result := 'iStart 尚未退出。请从托盘退出后重试安装。';
 #endif
 end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+#ifndef TestInstall
+  { 也清理安装后从应用设置启用的启动项，不仅限于安装时选中的任务。 }
+  if CurUninstallStep = usUninstall then
+    RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'iStart');
+#endif
+end;
