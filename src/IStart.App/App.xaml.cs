@@ -86,10 +86,11 @@ public partial class App : Application
                 var configured = startup?.GetValue("iStart") is string command && command.StartsWith("\"" + Environment.ProcessPath + "\"", StringComparison.OrdinalIgnoreCase);
                 if (store.Library.StartWithWindows != configured) store.Change(s => s.StartWithWindows = configured);
             }
-            var window = new MainWindow(store);
-            showWait = ThreadPool.RegisterWaitForSingleObject(showSignal, (_, _) => Dispatcher.BeginInvoke(() => { window.Show(); window.Activate(); }), null, Timeout.Infinite, false);
+            var window = new MainWindow(store) { ShowActivated = !BackgroundRequested };
+            showWait = ThreadPool.RegisterWaitForSingleObject(showSignal, (_, _) => Dispatcher.BeginInvoke(() => window.ShowMenu(null)), null, Timeout.Infinite, false);
             exitWait = ThreadPool.RegisterWaitForSingleObject(exitSignal, (_, _) => Dispatcher.BeginInvoke(() => window.RequestExit("exit-signal")), null, Timeout.Infinite, false);
             window.Show();
+            if (BackgroundRequested) window.Hide();
         }
         catch (Exception ex)
         {

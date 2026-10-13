@@ -21,18 +21,46 @@ public sealed class ShellIconConverter : IValueConverter
     }
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern nint SHGetFileInfo(string path, uint attributes, out FileInfo info, uint size, uint flags);
     [DllImport("user32.dll")] private static extern bool DestroyIcon(nint icon);
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern uint ExtractIconEx(string path, int index, out nint large, out nint small, uint count);
     private static readonly ConcurrentDictionary<string, ImageSource> Cache = new(StringComparer.OrdinalIgnoreCase);
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not string path) return null;
+        var cacheKey = path;
         if (Cache.TryGetValue(path, out var icon)) return icon;
+        if (!path.StartsWith("\\\\", StringComparison.Ordinal) && Path.GetExtension(path).Equals(".lnk", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var location = ShellShortcut.ReadIconLocation(path);
+                if (!location.Path.StartsWith("\\\\", StringComparison.Ordinal) && File.Exists(location.Path))
+                {
+                    ExtractIconEx(location.Path, location.Index, out var large, out var small, 1);
+                    try
+                    {
+                        var selected = large != 0 ? large : small;
+                        if (selected != 0)
+                        {
+                            var bitmap = Imaging.CreateBitmapSourceFromHIcon(selected, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                            bitmap.Freeze();
+                            if (Cache.Count < 256) Cache.TryAdd(cacheKey, bitmap);
+                            return bitmap;
+                        }
+                    }
+                    finally { if (large != 0) DestroyIcon(large); if (small != 0 && small != large) DestroyIcon(small); }
+                }
+                // 显示目标图标，启动仍使用原快捷方式，保留参数与工作目录。
+                path = ShellShortcut.ReadTarget(path);
+            }
+            catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException or ArgumentException) { return null; }
+        }
         var flags = path.StartsWith("\\\\", StringComparison.Ordinal) ? 0x111u : 0x101u;
         if (SHGetFileInfo(path, 0x80, out var info, (uint)Marshal.SizeOf<FileInfo>(), flags) == 0 || info.Icon == 0) return null;
         try
         {
             var source = Imaging.CreateBitmapSourceFromHIcon(info.Icon, Int32Rect.Empty, BitmapSizeOptions.FromWidthAndHeight(24, 24));
             source.Freeze();
-            if (Cache.Count < 256) Cache.TryAdd(path, source);
+            if (Cache.Count < 256) Cache.TryAdd(cacheKey, source);
             return source;
         }
         finally { DestroyIcon(info.Icon); }

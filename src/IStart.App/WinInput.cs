@@ -16,6 +16,9 @@ internal static class WinInput
     [DllImport("user32.dll", SetLastError = true)] private static extern uint SendInput(uint count, Input[] inputs, int size);
     [DllImport("user32.dll")] internal static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(nint window);
+    [DllImport("user32.dll")] internal static extern nint GetFocus();
+    [DllImport("user32.dll")] internal static extern nint SetFocus(nint window);
     [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window, out uint process);
     [DllImport("user32.dll")] internal static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")] internal static extern bool SetCursorPos(int x, int y);
@@ -29,6 +32,15 @@ internal static class WinInput
     internal static bool TestKeys(params (ushort Key, bool Up)[] keys) => Send(keys.Select(k => Key(k.Key, k.Up, 0)).ToArray());
     private static bool Send(Input[] inputs) => SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Input>()) == inputs.Length;
     internal static bool CancelWinRelease(ushort key) => Keys((0x11, false), (0x11, true), (key, true));
+    internal static bool TryForegroundAfterMenuInput(nint window)
+    {
+        if (GetForegroundWindow() == window) return true;
+        if (ModifiersHeld || (GetAsyncKeyState(0x5B) & 0x8000) != 0 || (GetAsyncKeyState(0x5C) & 0x8000) != 0) return false;
+        // 仅响应用户打开菜单后的失败焦点请求；带标记且平衡释放，Ctrl 取消 Alt 菜单激活。
+        if (!Keys((0x12, false), (0x11, false), (0x11, true), (0x12, true))) return false;
+        SetForegroundWindow(window);
+        return GetForegroundWindow() == window;
+    }
     internal static bool ModifiersHeld => new[] { 0x10, 0x11, 0x12 }.Any(k => (GetAsyncKeyState(k) & 0x8000) != 0);
     internal static void TestClick(Point point)
     {

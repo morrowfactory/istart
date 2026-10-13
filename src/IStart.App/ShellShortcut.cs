@@ -25,6 +25,19 @@ internal static class ShellShortcut
         try { ((IShellLinkW)link).SetPath(target); ((IPersistFile)link).Save(path, true); }
         finally { Marshal.FinalReleaseComObject(link); }
     }
+    internal static (string Path, int Index) ReadIconLocation(string path)
+    {
+        var link = NewLink();
+        try
+        {
+            ((IPersistFile)link).Load(path, 0);
+            var buffer = new StringBuilder(32768);
+            ((IShellLinkW)link).GetIconLocation(buffer, buffer.Capacity, out var index);
+            if (buffer.Length == 0) ((IShellLinkW)link).GetPath(buffer, buffer.Capacity, 0, 4);
+            return (Environment.ExpandEnvironmentVariables(buffer.ToString()), index);
+        }
+        finally { Marshal.FinalReleaseComObject(link); }
+    }
 
     [ComImport, Guid("000214F9-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     private interface IShellLinkW

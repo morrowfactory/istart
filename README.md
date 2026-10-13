@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-当前为 **0.2.0-preview.5 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
+当前为 **0.2.0-preview.6 试用版**。已有紧凑双栏、图标/列表切换、搜索、拖入与排序、分类管理、移除撤销、最近打开、本机软件推荐、托盘、账户电源入口和中文安装向导。
 
 界面已按 [Figma 优化稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=1-1245) 应用 Material 风格：浅色背景、蓝色重点、圆角搜索/分类/按钮和内容卡片；继续使用 Windows 本机真实软件图标与中文字体，无新增 UI 依赖。查看 [Google 风格预览](docs/prototypes/theme-google.png)、[Windows 风格预览](docs/prototypes/theme-windows.png) 与 [双风格验证记录](docs/THEME_VALIDATION.md)。
 
@@ -16,7 +16,7 @@
 
 ## 安装与使用
 
-运行 `iStart-Setup-0.2.0-preview.5.exe`，按中文向导选择位置与选项；显示实际安装进度。安装到当前账户，无需管理员权限，无需另装 .NET。默认不创建桌面图标、不启用开机启动、不接管开始入口；这些选项可按需选择。安装包当前未签名。
+运行 `iStart-Setup-0.2.0-preview.6.exe`，按中文向导选择位置与选项；显示实际安装进度。安装到当前账户，无需管理员权限，无需另装 .NET。默认不创建桌面图标、不启用开机启动、不接管开始入口；这些选项可按需选择。安装包当前未签名。
 
 - 把文件、文件夹或软件快捷方式拖入收藏，添加的是引用，原文件保持原位。
 - 拖动条目调整顺序，拖到分类上归类；搜索结果禁止重排。分类可拖动排序。
@@ -38,7 +38,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package 'C:\path\iStart-QA-Setup-0.2.0-preview.5.exe' -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package 'C:\path\iStart-QA-Setup-0.2.0-preview.6.exe' -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出至 `artifacts/setup/`。`--ui-test <测试目录>` 使用独立配置打开交互验收窗口，不修改真实开机启动；一次只运行一个验收实例。`--input-test <输出目录>` 会短暂打开原生开始菜单/运行窗口，并强制结束它自己启动的测试子进程，须在空闲交互桌面手动执行，不纳入 CI。CI 检查构建、核心行为、布局及独立 QA 身份的安装/覆盖/卸载；产物保留 7 天，不自动发布 Release。
@@ -58,3 +58,7 @@ Inno Setup 7 构建工具有商业使用许可要求，商业发行前需核对�
 下一步优先补齐 Win10/其他 Win11、Explorer 重启、多屏缩放、自动隐藏、交互式安装取消及失败回退。当前不能将局部实机结果视为正式发布验收通过。
 
 本机 runtime.log 仅记录启停、模式和检测恢复事件，不记录按键、文件内容或收藏路径；超过 64 KiB 轮转并仅保留一份旧日志。
+
+0.2.0-preview.6 统一开始按钮、Win、托盘与重复启动的窗口显示路径：恢复最小化窗口、自定义菜单可见时使用浮层、收起后解除置顶，并记录前台激活结果。后台启动不申请焦点，也不会在异步初始化结束后再次隐藏用户刚打开的菜单。详见 [窗口显示验证](docs/FOREGROUND_VALIDATION.md)。
+
+preview.6 已在当前电脑确认：菜单贴近开始按钮、图标不带快捷箭头，打开后可直接输入英文与中文。详见 [窗口与焦点验收](docs/FOREGROUND_VALIDATION.md)。
