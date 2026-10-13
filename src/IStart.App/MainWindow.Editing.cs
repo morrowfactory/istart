@@ -119,19 +119,25 @@ public partial class MainWindow
         if (recentView) Action("固定到未分类", () => AddPaths([entry.Target], Guid.Empty, null));
         else
         {
+            void Relocate(string target) => Perform(() => store.Change(s =>
+            {
+                if (s.Entries.Any(item => item.Id != entry.Id && item.Target.Equals(target, StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("目标已收藏");
+                s.Entries[s.Entries.FindIndex(item => item.Id == entry.Id)] = entry with { Target = target };
+            }), "入口目标已更新。");
             Action("重命名入口", () =>
             {
                 var title = Prompt("入口名称", entry.Title);
                 if (!string.IsNullOrWhiteSpace(title)) Perform(() => store.Change(s => s.Entries[s.Entries.FindIndex(item => item.Id == entry.Id)] = entry with { Title = title }), "名称已保存。");
             });
-            Action("重新定位…", () =>
+            Action("重新定位文件…", () =>
             {
                 var dialog = new OpenFileDialog { Title = "选择新的目标文件或快捷方式" };
-                if (dialog.ShowDialog(this) == true) Perform(() => store.Change(s =>
-                {
-                    if (s.Entries.Any(item => item.Id != entry.Id && item.Target.Equals(dialog.FileName, StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("目标已收藏");
-                    s.Entries[s.Entries.FindIndex(item => item.Id == entry.Id)] = entry with { Target = dialog.FileName };
-                }), "入口目标已更新。");
+                if (dialog.ShowDialog(this) == true) Relocate(dialog.FileName);
+            });
+            Action("重新定位文件夹…", () =>
+            {
+                var dialog = new OpenFolderDialog { Title = "选择新的目标文件夹" };
+                if (dialog.ShowDialog(this) == true) Relocate(dialog.FolderName);
             });
             var move = Action("移到分类", () => { });
             foreach (var category in store.Library.Categories)

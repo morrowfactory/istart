@@ -114,6 +114,8 @@ public partial class MainWindow
         var custom = Option("使用自定义开始菜单（试用）", adapter?.Enabled == true);
         panel.Children.Add(new TextBlock { Text = "当前仅在 Win11 26200 验证了基本接入；其他版本保持原生入口。", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 0, 0, 10) });
         var startup = Option("登录 Windows 后启动 iStart", store.Library.StartWithWindows);
+        startup.IsEnabled = !App.IsUITest;
+        if (App.IsUITest) startup.ToolTip = "交互验收模式不修改真实开机启动项。";
         var recommendations = Option("显示本机软件推荐", store.Library.RecommendationsEnabled);
         var record = Option("记录通过 iStart 打开的入口（仅本机，最多 100 项）", store.Library.RecordLaunches);
         panel.Children.Add(new TextBlock { Text = "未读取系统历史使用频率；推荐优先参考 iStart 自身启动记录。", TextWrapping = TextWrapping.Wrap, FontSize = 11 });
@@ -131,7 +133,7 @@ public partial class MainWindow
             var oldStartup = store.Library.StartWithWindows;
             try
             {
-                SystemActions.SetStartup(startup.IsChecked == true);
+                if (!App.IsUITest) SystemActions.SetStartup(startup.IsChecked == true);
                 store.Change(s => { s.StartWithWindows = startup.IsChecked == true; s.RecordLaunches = record.IsChecked == true; s.RecommendationsEnabled = recommendations.IsChecked == true; });
                 if (custom.IsChecked == true) await SetCustomMode(); else SetNativeMode();
                 RecommendationToggle.Content = store.Library.RecommendationsEnabled ? "关闭推荐" : "启用推荐";
@@ -142,7 +144,7 @@ public partial class MainWindow
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException)
             {
-                try { SystemActions.SetStartup(oldStartup); } catch (Exception rollback) when (rollback is UnauthorizedAccessException or System.Security.SecurityException) { }
+                try { if (!App.IsUITest) SystemActions.SetStartup(oldStartup); } catch (Exception rollback) when (rollback is UnauthorizedAccessException or System.Security.SecurityException) { }
                 MessageBox.Show(window, "设置未保存，请检查本地权限。", "iStart");
             }
             finally { save.IsEnabled = true; }

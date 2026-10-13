@@ -10,9 +10,19 @@ public partial class App : Application
     private RegisteredWaitHandle? showWait, exitWait;
     internal static bool EnableMenuRequested { get; private set; }
     internal static bool BackgroundRequested { get; private set; }
+    internal static bool IsUITest { get; private set; }
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.Length == 2 && e.Args[0] == "--ui-test")
+        {
+            IsUITest = true;
+            // 独立配置用于交互验收，不读取或替换个人收藏。
+            var output = Path.GetFullPath(e.Args[1]);
+            Directory.CreateDirectory(output);
+            new MainWindow(new LibraryStore(Path.Combine(output, "library.json"))) { Title = "iStart · 交互验收" }.Show();
+            return;
+        }
         if (e.Args.Length == 2 && e.Args[0] == "--hook-child")
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;

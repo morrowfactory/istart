@@ -246,7 +246,7 @@ public partial class MainWindow : Window
     {
         var entry = ItemAt<MenuEntry>(EntryList, e.OriginalSource);
         if (entry is null || IsButton(e.OriginalSource)) return;
-        if (!File.Exists(entry.Target) && !Directory.Exists(entry.Target)) { StatusText.Text = "目标已移动、删除或暂时离线，可以移除此入口后重新添加。"; return; }
+        if (!File.Exists(entry.Target) && !Directory.Exists(entry.Target)) { StatusText.Text = "目标已移动、删除或暂时离线，可右键重新定位，或移除此入口。"; return; }
         OpenTarget(entry.Target, entry.Title);
     }
     private void OpenTarget(string target, string? title = null)

@@ -15,7 +15,7 @@
 | StartMenuAdapter / WinInput | UIAutomation 定位 StartButton；低级键盘/鼠标钩子处理单独 Win 和开始按钮；组合键保留，原生注入使用自有标记避免递归 |
 | NativeMenu | SendInput 发送带标记的 Ctrl+Esc 请求临时原生菜单 |
 | SystemActions | 系统策略/能力判断，锁定、注销、切换用户、睡眠、休眠、关机和重启；固定参数，不使用 /f |
-| App | 当前 SID 命名互斥锁与显示/退出事件；已有实例正常退出等待；后台启动与诊断模式 |
+| App | 当前 SID 命名互斥锁与显示/退出事件；已有实例正常退出等待；后台启动与诊断模式；ui-test 使用独立配置并禁用真实开机启动修改 |
 | installer / scripts / CI | 中文向导与真实文件安装进度、升级前正常退出、卸载与校验值；QA 安装使用独立 AppId，无生产部署 |
 
 进程不注入 Explorer、不修改系统二进制、不替换登录认证、不添加服务或驱动。临时原生打开与默认原生切换是独立操作。
@@ -56,3 +56,5 @@ StartMenuAdapter 在后台单次扫描任务栏，缓存 StartButton 边界；�
 SmokeTest 验证数据保护、迁移、顺序、发现过滤、最近记录和 WPF 列表/图标渲染。InputIntegrationTest 是交互桌面专项测试，包含原生基线、Win/按钮/组合键/临时原生/禁用/异常进程恢复。Test-Installer 只接受隔离 QA 安装包与 artifacts 内新目录，验证静默首次、覆盖、卸载。
 
 Windows CI 保存核心结果、布局图、安装校验值及安装结果 7 天，不自动发布正式版本。Win10/其他 Win11、多屏缩放、Explorer 重启及安装失败矩阵未通过前，保持试用与版本限制。完整交付门槛见 [执行计划](EXECUTION_PLAN.md)。
+
+当前系统的真实鼠标、重新定位与完整菜单进程恢复证据见 [实机验收](docs/CURRENT_SYSTEM_VALIDATION.md)；按键人工反馈和会话中断项目仍待完成。
