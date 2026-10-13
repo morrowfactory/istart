@@ -163,7 +163,7 @@ public partial class MainWindow : Window
     {
         if (e.LeftButton != MouseButtonState.Pressed || draggedEntry is not Guid id || !Moved(e)) return;
         draggedEntry = null;
-        DragDrop.DoDragDrop(EntryList, new DataObject(EntryFormat, id), DragDropEffects.Move);
+        DragDrop.DoDragDrop(EntryList, new DataObject(EntryFormat, id.ToString()), DragDropEffects.Move);
     }
     private bool Moved(MouseEventArgs e)
     {
@@ -182,7 +182,7 @@ public partial class MainWindow : Window
         e.Handled = true;
         var target = ItemAt<MenuEntry>(EntryList, e.OriginalSource);
         if (e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), activeCategory ?? target?.CategoryId ?? Guid.Empty, target?.Id);
-        else if (e.Data.GetData(EntryFormat) is Guid id && SearchBox.Text.Trim().Length == 0)
+        else if (ReadDragId(e.Data, EntryFormat) is Guid id && store.Library.Entries.Any(item => item.Id == id) && SearchBox.Text.Trim().Length == 0)
             Perform(() => store.Move(id, activeCategory ?? target?.CategoryId ?? store.Library.Entries.Single(item => item.Id == id).CategoryId, target?.Id), "顺序已保存。");
     }
     private void CategoryMouseDown(object sender, MouseButtonEventArgs e)
@@ -195,7 +195,7 @@ public partial class MainWindow : Window
         if (e.LeftButton != MouseButtonState.Pressed || draggedCategory is not Guid id || !Moved(e)
             || id == Guid.Empty || id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff")) return;
         draggedCategory = null;
-        DragDrop.DoDragDrop(CategoryList, new DataObject(CategoryFormat, id), DragDropEffects.Move);
+        DragDrop.DoDragDrop(CategoryList, new DataObject(CategoryFormat, id.ToString()), DragDropEffects.Move);
     }
     private void CategoryDrop(object sender, DragEventArgs e)
     {
@@ -203,10 +203,12 @@ public partial class MainWindow : Window
         var category = ItemAt<MenuCategory>(CategoryList, e.OriginalSource);
         if (category is null || category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff")) return;
         if (e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), category.Id, null);
-        else if (e.Data.GetData(EntryFormat) is Guid id) Perform(() => store.Move(id, category.Id, null), "已移入分类。");
-        else if (e.Data.GetData(CategoryFormat) is Guid categoryId)
+        else if (ReadDragId(e.Data, EntryFormat) is Guid id && store.Library.Entries.Any(item => item.Id == id)) Perform(() => store.Move(id, category.Id, null), "已移入分类。");
+        else if (ReadDragId(e.Data, CategoryFormat) is Guid categoryId && store.Library.Categories.Any(item => item.Id == categoryId))
             Perform(() => { store.MoveCategory(categoryId, category.Id); RefreshCategories(); }, "分类顺序已保存。");
     }
+    private static Guid? ReadDragId(IDataObject data, string format) => data.GetDataPresent(format)
+        && Guid.TryParse(data.GetData(format) as string, out var id) ? id : null;
     private void CategoryDragOver(object sender, DragEventArgs e)
     {
         var category = ItemAt<MenuCategory>(CategoryList, e.OriginalSource);

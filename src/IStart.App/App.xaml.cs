@@ -9,6 +9,13 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.Length == 2 && e.Args[0] == "--probe-shell")
+        {
+            Directory.CreateDirectory(e.Args[1]);
+            File.WriteAllText(Path.Combine(e.Args[1], "shell-probe.txt"), ShellProbe.Read());
+            Shutdown();
+            return;
+        }
         if (e.Args.Length == 2 && e.Args[0] == "--smoke-test")
         {
             try { SmokeTest.Run(Path.GetFullPath(e.Args[1])); Shutdown(0); }

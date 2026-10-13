@@ -63,7 +63,6 @@ internal static class SmokeTest
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using (var stream = File.Create(Path.Combine(output, "menu.png"))) encoder.Save(stream);
         File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件快捷方式发现与过滤、推荐偏好持久化、WPF 布局渲染。\n真实鼠标拖放与开始菜单接入尚需人工验证。");
-        File.WriteAllText(Path.Combine(output, "shell-probe.txt"), ShellProbe.Read());
         window.Close();
     }
 

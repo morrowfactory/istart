@@ -18,6 +18,8 @@
 
 验证脚本为 `scripts/Test-Prototype.ps1`，输出在忽略提交的 `artifacts/smoke-*`；打包脚本为 `scripts/Publish-Preview.ps1`。源代码没有导入任何用户真实收藏或使用历史。CI 的 Windows runner 仅验证构建和核心行为，不替代 Win10/11 交互式桌面测试。
 
+任务栏取证独立使用 `IStart.App.exe --probe-shell <输出目录>`，不纳入无交互桌面的 CI 核心检查。内部拖放传递字符串标识，避免依赖 .NET 已移除的任意对象 BinaryFormatter 序列化。[迁移说明](https://learn.microsoft.com/en-us/dotnet/standard/serialization/binaryformatter-migration-guide/winforms-wpf-ole-guidance)
+
 ## 未通过或未执行
 
 - 真实鼠标拖入文件、文件夹、快捷方式及跨分类/分类排序交互仍需人工试用；代码与模型检查不等于鼠标测试。
