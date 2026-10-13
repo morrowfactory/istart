@@ -21,6 +21,8 @@ public partial class MainWindow : Window
     internal List<SoftwareCandidate> candidates = [];
     private CancellationTokenSource? discovery;
     private bool recentView;
+    private List<LaunchRecord> windowsRecent = [];
+    private bool readingRecent;
     private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
     private static readonly Guid RecentCategory = new("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     public MainWindow(LibraryStore store, bool enableShell = true)
@@ -116,9 +118,26 @@ public partial class MainWindow : Window
     {
         if (!ready) return;
         var keyword = SearchBox.Text.Trim();
-        IEnumerable<MenuEntry> source = recentView && keyword.Length == 0 ? store.Library.Launches.Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
+        IEnumerable<MenuEntry> source = recentView ? RecentDocuments.Merge(store.Library.Launches,
+            store.Library.ShowWindowsRecentDocuments ? windowsRecent : []).Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
         EntryList.ItemsSource = source.Where(e => (keyword.Length > 0 || activeCategory is null || e.CategoryId == activeCategory)
             && (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
+        if (recentView) SearchStatus.Text = EntryList.Items.Count == 0 ? "暂无最近记录。Windows 未提供最近文档时，只显示通过 iStart 打开的项目。" : "按最近时间排列；合并 iStart 打开记录与 Windows 最近文档。";
+        else SearchStatus.Text = "";
+    }
+    private async Task RefreshRecentDocuments()
+    {
+        if (readingRecent || !store.Library.ShowWindowsRecentDocuments) return;
+        readingRecent = true;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        try
+        {
+            windowsRecent = await Task.Run(() => RecentDocuments.Read(timeout.Token), timeout.Token).WaitAsync(timeout.Token);
+            if (recentView) RefreshEntries();
+        }
+        catch (OperationCanceledException) { if (recentView) SearchStatus.Text = "Windows 最近文档读取超时；iStart 打开记录仍可使用。"; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { if (recentView) SearchStatus.Text = "暂时无法读取 Windows 最近文档；iStart 打开记录仍可使用。"; }
+        finally { readingRecent = false; }
     }
     private void SearchChanged(object sender, TextChangedEventArgs e)
     {
@@ -126,8 +145,8 @@ public partial class MainWindow : Window
         RefreshEntries();
         RefreshRecommendations();
         var searching = SearchBox.Text.Trim().Length > 0;
-        SectionTitle.Text = searching ? "收藏搜索结果" : (CategoryList.SelectedItem as MenuCategory)?.Name ?? "全部收藏";
-        SearchStatus.Text = searching && EntryList.Items.Count == 0 ? "没有匹配的收藏。软件结果显示在上方；文件需先添加到收藏。" : "";
+        SectionTitle.Text = searching ? recentView ? "最近记录搜索结果" : "收藏搜索结果" : (CategoryList.SelectedItem as MenuCategory)?.Name ?? "全部收藏";
+        if (!recentView) SearchStatus.Text = searching && EntryList.Items.Count == 0 ? "没有匹配的收藏。软件结果显示在上方；文件需先添加到收藏。" : "";
     }
     private void CategoryChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -137,6 +156,7 @@ public partial class MainWindow : Window
         SectionTitle.Text = category.Name;
         RefreshEntries();
         ApplyView();
+        if (recentView) _ = RefreshRecentDocuments();
     }
     private void Perform(Action action, string success)
     {

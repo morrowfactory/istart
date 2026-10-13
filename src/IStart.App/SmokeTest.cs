@@ -45,6 +45,19 @@ internal static class SmokeTest
         catch (IOException) { Check(failed.Library.Entries.Count == 0, "保存失败回退内存状态"); }
 
         VerifySoftwareDiscovery(fixture);
+        var recentFolder = Path.Combine(fixture, "recent");
+        Directory.CreateDirectory(recentFolder);
+        ShellShortcut.CreateFixture(Path.Combine(recentFolder, "文档.lnk"), file);
+        ShellShortcut.CreateFixture(Path.Combine(recentFolder, "重复.lnk"), file);
+        ShellShortcut.CreateFixture(Path.Combine(recentFolder, "不存在.lnk"), Path.Combine(fixture, "missing.txt"));
+        ShellShortcut.CreateFixture(Path.Combine(recentFolder, "目录.lnk"), fixture);
+        var recentFiles = RecentDocuments.Read(CancellationToken.None, recentFolder);
+        Check(recentFiles.Count == 1 && recentFiles[0].Target == file, "Windows 最近文档读取、去重和无效目标过滤");
+        var ownRecent = new LaunchRecord(file, "自定义名称", DateTimeOffset.UtcNow.AddMinutes(1), 2);
+        Check(RecentDocuments.Merge([ownRecent], recentFiles).Single() == ownRecent, "合并最近记录保留最新且去重");
+        store.Change(s => s.ShowWindowsRecentDocuments = false);
+        Check(!new LibraryStore(config).Library.ShowWindowsRecentDocuments, "Windows 最近文档开关持久化");
+        store.Change(s => s.ShowWindowsRecentDocuments = true);
         var work = new Rect(0, 0, 1920, 1032);
         var size = new Size(740, 660);
         var bottom = MenuPlacement.Calculate(work, new Rect(12, 1032, 48, 48), size);

@@ -31,7 +31,7 @@ Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml �
 - Launches：target、title、openedAt、count，最多 100 个唯一目标，只表示成功交给系统启动。
 - 偏好：推荐开关与排除项、记录开关、自定义入口、开机启动、图标视图、Theme（Windows/Google；缺失或未知值回退 Google）。
 
-配置仅保存在本机；移除入口不删除源文件，删除分类将收藏移至未分类。手动排序与推荐排序独立。推荐候选不持久化，最多显示 12 项；可靠系统历史尚无来源，不读取 UserAssist 或宣称完整使用频率。Store 应用与无快捷方式软件不保证发现。
+配置仅保存在本机；移除入口不删除源文件，删除分类将收藏移至未分类。手动排序与推荐排序独立。推荐候选不持久化，最多显示 12 项；可靠系统历史尚无来源，不读取 UserAssist 或宣称完整使用频率。商店应用补充 AppsFolder 发现，无有效 Shell 入口的软件不保证发现。
 
 ## 接入与恢复
 
@@ -70,3 +70,5 @@ ShowMenu 为用户触发的统一显示入口：恢复 Normal、开启 ShowActiv
 软件发现补充只读 Shell.Application / AppsFolder 枚举，保留带 ! 的商店应用标识；COM 对象逐项释放，沿用取消令牌与五秒预算。传统快捷方式和商店应用共同组成搜索候选，输入时按名称及入口标识过滤，推荐仍限 12 项。商店应用通过 explorer.exe 的单个 ArgumentList 参数启动；不当作磁盘文件固定。关闭推荐不关闭本机搜索索引。收藏搜索跨分类，文件范围仅限收藏。
 
 商店应用图标：SHParseDisplayName 将 AppsFolder 入口解析为 PIDL，SHGetFileInfo 使用 SHGFI_PIDL 与 SHGFI_ICON 获取图标；转为冻结位图并沿用 256 项缓存，finally 释放 HICON 和 PIDL。失败回退通用 exe 图标，不把虚拟入口当作磁盘路径。
+
+RecentDocuments 在最近视图中异步读取当前用户 Recent 文件夹的最多 200 个最新 .lnk，三秒等待预算；读取目标和快捷方式修改时间，过滤网络路径、失效目标、文件夹及 exe/lnk。按目标去重并与 iStart Launches 合并至最多 100 项。Windows 数据只在内存展示，不导入 library.json，不更改系统隐私设置，不访问 Jump List 或应用私有历史。ShowWindowsRecentDocuments 独立控制展示和读取，旧配置默认启用；关闭时清空内存结果。Windows 快捷方式时间仅是排序依据，不宣称精确最后打开时间。

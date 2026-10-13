@@ -15,6 +15,7 @@ public sealed class MenuLibrary
     public List<string> ExcludedRecommendations { get; set; } = [];
     public List<LaunchRecord> Launches { get; set; } = [];
     public bool RecordLaunches { get; set; } = true;
+    public bool ShowWindowsRecentDocuments { get; set; } = true;
     public bool CustomMenuEnabled { get; set; }
     public bool StartWithWindows { get; set; }
     public bool IconView { get; set; }

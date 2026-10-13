@@ -1,4 +1,4 @@
-#define AppVersion "0.2.0-preview.8"
+#define AppVersion "0.2.0-preview.9"
 #ifndef Payload
   #define Payload "..\artifacts\preview-win-x64"
 #endif
