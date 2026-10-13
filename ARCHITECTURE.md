@@ -8,7 +8,7 @@
 
 | 模块 | 已实现职责与边界 |
 | --- | --- |
-| MainWindow / Editing / Shell | 分类、搜索、图标/列表、拖入排序、右键管理、撤销、设置、托盘与定位；普通用户运行 |
+| MainWindow / Editing / Shell / Websites | 四个固定入口、搜索、图标/列表、添加与隐藏、同页活动排序、设置、托盘与定位；普通用户运行 |
 | LibraryStore | 收藏、分类、偏好、最近记录；复制后修改，临时写入与原子替换，保留一份上一版本；失败不替换内存 |
 | SoftwareDiscovery / ShellShortcut | 异步发现用户与公共开始菜单 `.lnk`；IShellLinkW/IPersistFile Unicode 解析；有效 exe 目标去重，过滤安装维护与失效入口 |
 | ShellIconConverter | Shell 图标提取与有界缓存；UNC 使用通用图标，避免远程图标读取 |
@@ -92,3 +92,5 @@ GitHub 发布边界：build.yml 将 ProductVersion 绑定检出 SHA；release.ym
 统一品牌资源（preview.14）：Assets/Brand 保存 Figma 矢量源与透明 PNG、九档 ICO。MainWindow 在双主题中共用品牌 PNG，窗口 Icon 与托盘使用嵌入 ICO，ApplicationIcon 将同一图标编译进 EXE；安装器使用该 ICO，并将独立 istart.ico 安装给桌面/开始菜单快捷方式和卸载列表。托盘退出时释放克隆图标。SVG 仅在维护时转换，无新增运行时依赖，详见 docs/BRAND_ICON.md。
 
 最近文件与文件夹（preview.15）：RecentDocuments.Files 在合并前过滤自身及外部记录，仅让有效文档进入最近视图。FrequentFolders 复用 ShellShortcut 与 JumpListDocuments 的文件夹读取模式，独立读取有效本机目录；主窗口在现有 5 秒异步任务中刷新文件和目录缓存。常用文件夹视图保留手动项，再以打开次数/近期文档目录活动和近似时间补充空位；建议与本次隐藏仅驻留内存，固定时才保存入口。沿用外部历史开关，关闭时两类缓存一起清空；无配置 schema 变更。见 docs/RECENT_FILES_FOLDERS.md。
+
+活动视图（preview.16，取代上面的历史分类/推荐界面）：MySoftware 精确匹配本机累计 AppSwitched 与 iStart 记录，最多 30 个软件；SoftwareDiscovery 补充 exe 和 AppUserModel.ID 元数据，不再渲染推荐区域。四个固定导航不显示旧分类，原 Entries/Categories 仍保留以兼容。FrequentFolders 默认活动降序，可切换直接目录记录的最近排序；不会修改保存数组。WebsiteHistory 以系统 winsqlite3 只读查询 Chrome/Edge 的本机短暂快照，按域名聚合；MainWindow.Websites 处理异步刷新及同页常用/最近切换。两种排序偏好保存；浏览器历史和建议驻留内存，快照 finally 清理，无 NuGet 或运行时网络依赖。设置可关闭网站读取，异常/部分失败明确提示。数据字段与读取边界见 docs/ACTIVITY_VIEWS.md。

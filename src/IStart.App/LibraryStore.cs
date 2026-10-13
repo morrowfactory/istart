@@ -11,11 +11,13 @@ public sealed class MenuLibrary
     public int SchemaVersion { get; set; } = 2;
     public List<MenuCategory> Categories { get; set; } = [new(Guid.Empty, "未分类")];
     public List<MenuEntry> Entries { get; set; } = [];
-    public bool RecommendationsEnabled { get; set; }
-    public List<string> ExcludedRecommendations { get; set; } = [];
+    public List<string> HiddenSoftware { get; set; } = [];
     public List<LaunchRecord> Launches { get; set; } = [];
     public bool RecordLaunches { get; set; } = true;
     public bool ShowWindowsRecentDocuments { get; set; } = true;
+    public bool ShowBrowserHistory { get; set; } = true;
+    public bool WebsitesRecentFirst { get; set; }
+    public bool FoldersRecentFirst { get; set; }
     public bool CustomMenuEnabled { get; set; }
     public bool StartWithWindows { get; set; }
     public bool IconView { get; set; }
@@ -49,7 +51,7 @@ public sealed class LibraryStore
         if (state.SchemaVersion is not (1 or 2)) throw new NotSupportedException("不支持此配置版本");
         state.SchemaVersion = 2;
         if (state.Theme is not ("Windows" or "Google")) state.Theme = "Google";
-        if (state.Categories is null || state.Entries is null || state.ExcludedRecommendations is null || state.Launches is null
+        if (state.Categories is null || state.Entries is null || state.HiddenSoftware is null || state.HiddenSoftware.Count > 256 || state.HiddenSoftware.Any(string.IsNullOrWhiteSpace) || state.Launches is null
             || state.Launches.Any(l => l is null || string.IsNullOrWhiteSpace(l.Target) || string.IsNullOrWhiteSpace(l.Title) || l.Count < 1)
             || state.Launches.Count > 100 || state.Launches.Select(l => l.Target).Distinct(StringComparer.OrdinalIgnoreCase).Count() != state.Launches.Count
             || state.Categories.Any(c => c is null || string.IsNullOrWhiteSpace(c.Name))

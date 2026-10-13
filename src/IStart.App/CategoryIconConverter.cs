@@ -10,9 +10,9 @@ public sealed class CategoryIconConverter : IValueConverter
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not MenuCategory category) return null;
-        var name = category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff") ? "all"
+        var name = category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff") ? "apps"
             : category.Id == new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee") ? "recent"
-            : category.Name == "常用软件" ? "apps" : "folder";
+            : category.Name == "我的网站" ? "website" : "folder";
         if (!Icons.TryGetValue(name, out var icon))
         {
             icon = new BitmapImage(new Uri("pack://application:,,,/IStart.App;component/Assets/Fluent/" + name + ".png"));

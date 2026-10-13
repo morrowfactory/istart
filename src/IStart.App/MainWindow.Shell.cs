@@ -119,6 +119,8 @@ public partial class MainWindow
             Topmost = true;
             Show();
             if (recentView || folderView) _ = RefreshRecentDocuments();
+            if (websiteView) _ = RefreshWebsiteHistory();
+            if (softwareView) _ = DiscoverSoftware();
             if (adapter?.Enabled == true)
             {
                 var screen = point is WinInput.Point click
@@ -206,15 +208,15 @@ public partial class MainWindow
         var startup = Option("登录 Windows 后启动 iStart", store.Library.StartWithWindows);
         startup.IsEnabled = !App.IsUITest;
         if (App.IsUITest) startup.ToolTip = "交互验收模式不修改真实开机启动项。";
-        var recommendations = Option("显示本机软件推荐", store.Library.RecommendationsEnabled);
         var record = Option("记录通过 iStart 打开的入口（仅本机，最多 100 项）", store.Library.RecordLaunches);
         var windowsDocuments = Option("显示其他软件最近文件与文件夹活动（仅本机）", store.Library.ShowWindowsRecentDocuments);
-        panel.Children.Add(new TextBlock { Text = "未读取系统历史使用频率；推荐优先参考 iStart 自身启动记录。", TextWrapping = TextWrapping.Wrap, FontSize = 11 });
-        var clear = new Button { Content = "清除最近记录与推荐偏好", Margin = new Thickness(0, 12, 0, 8) };
+        var browserHistory = Option("读取 Chrome 和 Edge 网站历史（仅本机）", store.Library.ShowBrowserHistory);
+        panel.Children.Add(new TextBlock { Text = "我的软件参考本机累计应用切换和 iStart 打开记录，最多 30 个；不代表最近一个月启动次数。", TextWrapping = TextWrapping.Wrap, FontSize = 11 });
+        var clear = new Button { Content = "清除 iStart 最近记录与软件隐藏项", Margin = new Thickness(0, 12, 0, 8) };
         clear.Click += (_, _) =>
         {
-            if (MessageBox.Show(window, "清除最近记录和推荐排除列表？手动收藏与分类会保留。", "清除本机记录", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            Perform(() => { store.Change(s => { s.Launches.Clear(); s.ExcludedRecommendations.Clear(); }); RefreshRecommendations(); }, "记录已清除，手动收藏保持不变。");
+            if (MessageBox.Show(window, "清除 iStart 最近记录和软件隐藏项？已添加入口会保留；不会清除 Windows 或浏览器历史。", "清除本机记录", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            Perform(() => store.Change(s => { s.Launches.Clear(); s.HiddenSoftware.Clear(); }), "iStart 记录已清除，已添加入口保持不变。");
         };
         panel.Children.Add(clear);
         var save = new Button { Content = "保存设置", Margin = new Thickness(0, 10, 0, 0) };
@@ -225,12 +227,13 @@ public partial class MainWindow
             try
             {
                 if (!App.IsUITest) SystemActions.SetStartup(startup.IsChecked == true);
-                store.Change(s => { s.StartWithWindows = startup.IsChecked == true; s.RecordLaunches = record.IsChecked == true; s.ShowWindowsRecentDocuments = windowsDocuments.IsChecked == true; s.RecommendationsEnabled = recommendations.IsChecked == true; });
+                store.Change(s => { s.StartWithWindows = startup.IsChecked == true; s.RecordLaunches = record.IsChecked == true; s.ShowWindowsRecentDocuments = windowsDocuments.IsChecked == true; s.ShowBrowserHistory = browserHistory.IsChecked == true; });
+                if (!store.Library.ShowBrowserHistory) websiteHistory = new([], 0, 0);
+                else if (websiteView) await RefreshWebsiteHistory();
                 if (!store.Library.ShowWindowsRecentDocuments) { windowsRecent.Clear(); recentFolders.Clear(); }
                 else if (recentView || folderView) await RefreshRecentDocuments();
                 if (custom.IsChecked == true) await SetCustomMode(); else SetNativeMode();
-                if (store.Library.RecommendationsEnabled) await DiscoverSoftware();
-                else RefreshRecommendations();
+                if (candidates.Count == 0) await DiscoverSoftware();
                 RefreshEntries();
                 window.Close();
             }

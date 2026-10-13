@@ -1,4 +1,4 @@
-#define AppVersion "0.2.0-preview.15"
+#define AppVersion "0.2.0-preview.16"
 #ifndef Payload
   #define Payload "..\artifacts\preview-win-x64"
 #endif
@@ -41,7 +41,7 @@ Name: "zhcn"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 WelcomeLabel1=欢迎安装 iStart
 WelcomeLabel2=把常用软件、文件和文件夹集中整理，让桌面更清爽。%n%n这是试用版。默认保留 Windows 开始菜单，安装后可在设置中选择启用自定义入口。当前仅 Win11 26200 完成基本入口验证。%n%n安装仅用于当前账户，无需管理员权限；收藏数据留在本机。
 FinishedHeadingLabel=iStart 已安装
-FinishedLabel=安装已完成。打开后即可拖入软件、文件和文件夹；软件推荐默认隐藏，可在设置中开启。%n%n开始按钮接入需在设置中启用，通过兼容检查后生效。随时可从菜单或托盘切回原生菜单。%n%n卸载默认保留个人收藏与最近记录。
+FinishedLabel=安装已完成。常用软件、最近文件、文件夹和网站各有独立入口；文件夹和网站可切换常用与最近排序。%n%n开始按钮接入需在设置中启用，通过兼容检查后生效。随时可从菜单或托盘切回原生菜单。%n%n卸载默认保留个人收藏与最近记录。
 
 [Tasks]
 Name: "desktopicon"; Description: "创建桌面快捷方式"; Flags: unchecked

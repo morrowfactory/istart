@@ -25,9 +25,16 @@ public sealed class ShellIconConverter : IValueConverter
     [DllImport("user32.dll")] private static extern bool DestroyIcon(nint icon);
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern uint ExtractIconEx(string path, int index, out nint large, out nint small, uint count);
     private static readonly ConcurrentDictionary<string, ImageSource> Cache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Lazy<BitmapImage> WebsiteIcon = new(() =>
+    {
+        var icon = new BitmapImage(new Uri("pack://application:,,,/Assets/Fluent/website.png"));
+        icon.Freeze();
+        return icon;
+    });
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not string path) return null;
+        if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http") return WebsiteIcon.Value;
         var cacheKey = path;
         if (Cache.TryGetValue(path, out var icon)) return icon;
         if (path.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal))
