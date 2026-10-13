@@ -53,6 +53,15 @@ internal static class SmokeTest
         ShellShortcut.CreateFixture(Path.Combine(recentFolder, "目录.lnk"), fixture);
         var recentFiles = RecentDocuments.Read(CancellationToken.None, recentFolder);
         Check(recentFiles.Count == 1 && recentFiles[0].Target == file, "Windows 最近文档读取、去重和无效目标过滤");
+        var libreConfig = Path.Combine(fixture, "history.xcu");
+        File.WriteAllText(libreConfig, $"<items xmlns:oor=\"http://openoffice.org/2001/registry\"><item oor:path=\"/org.openoffice.Office.Histories/Histories/org.openoffice.Office.Histories:HistoryInfo['PickList']/OrderList\"><node oor:name=\"0\"><prop oor:name=\"HistoryItemRef\"><value>{System.Security.SecurityElement.Escape(new Uri(file).AbsoluteUri)}</value></prop></node></item></items>");
+        Check(LibreOfficeDocuments.Read(CancellationToken.None, libreConfig).Single().Target == file, "LibreOffice 独立最近文档读取与 URI 解码");
+        using (var recentTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+        {
+            var systemRecent = RecentDocuments.Read(recentTimeout.Token);
+            File.WriteAllText(Path.Combine(output, "recent-sources.txt"), $"跨软件有效最近文件：{systemRecent.Count}；图片：{systemRecent.Count(r => new[] { ".png", ".jpg", ".jpeg", ".webp", ".bmp" }.Contains(Path.GetExtension(r.Target), StringComparer.OrdinalIgnoreCase))}；办公文档：{systemRecent.Count(r => new[] { ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp" }.Contains(Path.GetExtension(r.Target), StringComparer.OrdinalIgnoreCase))}");
+            File.AppendAllText(Path.Combine(output, "recent-sources.txt"), $"；LibreOffice 有效条目：{LibreOfficeDocuments.Read(recentTimeout.Token).Count}；WPS 有效条目：{WpsDocuments.Read(recentTimeout.Token).Count}");
+        }
         var ownRecent = new LaunchRecord(file, "自定义名称", DateTimeOffset.UtcNow.AddMinutes(1), 2);
         Check(RecentDocuments.Merge([ownRecent], recentFiles).Single() == ownRecent, "合并最近记录保留最新且去重");
         store.Change(s => s.ShowWindowsRecentDocuments = false);

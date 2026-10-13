@@ -122,17 +122,19 @@ public partial class MainWindow : Window
             store.Library.ShowWindowsRecentDocuments ? windowsRecent : []).Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
         EntryList.ItemsSource = source.Where(e => (keyword.Length > 0 || activeCategory is null || e.CategoryId == activeCategory)
             && (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
-        if (recentView) SearchStatus.Text = EntryList.Items.Count == 0 ? "暂无最近记录。Windows 未提供最近文档时，只显示通过 iStart 打开的项目。" : "按最近时间排列；合并 iStart 打开记录与 Windows 最近文档。";
+        if (recentView) SearchStatus.Text = EntryList.Items.Count == 0 ? "暂无有效记录。仅显示软件或 Windows 已保存、且仍存在的本机文件。" : "合并 Windows、软件历史与 iStart 记录；外部历史时间为近似排序。";
         else SearchStatus.Text = "";
     }
     private async Task RefreshRecentDocuments()
     {
         if (readingRecent || !store.Library.ShowWindowsRecentDocuments) return;
         readingRecent = true;
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
-            windowsRecent = await Task.Run(() => RecentDocuments.Read(timeout.Token), timeout.Token).WaitAsync(timeout.Token);
+            var records = await Task.Run(() => RecentDocuments.Read(timeout.Token), timeout.Token).WaitAsync(timeout.Token);
+            if (!store.Library.ShowWindowsRecentDocuments) return;
+            windowsRecent = records;
             if (recentView) RefreshEntries();
         }
         catch (OperationCanceledException) { if (recentView) SearchStatus.Text = "Windows 最近文档读取超时；iStart 打开记录仍可使用。"; }

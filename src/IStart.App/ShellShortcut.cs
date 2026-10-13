@@ -25,6 +25,25 @@ internal static class ShellShortcut
         try { ((IShellLinkW)link).SetPath(target); ((IPersistFile)link).Save(path, true); }
         finally { Marshal.FinalReleaseComObject(link); }
     }
+    internal static string ReadTarget(IStream stream)
+    {
+        var link = NewLink();
+        try
+        {
+            ((IPersistStream)link).Load(stream);
+            var buffer = new StringBuilder(32768);
+            ((IShellLinkW)link).GetPath(buffer, buffer.Capacity, 0, 4);
+            return Environment.ExpandEnvironmentVariables(buffer.ToString());
+        }
+        finally { Marshal.FinalReleaseComObject(link); }
+    }
+    [ComImport, Guid("00000109-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IPersistStream
+    {
+        void GetClassID(out Guid id);
+        [PreserveSig] int IsDirty();
+        void Load(IStream stream);
+    }
     internal static (string Path, int Index) ReadIconLocation(string path)
     {
         var link = NewLink();

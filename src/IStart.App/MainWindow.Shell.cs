@@ -202,7 +202,7 @@ public partial class MainWindow
         if (App.IsUITest) startup.ToolTip = "交互验收模式不修改真实开机启动项。";
         var recommendations = Option("显示本机软件推荐", store.Library.RecommendationsEnabled);
         var record = Option("记录通过 iStart 打开的入口（仅本机，最多 100 项）", store.Library.RecordLaunches);
-        var windowsDocuments = Option("显示 Windows 最近文档（仅本机，不读取文件内容）", store.Library.ShowWindowsRecentDocuments);
+        var windowsDocuments = Option("显示其他软件最近文件（仅本机，不读取文件内容）", store.Library.ShowWindowsRecentDocuments);
         panel.Children.Add(new TextBlock { Text = "未读取系统历史使用频率；推荐优先参考 iStart 自身启动记录。", TextWrapping = TextWrapping.Wrap, FontSize = 11 });
         var clear = new Button { Content = "清除最近记录与推荐偏好", Margin = new Thickness(0, 12, 0, 8) };
         clear.Click += (_, _) =>

@@ -71,4 +71,10 @@ ShowMenu 为用户触发的统一显示入口：恢复 Normal、开启 ShowActiv
 
 商店应用图标：SHParseDisplayName 将 AppsFolder 入口解析为 PIDL，SHGetFileInfo 使用 SHGFI_PIDL 与 SHGFI_ICON 获取图标；转为冻结位图并沿用 256 项缓存，finally 释放 HICON 和 PIDL。失败回退通用 exe 图标，不把虚拟入口当作磁盘路径。
 
-RecentDocuments 在最近视图中异步读取当前用户 Recent 文件夹的最多 200 个最新 .lnk，三秒等待预算；读取目标和快捷方式修改时间，过滤网络路径、失效目标、文件夹及 exe/lnk。按目标去重并与 iStart Launches 合并至最多 100 项。Windows 数据只在内存展示，不导入 library.json，不更改系统隐私设置，不访问 Jump List 或应用私有历史。ShowWindowsRecentDocuments 独立控制展示和读取，旧配置默认启用；关闭时清空内存结果。Windows 快捷方式时间仅是排序依据，不宣称精确最后打开时间。
+RecentDocuments 在最近视图中异步读取当前用户 Recent 文件夹的最多 200 个最新 .lnk，五秒等待预算；读取目标和快捷方式修改时间，过滤网络路径、失效目标、文件夹及 exe/lnk。按目标去重并与 iStart Launches 合并至最多 100 项。外部历史只在内存展示，不导入 library.json，不更改系统隐私设置；preview.10 扩展读取下面列明的现成历史来源。ShowWindowsRecentDocuments 独立控制展示和读取，旧配置默认启用；关闭时清空内存结果。Windows 快捷方式时间仅是排序依据，不宣称精确最后打开时间。
+
+跨软件历史（preview.10）：JumpListDocuments 只读打开最新 60 个 AutomaticDestinations 结构化存储文件（单文件 ≤16 MiB、最多 200 个流、单流 ≤1 MiB），通过 IPersistStream 读取内嵌 Shell Link 目标，禁止 Resolve 和执行。COM IStorage / 枚举器 / IStream 均 finally 释放。仅用流或容器修改时间作近似排序；不解析 DestList 版本、不声称精确打开时间。暂不读 CustomDestinations。
+
+LibreOfficeDocuments 只读当前用户 4/user/registrymodifications.xcu（≤8 MiB），禁用 XML DTD 与外部解析，只取 PickList/OrderList/HistoryItemRef 文件 URI；保留序号顺序，用配置修改时间作近似排序。WpsDocuments 只读 HKCU/Software/Kingsoft/Office/6.0/{wps,et,wpp,pdf,ofd}/RecentFiles/files 的最多 100 个数值子键 path；不读取关联账户、设备或云记录。WPS 未确认打开时间，因此使用未知时间并保留软件序号，不伪造时间戳。
+
+各来源分别容错；网络、已删除、文件夹和可执行/脚本目标不加入外部文档结果。合并最多 100 项，关闭外部历史后不保留迟到读取结果。读取配置和链接元数据，不读取用户文档内容、不写入外部软件数据或系统历史。
