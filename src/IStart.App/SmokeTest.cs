@@ -47,6 +47,9 @@ internal static partial class SmokeTest
         VerifySoftwareDiscovery(fixture);
         VerifyWebsiteHistory(fixture);
         VerifyUpdater(fixture);
+        Check(ComputerItems.IsControlPanelCategory(ComputerItems.ControlPanel[6..] + "\\5")
+            && !ComputerItems.IsControlPanelCategory(ComputerItems.ControlPanel[6..] + "\\7")
+            && !ComputerItems.IsControlPanelCategory(ComputerItems.ControlPanel[6..] + "\\0"), "控制面板仅允许七个大类，排除轻松使用及全部子项");
         var recentFolder = Path.Combine(fixture, "recent");
         Directory.CreateDirectory(recentFolder);
         ShellShortcut.CreateFixture(Path.Combine(recentFolder, "文档.lnk"), file);
@@ -258,15 +261,17 @@ internal static partial class SmokeTest
         sitesBitmap.Render(backdrop); sitesBitmap.Render(content);
         var sitesEncoder = new PngBitmapEncoder(); sitesEncoder.Frames.Add(BitmapFrame.Create(sitesBitmap));
         using (var stream = File.Create(Path.Combine(output, "menu-websites.png"))) sitesEncoder.Save(stream);
-        window.computer = new([new("系统 (C:)", "C:\\", "可用 120 GB / 共 256 GB", 53), new("资料 (D:)", "D:\\", "可用 640 GB / 共 1 TB", 36)],
-            [new("程序和功能", "shell:::{7B81BE6A-CE2B-4676-A29E-EB907A5126C5}"), new("网络和共享中心", "shell:::{8E908FC9-BECC-40F6-915B-F4CA0E70D03D}")], false);
+        window.computer = new([new("系统 (C:)", "C:\\", "可用 120 GB / 共 256 GB", 53), new("资料 (D:)", "D:\\", "可用 640 GB / 共 1 TB", 36), new("资料 (E:)", "E:\\", "可用 527 GB / 共 621 GB", 15), new("资料 (F:)", "F:\\", "可用 606 GB / 共 621 GB", 3), new("G:\\", "G:\\", "设备未就绪")],
+            new[] { "系统和安全", "网络和 Internet", "硬件和声音", "程序", "用户账户", "外观和个性化", "时钟和区域" }.Select((title, index) => new ComputerItem(title, ComputerItems.ControlPanel + "\\" + new[] { 5, 3, 2, 8, 9, 1, 6 }[index])).ToList(), false);
         navigation.SelectedItem = navigation.Items.OfType<MenuCategory>().Single(c => c.Name == "我的电脑");
         content.UpdateLayout();
         Check(groupedList.Visibility == Visibility.Collapsed && ((System.Windows.Controls.ScrollViewer)window.FindName("ComputerScroll")).Visibility == Visibility.Visible, "我的电脑独立内容区切换");
+        var computerScroll = (System.Windows.Controls.ScrollViewer)window.FindName("ComputerScroll");
         var computerBitmap = new RenderTargetBitmap(740, 660, 96, 96, PixelFormats.Pbgra32);
         computerBitmap.Render(backdrop); computerBitmap.Render(content);
         var computerEncoder = new PngBitmapEncoder(); computerEncoder.Frames.Add(BitmapFrame.Create(computerBitmap));
         using (var stream = File.Create(Path.Combine(output, "menu-computer.png"))) computerEncoder.Save(stream);
+        Check(computerScroll.ExtentHeight <= computerScroll.ViewportHeight + 1, $"默认尺寸下五个磁盘与七个控制面板分类无需滚动：内容 {computerScroll.ExtentHeight}，可视 {computerScroll.ViewportHeight}");
         search.Text = "网络";
         Check(((System.Windows.Controls.StackPanel)window.FindName("ComputerPanel")).Children.OfType<System.Windows.Controls.Primitives.UniformGrid>().SelectMany(g => g.Children.OfType<System.Windows.Controls.Button>()).Count() == 1, "我的电脑搜索过滤系统入口");
         search.Clear();

@@ -97,7 +97,7 @@ GitHub 发布边界：build.yml 将 ProductVersion 绑定检出 SHA；release.ym
 
 ## 我的电脑与应用内升级（preview.17 开发版）
 
-ComputerItems 使用 DriveInfo 读取分区和就绪本机磁盘容量；映射网络盘只展示入口，不查询远程容量。当前用户 Shell.Application 枚举控制面板的最多 128 个项目，finally 释放 COM 对象。MainWindow.Computer 在独立异步任务读取，等待预算 5 秒；未结束的任务不会重复创建。视图显示磁盘容量、回收站、网络及默认展开的控制面板项目，支持名称搜索；系统入口通过 explorer.exe 的单个 ArgumentList 参数打开，不写入个人文件历史、不执行清空回收站等操作。ShellIconConverter 沿用 PIDL 图标能力读取虚拟系统入口。
+ComputerItems 使用 DriveInfo 读取分区和就绪本机磁盘容量；映射网络盘只展示入口，不查询远程容量。当前用户 Shell.Application 枚举控制面板类别根目录的最多 16 个入口，仅保留系统和安全、网络和 Internet、硬件和声音、程序、用户账户、外观和个性化、时钟和区域这 7 个类别；按系统类别 ID 过滤，排除轻松使用和所有控制面板项，finally 释放 COM 对象。MainWindow.Computer 在独立异步任务读取，等待预算 5 秒；未结束的任务不会重复创建。视图以紧凑三列显示磁盘容量、回收站、网络及默认展开的控制面板项目，支持名称搜索；系统入口通过 explorer.exe 的单个 ArgumentList 参数打开，不写入个人文件历史、不执行清空回收站等操作。ShellIconConverter 沿用 PIDL 图标能力读取虚拟系统入口。
 
 GitHubUpdater 只在用户打开升级页时访问固定仓库的公开 Releases API（最多 100 个版本，响应上限 2 MiB，30 秒预算）。按数值版本比较；预览用户可跟随更高预览或正式版，正式用户不接收预览。排除草稿，只接受精确匹配版本名的 x64 安装资产、固定仓库下载 URL、256 MiB 内大小和 GitHub SHA256 digest。下载流最大 15 分钟，展示实际字节进度，写入独立 GUID 目录的 .part；校验大小和 SHA256 后才改名为 exe。关闭窗口取消请求，失败清理本次临时文件，保留原版本。成功后只清理更新器拥有的超过 7 天且非最近两次下载的已知缓存文件，不递归删除未知内容。
 

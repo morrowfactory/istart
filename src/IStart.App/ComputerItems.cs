@@ -10,7 +10,9 @@ internal static class ComputerItems
 {
     internal const string RecycleBin = "shell:RecycleBinFolder";
     internal const string Network = "shell:NetworkPlacesFolder";
-    internal const string ControlPanel = "shell:::{26EE0668-A00A-44D7-9371-BEB064C98683}\\0";
+    internal const string ControlPanel = "shell:::{26EE0668-A00A-44D7-9371-BEB064C98683}";
+    private static readonly int[] CategoryOrder = [5, 3, 2, 8, 9, 1, 6];
+    internal static bool IsControlPanelCategory(string path) => CategoryOrder.Any(id => path.Equals(ControlPanel[6..] + "\\" + id, StringComparison.OrdinalIgnoreCase));
 
     public static ComputerSnapshot Read(CancellationToken token)
     {
@@ -45,7 +47,7 @@ internal static class ComputerItems
             else
             {
                 items = ((dynamic)folder).Items();
-                var count = Math.Min((int)((dynamic)items).Count, 128);
+                var count = Math.Min((int)((dynamic)items).Count, 16);
                 for (var i = 0; i < count; i++)
                 {
                     token.ThrowIfCancellationRequested();
@@ -54,7 +56,7 @@ internal static class ComputerItems
                     {
                         string path = ((dynamic)item).Path;
                         string name = ((dynamic)item).Name;
-                        if (!string.IsNullOrWhiteSpace(name) && path.StartsWith("::{", StringComparison.Ordinal))
+                        if (!string.IsNullOrWhiteSpace(name) && IsControlPanelCategory(path))
                             panel.Add(new(name, "shell:" + path));
                     }
                     finally { Marshal.FinalReleaseComObject(item); }
@@ -69,7 +71,7 @@ internal static class ComputerItems
             if (folder is not null) Marshal.FinalReleaseComObject(folder);
             if (shell is not null) Marshal.FinalReleaseComObject(shell);
         }
-        return new(drives, panel.OrderBy(i => i.Title, StringComparer.CurrentCultureIgnoreCase).ToList(), unavailable);
+        return new(drives, panel.OrderBy(i => Array.IndexOf(CategoryOrder, int.Parse(i.Target[(i.Target.LastIndexOf('\\') + 1)..]))).ToList(), unavailable);
     }
 
     private static string Size(long bytes) => bytes >= 1L << 40 ? $"{bytes / (double)(1L << 40):0.#} TB" : $"{bytes / (double)(1L << 30):0.#} GB";
