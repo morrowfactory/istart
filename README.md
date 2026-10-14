@@ -2,13 +2,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前发布：0.2.0-preview.16 预览版**
+**当前发布：0.2.0-preview.17 预览版**
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.16/iStart-Setup-0.2.0-preview.16.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.16) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.17/iStart-Setup-0.2.0-preview.17.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.17) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 ## 当前功能
 
-当前开发版为 `0.2.0-preview.17`，新增下述“我的电脑”和应用内升级；上方下载链接仍指向已公开的 preview.16，preview.17 尚未发布。
+本版新增“我的电脑”和应用内升级。公开安装包与校验信息见上方发布链接。
 
 | 入口 | 显示内容 | 排序与限制 |
 | --- | --- | --- |
