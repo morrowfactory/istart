@@ -12,6 +12,7 @@ public sealed class CategoryIconConverter : IValueConverter
         if (value is not MenuCategory category) return null;
         var name = category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff") ? "apps"
             : category.Id == new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee") ? "recent"
+            : category.Name == "我的电脑" ? "computer"
             : category.Name == "我的网站" ? "website" : "folder";
         if (!Icons.TryGetValue(name, out var icon))
         {

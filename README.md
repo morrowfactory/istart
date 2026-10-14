@@ -2,11 +2,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前发布：0.2.0-preview.16 预览版**
+**当前发布：0.2.0-preview.17 预览版**
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.16/iStart-Setup-0.2.0-preview.16.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.16) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.17/iStart-Setup-0.2.0-preview.17.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.17) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 ## 当前功能
+
+本版新增“我的电脑”和应用内升级。公开安装包与校验信息见上方发布链接。
 
 | 入口 | 显示内容 | 排序与限制 |
 | --- | --- | --- |
@@ -14,6 +16,7 @@
 | 最近打开 | iStart、Windows、WPS、LibreOffice 等留下记录的有效文件 | 最近优先、去重，最多 100 项；不显示文件夹和程序 |
 | 常用文件夹 | 已添加目录及本机活动中的目录 | 默认常用优先，同页按钮切换最近打开；按窗口空位补充 |
 | 我的网站 | Chrome 和 Edge 的有限本机浏览历史，按域名合并 | 默认常用优先，同页按钮切换最近网址清单，最多 30 个 |
+| 我的电脑 | 硬盘分区、可用容量、回收站、网络、可展开的 7 个控制面板大类（不含轻松使用） | 点击系统项目打开 Windows 原生页面；支持当前页搜索 |
 
 - Windows 11 Fluent / Google 两种风格，在设置中即时切换并保存。
 - 桌面、任务栏、窗口、托盘、安装器和菜单使用统一 iStart 图标。
@@ -21,16 +24,18 @@
 - 保留 Windows 原生菜单恢复、账户、电源和托盘入口。
 - 已移除独立软件推荐区、未分类、新建分类和分类名称输入框；旧入口数据保留兼容。
 
-![四个入口与网站最近清单](docs/prototypes/activity-websites.png)
+![五个入口与我的电脑](docs/prototypes/computer.png)
 
-界面示意使用测试网址；实际内容来自当前账户的本机记录。详见[活动视图说明](docs/ACTIVITY_VIEWS.md)。
+界面示意使用测试磁盘容量；实际内容来自当前账户的本机系统与活动记录。详见[活动视图说明](docs/ACTIVITY_VIEWS.md)。
 
 ## 安装与使用
 
 1. 下载并运行安装包，按中文向导选择位置与选项，查看实际安装进度。
 2. 安装仅用于当前账户，无需管理员权限，也无需另装 .NET。新安装默认不创建桌面快捷方式、不启用开机启动、不接管开始入口；可按需勾选。
-3. 从四个入口访问内容，直接输入搜索文字；拖入软件快捷方式和文件夹可添加入口。
+3. 从五个入口访问内容，直接输入搜索文字；拖入软件快捷方式和文件夹可添加入口。
 4. 在“设置 → 外观风格”选择 Windows 或 Google。网站与文件夹页面的按钮可切换常用/最近，选择会保存。
+
+设置底部显示当前版本；点击“检查更新 / 升级”打开升级页，查看版本说明、下载进度和校验结果，再点击安装进入升级向导。更新仅连接 `morrowfactory/istart` 的 GitHub Releases，预览版跟随更高预览版或正式版，正式版只跟随正式版；不会自动静默安装。下载失败或关闭升级窗口时当前程序继续可用。开发和验收运行不能启动覆盖安装。
 
 安装包目前未签名。升级保留原有入口、记录和有效设置；旧分类数据保留，但不再显示分类编辑界面。隐藏入口不会卸载软件、移动原文件或删除浏览器历史。
 
@@ -57,11 +62,12 @@ Explorer 重启、多屏缩放、自动隐藏任务栏、长期稳定性，以�
 ## 本地数据与隐私
 
 - 配置位于 `%LOCALAPPDATA%\iStart\library.json`，保留一份 `.bak`。卸载不主动删除个人入口和记录。
-- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。
+- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。检查更新与下载是用户主动触发的 GitHub 网络请求。
 - 软件排序参考 Windows 累计应用切换与 iStart 打开记录；目录排序参考打开次数及近期文件活动，均不是完整系统频率或精确月统计。
 - 网站只读取 Chrome/Edge 保留的有限历史，不读取 Cookie、密码、网页内容或无痕会话；同域名合并后打开网站根地址。
 - 设置可关闭外部文件/文件夹活动或浏览器历史读取。“清除 iStart 记录”不会清除外部历史。
 - 浏览器历史快照仅在本机临时使用，正常读取后清理；不可读、部分失败或超时会提示。
+- 升级下载缓存在 `%LOCALAPPDATA%\iStart\Updates`；取消或失败清理本次下载。成功后清理超过 7 天的旧更新缓存，至少保留最近两次下载，不清理个人数据。
 - `runtime.log` 记录运行与恢复诊断，不记录按键、网址或文件内容；超过 64 KiB 轮转，只保留一份旧日志。
 
 ## 构建与验证
@@ -74,10 +80,12 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.16.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.17.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
+
+`--probe-system <目录>` 只读检查驱动器、控制面板项目数量和 GitHub 可升级版本，不启动系统项目或安装器。
 
 `--ui-test <目录>` 使用独立配置验收界面，不修改真实开机启动；`--probe-activity <目录>` 只输出活动来源数量。`--input-test <目录>` 会操作原生菜单/运行窗口并结束它自己启动的测试子进程，仅在空闲交互桌面手动执行，不纳入 CI。
 
@@ -94,4 +102,5 @@ Inno Setup 7 有商业使用许可要求，商业发行前需取得适用授权�
 - [统一图标](docs/BRAND_ICON.md)：Figma 来源和资源维护。
 - [窗口与焦点验证](docs/FOREGROUND_VALIDATION.md)：置前、定位与直接输入。
 - [当前系统实机验收](docs/CURRENT_SYSTEM_VALIDATION.md)：历史实测范围与未执行项。
+- [我的电脑与升级验证](docs/COMPUTER_UPDATE_VALIDATION.md)：系统项目、更新来源与已测范围。
 - [GitHub 发布](docs/GITHUB_RELEASE.md)：版本来源、完整性校验与回退。

@@ -120,6 +120,7 @@ public partial class MainWindow
             Show();
             if (recentView || folderView) _ = RefreshRecentDocuments();
             if (websiteView) _ = RefreshWebsiteHistory();
+            if (computerView) _ = RefreshComputer();
             if (softwareView) _ = DiscoverSoftware();
             if (adapter?.Enabled == true)
             {
@@ -245,6 +246,13 @@ public partial class MainWindow
             finally { save.IsEnabled = true; }
         };
         panel.Children.Add(save);
+        panel.Children.Add(new TextBlock { Text = "版本与升级", FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 18, 0, 8) });
+        panel.Children.Add(new TextBlock { Text = $"当前版本 {GitHubUpdater.CurrentVersion}" });
+        var update = new Button { Content = "检查更新 / 升级", Margin = new Thickness(0, 8, 0, 0) };
+        update.Click += (_, _) => new UpdateWindow(window, store.Library.StartWithWindows).ShowDialog();
+        panel.Children.Add(update);
+        window.MaxHeight = SystemParameters.WorkArea.Height - 40;
+        window.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         window.ShowDialog();
     }
     internal void SetTheme(string theme)

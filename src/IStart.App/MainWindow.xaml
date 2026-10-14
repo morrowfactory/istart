@@ -26,7 +26,8 @@
           <DockPanel><StackPanel Orientation="Horizontal" DockPanel.Dock="Right"><Button x:Name="ActivitySortButton" Content="常用网站 · 切换最近" Visibility="Collapsed" Click="ToggleActivitySort"/><Button x:Name="ViewToggle" Content="图标" Click="ToggleView"/><Button x:Name="AddFileButton" Content="＋ 软件" Style="{StaticResource PrimaryButton}" Click="AddFile"/><Button x:Name="AddFolderButton" Content="＋ 文件夹" Click="AddFolder"/></StackPanel><TextBlock x:Name="SectionTitle" Text="我的软件" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
 
         </StackPanel>
-        <TextBlock x:Name="SearchStatus" DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/><ListBox x:Name="EntryList" BorderThickness="0" Background="{DynamicResource ContentSurface}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="EntryDrop" DragOver="EntryDragOver" MouseDoubleClick="OpenSelected" KeyDown="EntryKeyDown" ContextMenuOpening="EntryContextMenu" AutomationProperties.Name="收藏入口">
+
+        <TextBlock x:Name="SearchStatus" DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/><Grid><ListBox x:Name="EntryList" BorderThickness="0" Background="{DynamicResource ContentSurface}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="EntryDrop" DragOver="EntryDragOver" MouseDoubleClick="OpenSelected" KeyDown="EntryKeyDown" ContextMenuOpening="EntryContextMenu" AutomationProperties.Name="收藏入口">
 
           <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="5,7"/></Style></ListBox.ItemContainerStyle>
           <ListBox.ItemTemplate>
@@ -39,6 +40,7 @@
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
+        <ScrollViewer x:Name="ComputerScroll" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="ComputerPanel"/></ScrollViewer></Grid>
       </DockPanel></Border>
     </Grid>
     <Border Grid.Row="2" Background="{DynamicResource StatusSurface}" CornerRadius="{DynamicResource StatusRadius}" Padding="{DynamicResource StatusPadding}" Margin="0,10,0,6"><DockPanel><Button x:Name="UndoButton" Content="撤销移除" Visibility="Collapsed" DockPanel.Dock="Right" Click="UndoRemove"/><TextBlock x:Name="StatusText" FontSize="{DynamicResource StatusFontSize}" Text="拖入即可添加入口，原文件保持原位。双击或按 Enter 打开。" TextWrapping="Wrap" VerticalAlignment="Center"/></DockPanel></Border>

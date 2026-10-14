@@ -15,6 +15,21 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.Length == 2 && e.Args[0] == "--probe-system")
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            try
+            {
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(35));
+                var system = Task.Run(() => ComputerItems.Read(timeout.Token), timeout.Token).WaitAsync(timeout.Token).GetAwaiter().GetResult();
+                var update = Task.Run(() => GitHubUpdater.Check(timeout.Token), timeout.Token).GetAwaiter().GetResult();
+                Directory.CreateDirectory(e.Args[1]);
+                File.WriteAllText(Path.Combine(e.Args[1], "system-probe.txt"), $"当前版本：{GitHubUpdater.CurrentVersion}\n驱动器：{system.Drives.Count}\n控制面板项目：{system.ControlPanel.Count}\n控制面板不可用：{system.PanelUnavailable}\n可升级版本：{update?.Version ?? "无"}\n");
+                Shutdown(0);
+            }
+            catch (Exception ex) { Directory.CreateDirectory(e.Args[1]); File.WriteAllText(Path.Combine(e.Args[1], "failure.txt"), ex.ToString()); Shutdown(1); }
+            return;
+        }
         if (e.Args.Length == 2 && e.Args[0] == "--probe-activity")
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
