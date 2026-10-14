@@ -37,7 +37,7 @@ public sealed class ShellIconConverter : IValueConverter
         if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http") return WebsiteIcon.Value;
         var cacheKey = path;
         if (Cache.TryGetValue(path, out var icon)) return icon;
-        if (path.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal))
+        if (path.StartsWith("shell:", StringComparison.Ordinal))
         {
             nint item = 0;
             try

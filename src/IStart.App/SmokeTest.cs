@@ -46,6 +46,7 @@ internal static partial class SmokeTest
 
         VerifySoftwareDiscovery(fixture);
         VerifyWebsiteHistory(fixture);
+        VerifyUpdater(fixture);
         var recentFolder = Path.Combine(fixture, "recent");
         Directory.CreateDirectory(recentFolder);
         ShellShortcut.CreateFixture(Path.Combine(recentFolder, "文档.lnk"), file);
@@ -77,7 +78,7 @@ internal static partial class SmokeTest
         var pinnedFolder = new MenuEntry(Guid.NewGuid(), fixture, "手动固定", Guid.Empty);
         LaunchRecord[] folderOwn = [new(highFolder, "高频", DateTimeOffset.UtcNow.AddDays(-1), 12)];
         LaunchRecord[] folderExternal = [new(newFolder, "新近", DateTimeOffset.UtcNow, 1),
-            new(highFolder, "重复", DateTimeOffset.UtcNow, 1), new(fixture, "已固定", DateTimeOffset.UtcNow, 1)];
+            new(highFolder, "重复", DateTimeOffset.UtcNow, 1), new(fixture, "已固定", DateTimeOffset.UtcNow.AddMinutes(1), 1)];
         var folderResults = FrequentFolders.Build([pinnedFolder], folderOwn, folderExternal, 3, Guid.Empty, new HashSet<string>());
         Check(folderResults.Count == 3 && folderResults[0].Target == highFolder && folderResults.Contains(pinnedFolder),
             "常用文件夹高频在前，固定入口保留且去重");
@@ -164,7 +165,7 @@ internal static partial class SmokeTest
         Check(groupedList.Items.OfType<MenuEntry>().First().Target == "https://work.example/", "网站页面默认常用排序");
         activitySort.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
         Check(store.Library.WebsitesRecentFirst && groupedList.Items.OfType<MenuEntry>().First().Target == "https://recent.example/", "网站同页切换最近并保存");
-        Check(navigation.Items.OfType<MenuCategory>().Select(c => c.Name).SequenceEqual(new[] { "我的软件", "最近打开", "常用文件夹", "我的网站" }), "四个固定入口，无未分类和自定义分类");
+        Check(navigation.Items.OfType<MenuCategory>().Select(c => c.Name).SequenceEqual(new[] { "我的软件", "最近打开", "常用文件夹", "我的网站", "我的电脑" }), "五个固定入口，无未分类和自定义分类");
         navigation.SelectedIndex = 0;
         store.Change(s => { s.ShowWindowsRecentDocuments = true; s.Launches = priorLaunches; });
         var content = (FrameworkElement)window.Content;
@@ -257,6 +258,18 @@ internal static partial class SmokeTest
         sitesBitmap.Render(backdrop); sitesBitmap.Render(content);
         var sitesEncoder = new PngBitmapEncoder(); sitesEncoder.Frames.Add(BitmapFrame.Create(sitesBitmap));
         using (var stream = File.Create(Path.Combine(output, "menu-websites.png"))) sitesEncoder.Save(stream);
+        window.computer = new([new("系统 (C:)", "C:\\", "可用 120 GB / 共 256 GB", 53), new("资料 (D:)", "D:\\", "可用 640 GB / 共 1 TB", 36)],
+            [new("程序和功能", "shell:::{7B81BE6A-CE2B-4676-A29E-EB907A5126C5}"), new("网络和共享中心", "shell:::{8E908FC9-BECC-40F6-915B-F4CA0E70D03D}")], false);
+        navigation.SelectedItem = navigation.Items.OfType<MenuCategory>().Single(c => c.Name == "我的电脑");
+        content.UpdateLayout();
+        Check(groupedList.Visibility == Visibility.Collapsed && ((System.Windows.Controls.ScrollViewer)window.FindName("ComputerScroll")).Visibility == Visibility.Visible, "我的电脑独立内容区切换");
+        var computerBitmap = new RenderTargetBitmap(740, 660, 96, 96, PixelFormats.Pbgra32);
+        computerBitmap.Render(backdrop); computerBitmap.Render(content);
+        var computerEncoder = new PngBitmapEncoder(); computerEncoder.Frames.Add(BitmapFrame.Create(computerBitmap));
+        using (var stream = File.Create(Path.Combine(output, "menu-computer.png"))) computerEncoder.Save(stream);
+        search.Text = "网络";
+        Check(((System.Windows.Controls.StackPanel)window.FindName("ComputerPanel")).Children.OfType<System.Windows.Controls.Primitives.UniformGrid>().SelectMany(g => g.Children.OfType<System.Windows.Controls.Button>()).Count() == 1, "我的电脑搜索过滤系统入口");
+        search.Clear();
         navigation.SelectedIndex = 0;
         window.SetTheme("Google");
         content.UpdateLayout();
@@ -282,7 +295,7 @@ internal static partial class SmokeTest
         Check(!closed && !resident.IsVisible && !resident.Topmost, "关闭窗口收起到托盘并解除浮层");
         resident.RequestExit("smoke");
         Check(closed, "显式退出结束窗口");
-        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界、Windows/Google 即时往返切换、主题保存重开与未知值回退。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
+        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 更新版本选择、下载完整性、取消和失败清理；我的电脑视图及搜索； 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界、Windows/Google 即时往返切换、主题保存重开与未知值回退。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
         window.Close();
     }
 

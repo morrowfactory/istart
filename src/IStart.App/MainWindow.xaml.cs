@@ -14,7 +14,7 @@ public partial class MainWindow : Window
     private bool ready;
     internal List<SoftwareCandidate> candidates = [];
     internal Dictionary<string, int> softwareUsage = new(StringComparer.OrdinalIgnoreCase);
-    private bool softwareView => !recentView && !folderView && !websiteView;
+    private bool softwareView => !recentView && !folderView && !websiteView && !computerView;
     private CancellationTokenSource? discovery;
     private bool recentView;
     private bool folderView;
@@ -63,12 +63,13 @@ public partial class MainWindow : Window
     }
     private void RefreshCategories()
     {
-        CategoryList.ItemsSource = new[] { new MenuCategory(AllCategory, "我的软件"), new(RecentCategory, "最近打开"), new(FoldersCategory, "常用文件夹"), new(WebsitesCategory, "我的网站") };
+        CategoryList.ItemsSource = new[] { new MenuCategory(AllCategory, "我的软件"), new(RecentCategory, "最近打开"), new(FoldersCategory, "常用文件夹"), new(WebsitesCategory, "我的网站"), new(ComputerCategory, "我的电脑") };
         CategoryList.SelectedIndex = 0;
     }
     private void RefreshEntries()
     {
         if (!ready) return;
+        if (computerView) { RenderComputer(); return; }
         var keyword = SearchBox.Text.Trim();
         IEnumerable<MenuEntry> source = recentView ? RecentDocuments.Files(store.Library.Launches,
             store.Library.ShowWindowsRecentDocuments ? windowsRecent : []).Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
@@ -128,17 +129,21 @@ public partial class MainWindow : Window
     private void CategoryChanged(object sender, SelectionChangedEventArgs e)
     {
         if (CategoryList.SelectedItem is not MenuCategory category) return;
+        computerView = category.Id == ComputerCategory;
         recentView = category.Id == RecentCategory;
         websiteView = category.Id == WebsitesCategory;
         folderView = category.Id == FoldersCategory || category.Name == "常用文件夹";
         SectionTitle.Text = category.Name;
         AddFileButton.Content = softwareView ? "＋ 软件" : "＋ 文件";
-        AddFileButton.Visibility = folderView || websiteView ? Visibility.Collapsed : Visibility.Visible;
+        AddFileButton.Visibility = folderView || websiteView || computerView ? Visibility.Collapsed : Visibility.Visible;
         AddFolderButton.Visibility = folderView ? Visibility.Visible : Visibility.Collapsed;
         ActivitySortButton.Visibility = websiteView || folderView ? Visibility.Visible : Visibility.Collapsed;
-        ViewToggle.Visibility = websiteView ? Visibility.Collapsed : Visibility.Visible;
+        ViewToggle.Visibility = websiteView || computerView ? Visibility.Collapsed : Visibility.Visible;
+        EntryList.Visibility = computerView ? Visibility.Collapsed : Visibility.Visible;
+        ComputerScroll.Visibility = computerView ? Visibility.Visible : Visibility.Collapsed;
         RefreshEntries();
         ApplyView();
+        if (computerView) _ = RefreshComputer();
         if (recentView || folderView) _ = RefreshRecentDocuments();
         if (websiteView) _ = RefreshWebsiteHistory();
     }
@@ -190,13 +195,13 @@ public partial class MainWindow : Window
         ? content.Parent : VisualTreeHelper.GetParent(element);
     private void EntryDragOver(object sender, DragEventArgs e)
     {
-        e.Effects = !recentView && !websiteView && e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Link : DragDropEffects.None;
+        e.Effects = !recentView && !websiteView && !computerView && e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Link : DragDropEffects.None;
         e.Handled = true;
     }
     private void EntryDrop(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        if (!recentView && !websiteView && e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), Guid.Empty, null);
+        if (!recentView && !websiteView && !computerView && e.Data.GetDataPresent(DataFormats.FileDrop)) AddPaths((string[])e.Data.GetData(DataFormats.FileDrop), Guid.Empty, null);
     }
     private void RemoveEntry(object sender, RoutedEventArgs e)
     {
