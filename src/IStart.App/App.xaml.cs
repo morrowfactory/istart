@@ -65,7 +65,8 @@ public partial class App : Application
         if (e.Args.Length == 2 && e.Args[0] == "--probe-shell")
         {
             Directory.CreateDirectory(e.Args[1]);
-            File.WriteAllText(Path.Combine(e.Args[1], "shell-probe.txt"), ShellProbe.Read());
+            try { File.WriteAllText(Path.Combine(e.Args[1], "shell-probe.txt"), ShellProbe.ReadAsync().GetAwaiter().GetResult()); }
+            catch (TimeoutException) { File.WriteAllText(Path.Combine(e.Args[1], "shell-probe.txt"), "开始按钮读取超时；未接入或改变系统设置。"); }
             Shutdown();
             return;
         }

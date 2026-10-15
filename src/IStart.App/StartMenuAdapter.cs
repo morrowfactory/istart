@@ -6,7 +6,7 @@ using System.Windows.Threading;
 
 namespace IStart;
 
-internal sealed record StartTarget(nint Taskbar, Rect Bounds);
+internal sealed record StartTarget(nint Taskbar, Rect Bounds, string Source = "UIAutomation");
 
 internal sealed class WinKeyGesture
 {
@@ -39,6 +39,7 @@ internal sealed class StartMenuAdapter : IDisposable
     [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hook, int code, nint message, nint data);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern nint GetModuleHandle(string? name);
     [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindow callback, nint parameter);
+    [DllImport("user32.dll")] private static extern bool EnumChildWindows(nint parent, EnumWindow callback, nint parameter);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(nint window, System.Text.StringBuilder name, int max);
     private readonly Dispatcher dispatcher;
     private readonly Func<StartTarget[]> scanTargets;
@@ -69,7 +70,7 @@ internal sealed class StartMenuAdapter : IDisposable
     {
         ObjectDisposedException.ThrowIf(disposed, this);
         if (Enabled) return;
-        if (Environment.OSVersion.Version.Build != 26200) throw new NotSupportedException("此系统版本尚未完成入口验证，请先使用原生菜单模式。");
+        if (!ShellCompatibility.CanTry(Environment.OSVersion.Version)) throw new NotSupportedException(ShellCompatibility.Description(Environment.OSVersion.Version));
         await RefreshTargets();
         ObjectDisposedException.ThrowIf(disposed, this);
         if (targets.Length == 0) throw new NotSupportedException("未能定位开始按钮，已保留 Windows 原生入口。");
@@ -94,6 +95,7 @@ internal sealed class StartMenuAdapter : IDisposable
             if (disposed) return;
             if (snapshot.Length > 0)
             {
+                if (!targets.SequenceEqual(snapshot)) RuntimeLog.Write($"start-targets count={snapshot.Length} sources={string.Join(',', snapshot.Select(t => t.Source).Distinct())}");
                 targets = snapshot;
                 updated = Environment.TickCount64;
                 SetWaitingForTaskbar(false);
@@ -130,16 +132,43 @@ internal sealed class StartMenuAdapter : IDisposable
         var result = new List<StartTarget>();
         foreach (var bar in bars)
         {
-            if (!WinInput.IsWindowVisible(bar)) continue;
-            var root = AutomationElement.FromHandle(bar);
-            var found = root.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "StartButton"));
-            foreach (AutomationElement element in found)
+            if (!WinInput.IsWindowVisible(bar) || !WinInput.GetWindowRect(bar, out var windowRect)) continue;
+            var barBounds = new Rect(windowRect.Left, windowRect.Top, Math.Max(0, windowRect.Right - windowRect.Left), Math.Max(0, windowRect.Bottom - windowRect.Top));
+            var before = result.Count;
+            // Win10 传统任务栏可直接提供 Start 子窗口，无需依赖自动化标识或显示语言。
+            if (Environment.OSVersion.Version.Build <= 19045) FindNativeStart(bar, barBounds, result);
+            if (result.Count > before) continue;
+            try
             {
-                var rect = element.Current.BoundingRectangle;
-                if (!rect.IsEmpty && rect.Width > 0 && rect.Height > 0 && !element.Current.IsOffscreen) result.Add(new(bar, rect));
+                var root = AutomationElement.FromHandle(bar);
+                var found = root.FindAll(TreeScope.Descendants, new AndCondition(
+                    new PropertyCondition(AutomationElement.AutomationIdProperty, "StartButton"),
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button)));
+                foreach (AutomationElement element in found)
+                {
+                    var rect = element.Current.BoundingRectangle;
+                    if (!element.Current.IsOffscreen && ShellCompatibility.ValidBounds(rect, barBounds)) result.Add(new(bar, rect));
+                }
             }
+            catch (Exception ex) when (ex is COMException or ElementNotAvailableException or InvalidOperationException) { }
+            if (result.Count == before) FindNativeStart(bar, barBounds, result);
         }
-        return result.ToArray();
+        return result.Distinct().ToArray();
+    }
+    internal static void FindNativeStart(nint bar, Rect bounds, List<StartTarget> result)
+    {
+        EnumChildWindows(bar, (window, _) =>
+        {
+            var name = new System.Text.StringBuilder(128);
+            GetClassName(window, name, name.Capacity);
+            if (name.ToString() == "Start" && WinInput.GetAncestor(window, 2) == bar
+                && WinInput.IsWindowVisible(window) && WinInput.GetWindowRect(window, out var rect))
+            {
+                var button = new Rect(rect.Left, rect.Top, Math.Max(0, rect.Right - rect.Left), Math.Max(0, rect.Bottom - rect.Top));
+                if (ShellCompatibility.ValidBounds(button, bounds)) result.Add(new(bar, button, "NativeStart"));
+            }
+            return true;
+        }, 0);
     }
     private nint KeyboardHook(int code, nint message, nint data)
     {

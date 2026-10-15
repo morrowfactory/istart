@@ -47,6 +47,7 @@ internal static partial class SmokeTest
         VerifySoftwareDiscovery(fixture);
         VerifyWebsiteHistory(fixture);
         VerifyUpdater(fixture);
+        VerifyCompatibility();
         Check(ComputerItems.IsControlPanelCategory(ComputerItems.ControlPanel[6..] + "\\5")
             && !ComputerItems.IsControlPanelCategory(ComputerItems.ControlPanel[6..] + "\\7")
             && !ComputerItems.IsControlPanelCategory(ComputerItems.ControlPanel[6..] + "\\0"), "控制面板仅允许七个大类，排除轻松使用及全部子项");
@@ -300,7 +301,7 @@ internal static partial class SmokeTest
         Check(!closed && !resident.IsVisible && !resident.Topmost, "关闭窗口收起到托盘并解除浮层");
         resident.RequestExit("smoke");
         Check(closed, "显式退出结束窗口");
-        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: 更新版本选择、下载完整性、取消和失败清理；我的电脑视图及搜索； 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界、Windows/Google 即时往返切换、主题保存重开与未知值回退。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
+        File.WriteAllText(Path.Combine(output, "result.txt"), "PASS: Win10/11 试用版本策略、传统 Start 窗口定位与隐藏/越界过滤；更新版本选择、下载完整性、取消和失败清理；我的电脑视图及搜索； 添加、去重、分类排序、持久化、源文件保留、配置恢复、未知版本保护、写入失败回退、软件发现过滤、推荐偏好、schema 迁移、最近记录次数/关闭/上限、删除分类保留收藏、Win 组合键模型、电源参数、WPF 默认/图标/紧凑布局及关键控件边界、Windows/Google 即时往返切换、主题保存重开与未知值回退。\n真实鼠标拖放仍待人工验收；开始入口实机验证另见 input-result.txt。");
         window.Close();
     }
 

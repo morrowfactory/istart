@@ -205,7 +205,25 @@ public partial class MainWindow
             return box;
         }
         var custom = Option("使用自定义开始菜单（试用）", adapter?.Enabled == true);
-        panel.Children.Add(new TextBlock { Text = "当前仅在 Win11 26200 验证了基本接入；其他版本保持原生入口。", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 0, 0, 10) });
+        panel.Children.Add(new TextBlock { Text = ShellCompatibility.Description(Environment.OSVersion.Version), TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 0, 0, 10) });
+        var diagnostic = new Button { Content = "导出开始菜单兼容诊断", Margin = new Thickness(0, 0, 0, 10) };
+        diagnostic.Click += async (_, _) =>
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog { Title = "保存兼容诊断", FileName = "iStart-兼容诊断.txt", Filter = "文本文件|*.txt" };
+            if (dialog.ShowDialog(window) != true) return;
+            diagnostic.IsEnabled = false;
+            try
+            {
+                var report = await ShellProbe.ReadAsync();
+                report += $"\n当前接入：{adapter?.Enabled == true}";
+                await File.WriteAllTextAsync(dialog.FileName, report);
+                MessageBox.Show(window, "诊断已保存；未更改系统设置，也未上传数据。", "iStart");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or TimeoutException or System.Runtime.InteropServices.COMException or InvalidOperationException)
+            { MessageBox.Show(window, "诊断暂未完成，请稍后重试。", "iStart"); }
+            finally { diagnostic.IsEnabled = true; }
+        };
+        panel.Children.Add(diagnostic);
         var startup = Option("登录 Windows 后启动 iStart", store.Library.StartWithWindows);
         startup.IsEnabled = !App.IsUITest;
         if (App.IsUITest) startup.ToolTip = "交互验收模式不修改真实开机启动项。";
