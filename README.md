@@ -2,9 +2,9 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前发布：0.2.0-preview.17 预览版**
+**当前发布：0.2.0-preview.18 预览版**
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.17/iStart-Setup-0.2.0-preview.17.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.17) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.18/iStart-Setup-0.2.0-preview.18.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.18) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 ## 当前功能
 
@@ -50,14 +50,14 @@
 
 ## 兼容性与已知限制
 
-开发版 `0.2.0-preview.18` 增加已知 Win10/11 版本的能力检测试用和设置内诊断导出；当前公开下载仍为 preview.17，旧版仍只允许 26200 接入。
+本版增加已知 Win10/11 版本的能力检测试用和设置内诊断导出；preview.17 及更旧版本仍只允许 26200 接入。
 
 目标为 Windows 10/11 x64，目前仍是预览版，不能视为已完成双系统兼容验收。
 
 | 系统 | 当前验证范围 |
 | --- | --- |
-| Windows 11 25H2 x64，26200.9457 | 开始按钮、单独 Win 键、Win+R 保留及基本恢复已实机检查；基本接入与恢复已实机验证；开发版继续优先使用 UIAutomation 定位 |
-| Windows 10 19041–19045；Windows 11 22000、22621、22631、26100 | 开发版允许用户主动启用兼容试用，成功定位按钮后才安装钩子；尚无对应系统实机验收 |
+| Windows 11 25H2 x64，26200.9457 | 开始按钮、单独 Win 键、Win+R 保留及基本恢复已实机检查；基本接入与恢复已实机验证；继续优先使用 UIAutomation 定位 |
+| Windows 10 19041–19045；Windows 11 22000、22621、22631、26100 | 允许用户主动启用兼容试用，成功定位按钮后才安装钩子；尚无对应系统实机验收 |
 | 其他版本、定位失败或异常恢复 | 保持原生入口；不猜测开始按钮坐标 |
 
 设置中的“导出开始菜单兼容诊断”保存版本策略、显示器数量、按钮数量/边界与识别方式，不包含软件列表、文件路径或网址，不上传数据。详细测试范围见[Windows 兼容说明](docs/WINDOWS_COMPATIBILITY.md)。
