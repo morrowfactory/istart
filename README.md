@@ -2,9 +2,9 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前发布：0.2.0-preview.17 预览版**
+**当前发布：0.2.0-preview.18 预览版**
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.17/iStart-Setup-0.2.0-preview.17.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.17) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.18/iStart-Setup-0.2.0-preview.18.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.18) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 ## 当前功能
 
@@ -50,12 +50,17 @@
 
 ## 兼容性与已知限制
 
+本版增加已知 Win10/11 版本的能力检测试用和设置内诊断导出；preview.17 及更旧版本仍只允许 26200 接入。
+
 目标为 Windows 10/11 x64，目前仍是预览版，不能视为已完成双系统兼容验收。
 
 | 系统 | 当前验证范围 |
 | --- | --- |
-| Windows 11 25H2 x64，26200.9457 | 开始按钮、单独 Win 键、Win+R 保留及基本恢复已实机检查；自定义接入仅对白名单内部版本 26200 开放 |
-| Windows 10、其他 Windows 11 版本 | 保持原生开始入口；完整兼容验收待完成 |
+| Windows 11 25H2 x64，26200.9457 | 开始按钮、单独 Win 键、Win+R 保留及基本恢复已实机检查；基本接入与恢复已实机验证；继续优先使用 UIAutomation 定位 |
+| Windows 10 19041–19045；Windows 11 22000、22621、22631、26100 | 允许用户主动启用兼容试用，成功定位按钮后才安装钩子；尚无对应系统实机验收 |
+| 其他版本、定位失败或异常恢复 | 保持原生入口；不猜测开始按钮坐标 |
+
+设置中的“导出开始菜单兼容诊断”保存版本策略、显示器数量、按钮数量/边界与识别方式，不包含软件列表、文件路径或网址，不上传数据。详细测试范围见[Windows 兼容说明](docs/WINDOWS_COMPATIBILITY.md)。
 
 Explorer 重启、多屏缩放、自动隐藏任务栏、长期稳定性，以及交互式安装取消/失败回退仍需进一步验证。运行时支持与应用实测需分别判断，参见 [.NET 官方系统矩阵](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md)。
 
@@ -80,7 +85,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.17.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.18.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
