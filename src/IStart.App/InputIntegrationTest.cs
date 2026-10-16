@@ -1,11 +1,13 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace IStart;
 
 internal static class InputIntegrationTest
 {
+    [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hook, int code, nint message, nint data);
     public static async Task Run(string output)
     {
         Directory.CreateDirectory(output);
@@ -22,6 +24,21 @@ internal static class InputIntegrationTest
             WinInput.Keys((0x1B, false), (0x1B, true));
             await Task.Delay(300);
             await adapter.Enable();
+            var probes = 0;
+            using (var monitor = new InputHookThread((code, message, data) =>
+            {
+                if (code >= 0 && Marshal.ReadInt32(data) == 0x87) Interlocked.Increment(ref probes);
+                return CallNextHookEx(0, code, message, data);
+            }, (code, message, data) => CallNextHookEx(0, code, message, data)))
+            {
+                await monitor.Ready;
+                var sendProbe = Task.Run(async () => { await Task.Delay(100); Check(WinInput.TestKeys((0x87, false), (0x87, true)), "发送 F24 线程探针"); });
+                // 仅阻塞本测试进程的 UI；探针不触发截图、启动软件或修改个人配置。
+                Thread.Sleep(1300);
+                await sendProbe;
+                Check(Volatile.Read(ref probes) >= 2, "UI 阻塞期间专用钩子仍处理输入");
+                report.Add("PASS dedicated hook thread => input processed during 1300 ms UI stall");
+            }
             Check(WinInput.TestKeys((0x5B, false), (0x5B, true)), "发送 Win 键");
             await Task.Delay(600);
             Check(count == 1, "单独 Win 键触发一次自定义入口");

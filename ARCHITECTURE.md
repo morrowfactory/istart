@@ -6,6 +6,8 @@
 
 ## 模块边界
 
+InputHookThread 在独立 STA 消息循环安装和卸载低级键鼠钩子，回调仅识别手势、校验本机 HWND 并向 UI Dispatcher 投递；同一待处理打开请求合并，生命周期代数阻止停用前的队列请求在重新启用后执行。UI 心跳超过 2 秒时键盘放行并清理 Win 手势，鼠标后续按下不拦截；已拦截的抬起仍消费，避免半个鼠标手势传给 Explorer。Win10 StartTarget 带真实 ButtonWindow，点击时检查类名、父任务栏、可见性、实时边界；UIAutomation 仍使用 1.5 秒新鲜度限制。主窗口接收 TaskbarCreated、WM_DISPLAYCHANGE、WM_SETTINGCHANGE 后清空快照，并通过快照代数拒绝变化前的扫描覆盖新状态；COM 检测超时尝试纯原生窗口枚举，不累积挂起自动化任务。启用共享同一个待完成任务，有限重试仍失败时保留原生入口。专用线程不注入 Explorer，不添加服务或驱动。
+
 ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT）注册全局组合，通过 HwndSource 的 WM_HOTKEY 回调启动截屏；正常关闭注销快捷键并移除 Hook，与开始菜单钩子独立。配置 ScreenshotShortcut 缺失时默认 Alt+Shift+A，未知值不注册；不读取或修改企业微信配置。发生占用时保留菜单截屏按钮并在设置显示冲突，可选择备用组合或关闭。交互验收模式不注册全局快捷键，纯界面测试不安装全局钩子。
 
 截屏由 MainWindow.Screenshot 协调隐藏菜单并等待重绘，Screenshot 使用 GDI CopyFromScreen 获取菜单所在显示器的物理像素；ScreenshotWindow / CaptureSurface 提供浮动工具栏、选区移动缩放和标注。编辑期间阻止开始入口再次显示菜单。导出根据选区裁剪原图与标注，不包含遮罩、边框或工具栏；文字和画笔保留本机内存对象，马赛克按块采样。截图不写入活动历史，不联网；只有用户复制或保存才输出，PNG 编码成功后用临时文件替换目标并清理临时文件。当前仅截取单个显示器；真实桌面隐藏效果、剪贴板和不同 DPI 仍需交互验收。

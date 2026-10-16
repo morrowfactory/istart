@@ -26,6 +26,7 @@ internal static class WinInput
     [DllImport("user32.dll")] internal static extern nint WindowFromPoint(Point point);
     [DllImport("user32.dll")] internal static extern nint GetAncestor(nint window, uint flags);
     [DllImport("user32.dll")] internal static extern bool IsWindowVisible(nint window);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern uint RegisterWindowMessage(string name);
     [DllImport("user32.dll")] internal static extern bool SetWindowPos(nint window, nint after, int x, int y, int width, int height, uint flags);
     private static Input Key(ushort key, bool up, nuint marker) => new() { Type = 1, Value = new() { Keyboard = new() { Key = key, Flags = up ? 2u : 0u, Extra = marker } } };
     internal static bool Keys(params (ushort Key, bool Up)[] keys) => Send(keys.Select(k => Key(k.Key, k.Up, Marker)).ToArray());

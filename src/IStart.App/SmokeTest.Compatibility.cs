@@ -57,6 +57,14 @@ internal static partial class SmokeTest
             var found = new List<StartTarget>();
             StartMenuAdapter.FindNativeStart(root, new(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top), found);
             Check(found.Count == 1 && found[0].Source == "NativeStart", "原生 Start 子窗口定位，过滤隐藏和越界窗口");
+            using var adapter = new StartMenuAdapter(Application.Current.Dispatcher, _ => { }, () => []);
+            var target = found.Single();
+            Check(target.ButtonWindow != 0 && adapter.HitTarget(target, new() { X = rect.Left + 20, Y = rect.Top + 20 }), "原生按钮不依赖扫描时间戳");
+            WinInput.SetWindowPos(target.ButtonWindow, 0, 100, 0, 48, 48, 0x14);
+            Check(!adapter.HitTarget(target, new() { X = rect.Left + 20, Y = rect.Top + 20 })
+                && adapter.HitTarget(target, new() { X = rect.Left + 120, Y = rect.Top + 20 }), "开始按钮移动后拒绝旧位置并命中新位置");
+            DestroyWindow(target.ButtonWindow);
+            Check(!adapter.HitTarget(target, new() { X = rect.Left + 120, Y = rect.Top + 20 }), "开始按钮销毁后拒绝失效 HWND");
         }
         finally
         {

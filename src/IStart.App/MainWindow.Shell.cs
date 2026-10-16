@@ -14,11 +14,19 @@ public partial class MainWindow
     private bool exitRequested;
     private bool presentingMenu;
     private bool searchFocusPending;
+    private HwndSource? shellMessages;
+    private uint taskbarCreated;
     private string SessionMarker => Path.Combine(store.DirectoryPath, "session.active");
     private void InitializeShell()
     {
         InitializeScreenshotHotkey();
         adapter = new StartMenuAdapter(Dispatcher, ToggleMenu);
+        taskbarCreated = WinInput.RegisterWindowMessage("TaskbarCreated");
+        SourceInitialized += (_, _) =>
+        {
+            shellMessages = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+            shellMessages.AddHook(ShellMessage);
+        };
         adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("打开 iStart", null, (_, _) => ShowMenu(null));
@@ -57,11 +65,18 @@ public partial class MainWindow
         {
             RuntimeLog.Write("window-closed");
             adapter.Dispose();
+            shellMessages?.RemoveHook(ShellMessage);
             tray.Dispose();
             trayIcon.Dispose();
             undoTimer?.Stop();
             try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         };
+    }
+    private nint ShellMessage(nint window, int message, nint wParam, nint lParam, ref bool handled)
+    {
+        if (message == 0x007E || message == 0x001A || taskbarCreated != 0 && (uint)message == taskbarCreated)
+            adapter?.ShellChanged();
+        return 0;
     }
     internal void RequestExit(string reason)
     {
@@ -137,8 +152,12 @@ public partial class MainWindow
                 var handle = new WindowInteropHelper(this).Handle;
                 if (WinInput.GetWindowRect(handle, out var rect))
                 {
+                    var anchor = target?.Bounds ?? new Rect(area.Left, area.Bottom, 0, 0);
+                    if (target is { ButtonWindow: not 0 } && WinInput.GetWindowRect(target.ButtonWindow, out var button)
+                        && WinInput.GetAncestor(target.ButtonWindow, 2) == target.Taskbar)
+                        anchor = new Rect(button.Left, button.Top, Math.Max(0, button.Right - button.Left), Math.Max(0, button.Bottom - button.Top));
                     var position = MenuPlacement.Calculate(new Rect(area.X, area.Y, area.Width, area.Height),
-                        target?.Bounds ?? new Rect(area.Left, area.Bottom, 0, 0), new Size(rect.Right - rect.Left, rect.Bottom - rect.Top));
+                        anchor, new Size(rect.Right - rect.Left, rect.Bottom - rect.Top));
                     WinInput.SetWindowPos(handle, 0, (int)position.X, (int)position.Y, (int)position.Width, (int)position.Height, 0x4);
                 }
             }
