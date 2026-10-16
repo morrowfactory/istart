@@ -106,10 +106,12 @@ public partial class MainWindow
     }
     private void ToggleMenu(WinInput.Point? point)
     {
+        if (capturing) return;
         if (IsVisible && (IsActive || Topmost)) Hide(); else ShowMenu(point);
     }
     internal void ShowMenu(WinInput.Point? point)
     {
+        if (capturing) return;
         presentingMenu = true;
         try
         {
