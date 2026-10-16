@@ -2,9 +2,11 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前发布：0.2.0-preview.21 预览版**
+**当前版本：0.2.0-preview.22 预览版**
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.21/iStart-Setup-0.2.0-preview.21.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.21) · [所有版本](https://github.com/morrowfactory/istart/releases)
+`0.2.0-preview.22` 新增界面语言设置：默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](docs/LOCALIZATION.md)。
+
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.22/iStart-Setup-0.2.0-preview.22.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.22) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 ## 当前功能
 
@@ -42,6 +44,7 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 2. 安装仅用于当前账户，无需管理员权限，也无需另装 .NET。新安装默认不创建桌面快捷方式、不启用开机启动、不接管开始入口；可按需勾选。
 3. 从五个入口访问内容，直接输入搜索文字；拖入软件快捷方式和文件夹可添加入口。
 4. 在“设置 → 外观风格”选择 Windows 或 Google。网站与文件夹页面的按钮可切换常用/最近，选择会保存。
+5. 在“设置 → 界面语言”选择跟随系统、简体中文或 English，无需重启；旧配置升级后默认跟随系统。
 
 设置底部显示当前版本；点击“检查更新 / 升级”打开升级页，查看版本说明、下载进度和校验结果，再点击安装进入升级向导。更新仅连接 `morrowfactory/istart` 的 GitHub Releases，预览版跟随更高预览版或正式版，正式版只跟随正式版；不会自动静默安装。下载失败或关闭升级窗口时当前程序继续可用。开发和验收运行不能启动覆盖安装。
 
@@ -93,7 +96,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.21.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.22.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
@@ -103,6 +106,8 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 `--ui-test <目录>` 使用独立配置验收界面，不修改真实开机启动；`--probe-activity <目录>` 只输出活动来源数量。`--input-test <目录>` 会操作原生菜单/运行窗口并结束它自己启动的测试子进程，仅在空闲交互桌面手动执行，不纳入 CI。
 
 GitHub CI 验证构建、核心行为、布局及隔离安装/覆盖/卸载，临时产物保留 7 天。公开安装包通过[发布流程](docs/GITHUB_RELEASE.md)使用最新 main 的已验证 CI 产物，核对来源 SHA 和哈希后发布；不包含个人配置或历史。
+
+Win10 桌面兼容测试使用独立虚拟机，运行 `scripts/Test-WindowsVm.ps1`；宿主机可用 `-PreflightOnly` 只读预检。环境隔离、安装包校验和人工验收矩阵见 [Windows 测试环境](docs/WINDOWS_TEST_LAB.md)。脚本与环境准备不代表 Win10 验收通过。
 
 Inno Setup 7 有商业使用许可要求，商业发行前需取得适用授权，参见 [Inno 许可](https://jrsoftware.org/isorder.php)。项目未复制 Open-Shell 代码。
 
@@ -116,4 +121,5 @@ Inno Setup 7 有商业使用许可要求，商业发行前需取得适用授权�
 - [窗口与焦点验证](docs/FOREGROUND_VALIDATION.md)：置前、定位与直接输入。
 - [当前系统实机验收](docs/CURRENT_SYSTEM_VALIDATION.md)：历史实测范围与未执行项。
 - [我的电脑与升级验证](docs/COMPUTER_UPDATE_VALIDATION.md)：系统项目、更新来源与已测范围。
+- [界面语言](docs/LOCALIZATION.md)：系统语言回退、切换与验证边界。
 - [GitHub 发布](docs/GITHUB_RELEASE.md)：版本来源、完整性校验与回退。

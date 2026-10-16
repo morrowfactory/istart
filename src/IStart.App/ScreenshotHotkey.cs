@@ -10,7 +10,10 @@ internal sealed class ScreenshotHotkey : IDisposable
     private readonly HwndSource source;
     private readonly Action capture;
     private bool registered;
-    internal string Status { get; private set; } = "截屏快捷键已关闭。";
+    private string shortcut = "关闭";
+    internal string Status => Binding(shortcut).Key == 0 ? L.T("截屏快捷键已关闭。")
+        : registered ? L.F("截屏快捷键：{0}", shortcut)
+        : L.F("{0} 无法注册，可能已被企业微信等软件占用；请选择其他快捷键。", shortcut);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool RegisterHotKey(nint window, int id, uint modifiers, uint key);
     [DllImport("user32.dll")] private static extern bool UnregisterHotKey(nint window, int id);
 
@@ -29,12 +32,12 @@ internal sealed class ScreenshotHotkey : IDisposable
     };
     internal void Set(string shortcut)
     {
+        this.shortcut = shortcut;
         if (registered) UnregisterHotKey(source.Handle, Id);
         registered = false;
         var (modifiers, key) = Binding(shortcut);
-        if (key == 0) { Status = "截屏快捷键已关闭。"; return; }
+        if (key == 0) return;
         registered = RegisterHotKey(source.Handle, Id, modifiers | 0x4000, key);
-        Status = registered ? $"截屏快捷键：{shortcut}" : $"{shortcut} 无法注册，可能已被企业微信等软件占用；请选择其他快捷键。";
         RuntimeLog.Write("screenshot-hotkey registered=" + registered);
     }
     private nint HandleMessage(nint window, int message, nint wParam, nint lParam, ref bool handled)

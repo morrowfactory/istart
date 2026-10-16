@@ -12,6 +12,11 @@ internal static class ComputerItems
     internal const string Network = "shell:NetworkPlacesFolder";
     internal const string ControlPanel = "shell:::{26EE0668-A00A-44D7-9371-BEB064C98683}";
     private static readonly int[] CategoryOrder = [5, 3, 2, 8, 9, 1, 6];
+    internal static string CategoryName(string path) => L.T(path[(path.LastIndexOf('\\') + 1)..] switch
+    {
+        "5" => "系统和安全", "3" => "网络和 Internet", "2" => "硬件和声音", "8" => "程序",
+        "9" => "用户账户", "1" => "外观和个性化", "6" => "时钟和区域", _ => "控制面板"
+    });
     internal static bool IsControlPanelCategory(string path) => CategoryOrder.Any(id => path.Equals(ControlPanel[6..] + "\\" + id, StringComparison.OrdinalIgnoreCase));
 
     public static ComputerSnapshot Read(CancellationToken token)
@@ -20,17 +25,17 @@ internal static class ComputerItems
         foreach (var drive in DriveInfo.GetDrives())
         {
             token.ThrowIfCancellationRequested();
-            var item = new ComputerItem(drive.Name, drive.Name, "设备未就绪");
+            var item = new ComputerItem(drive.Name, drive.Name, L.T("设备未就绪"));
             try
             {
                 // 不查询映射网络盘容量，避免菜单等待网络连接。
-                if (drive.DriveType == DriveType.Network) item = item with { Detail = "网络驱动器" };
+                if (drive.DriveType == DriveType.Network) item = item with { Detail = L.T("网络驱动器") };
                 else if (drive.IsReady)
                 {
                     var total = drive.TotalSize;
                     var free = drive.AvailableFreeSpace;
-                    item = item with { Title = $"{(string.IsNullOrEmpty(drive.VolumeLabel) ? "本地磁盘" : drive.VolumeLabel)} ({drive.Name.TrimEnd('\\')})",
-                        Detail = $"可用 {Size(free)} / 共 {Size(total)}", UsedPercent = total > 0 ? 100d * (total - free) / total : null };
+                    item = item with { Title = $"{(string.IsNullOrEmpty(drive.VolumeLabel) ? L.T("本地磁盘") : drive.VolumeLabel)} ({drive.Name.TrimEnd('\\')})",
+                        Detail = L.F("可用 {0} / 共 {1}", Size(free), Size(total)), UsedPercent = total > 0 ? 100d * (total - free) / total : null };
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
@@ -57,7 +62,7 @@ internal static class ComputerItems
                         string path = ((dynamic)item).Path;
                         string name = ((dynamic)item).Name;
                         if (!string.IsNullOrWhiteSpace(name) && IsControlPanelCategory(path))
-                            panel.Add(new(name, "shell:" + path));
+                            panel.Add(new(CategoryName(path), "shell:" + path));
                     }
                     finally { Marshal.FinalReleaseComObject(item); }
                 }

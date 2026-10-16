@@ -18,6 +18,7 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | --- | --- |
 | MainWindow / Editing / Shell / Websites / Computer | 五个固定入口、搜索、图标/列表、添加与隐藏、同页活动排序、设置、托盘与定位；普通用户运行 |
 | LibraryStore | 收藏、分类、偏好、最近记录；复制后修改，临时写入与原子替换，保留一份上一版本；失败不替换内存 |
+| Localization / Strings.en.json | 集中管理产品文字与英文翻译；读取当前用户 Windows 显示语言，WPF 绑定即时更新固定文字，导航与快捷键使用稳定标识 |
 | SoftwareDiscovery / ShellShortcut | 异步发现用户与公共开始菜单 `.lnk`；IShellLinkW/IPersistFile Unicode 解析；有效 exe 目标去重，过滤安装维护与失效入口 |
 | ShellIconConverter | Shell 图标提取与有界缓存；UNC 使用通用图标，避免远程图标读取 |
 | StartMenuAdapter / ShellCompatibility / WinInput | 版本策略、UIAutomation/原生 Start 子窗口定位；低级键盘/鼠标钩子处理单独 Win 和开始按钮；组合键保留，原生注入使用自有标记避免递归 |
@@ -27,6 +28,8 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | installer / scripts / CI | 中文向导与真实文件安装进度、升级前正常退出、卸载与校验值；QA 安装使用独立 AppId，无生产部署 |
 
 进程不注入 Explorer、不修改系统二进制、不替换登录认证、不添加服务或驱动。临时原生打开与默认原生切换是独立操作。
+
+兼容验收工具 `scripts/Test-WindowsVm.ps1` 独立于产品运行路径，只在已识别的 Win10 x64 虚拟机调用既有诊断/回归/交互入口，配置和报告按轮隔离。只读预检可在宿主运行；实际键鼠输入、窗口抢焦点和恢复验证留在虚拟机。VirtualBox 是测试环境依赖，不随 iStart 安装，虚拟机镜像、磁盘、账户凭据和本地报告不进入仓库或发行包。
 
 Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml 与 MainWindow.xaml 通过 DynamicResource 即时更新按钮、输入框、列表选择与内容卡片。设置中的外观选择单独保存并调用 SetTheme，不重启适配器，也不改写隐私或开机启动选项。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](docs/MATERIAL_VALIDATION.md)。
 
@@ -38,6 +41,9 @@ Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml �
 - Categories：id、name，数组顺序表示分类排序，未分类不可删除。
 - Launches：target、title、openedAt、count，最多 100 个唯一目标，只表示成功交给系统启动。
 - 偏好：推荐开关与排除项、记录开关、自定义入口、开机启动、图标视图、Theme（Windows/Google；缺失或未知值回退 Google）。
+- Language：`System` / `zh-CN` / `en`，缺失、空值和未知值回退 `System`，沿用 schema 2。系统模式使用 `GetUserDefaultUILanguage` 读取当前用户显示语言，中文映射简体中文，其他语言回退英文；不修改 Windows 语言或进程区域格式。
+
+界面切换先通过 LibraryStore 保存偏好，再更新语言绑定和当前导航、搜索结果、托盘及系统内容。设置面板保持原控件，保留尚未保存的复选项；不重启 StartMenuAdapter、不重新注册截图快捷键，不改写入口名称、隐私或开机启动。截图快捷键选项的显示文字与持久化标识分离；导航图标按固定 GUID 判断。控制面板的七个标题按类别 ID 本地化，磁盘卷标保持用户原文。外部 Shell 名称、原生对话框、安装向导和 GitHub 发布说明保留其自身语言。详见 [界面语言](docs/LOCALIZATION.md)。
 
 配置仅保存在本机；移除入口不删除源文件，删除分类将收藏移至未分类。手动排序与推荐排序独立。推荐候选不持久化，最多显示 12 项；可靠系统历史尚无来源，不读取 UserAssist 或宣称完整使用频率。商店应用补充 AppsFolder 发现，无有效 Shell 入口的软件不保证发现。
 

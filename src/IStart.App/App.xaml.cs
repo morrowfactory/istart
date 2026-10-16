@@ -126,7 +126,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             RuntimeLog.Write($"startup-failed {ex.GetType().Name} 0x{ex.HResult:X8}");
-            MessageBox.Show("暂时无法加载 iStart。请检查本地配置或文件权限。Windows 原生开始菜单仍可正常使用。", "iStart", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(L.T("暂时无法加载 iStart。请检查本地配置或文件权限。Windows 原生开始菜单仍可正常使用。"), "iStart", MessageBoxButton.OK, MessageBoxImage.Warning);
             Shutdown(1);
         }
     }

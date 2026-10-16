@@ -12,8 +12,8 @@ public sealed class CategoryIconConverter : IValueConverter
         if (value is not MenuCategory category) return null;
         var name = category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff") ? "apps"
             : category.Id == new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee") ? "recent"
-            : category.Name == "我的电脑" ? "computer"
-            : category.Name == "我的网站" ? "website" : "folder";
+            : category.Id == new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb") ? "computer"
+            : category.Id == new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc") ? "website" : "folder";
         if (!Icons.TryGetValue(name, out var icon))
         {
             icon = new BitmapImage(new Uri("pack://application:,,,/IStart.App;component/Assets/Fluent/" + name + ".png"));

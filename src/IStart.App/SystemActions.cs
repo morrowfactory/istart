@@ -38,7 +38,7 @@ internal static class SystemActions
     }
     internal static async Task Execute(SystemAction action)
     {
-        if (!Available(action)) throw new NotSupportedException("系统当前不支持或不允许此操作。");
+        if (!Available(action)) throw new NotSupportedException(L.T("系统当前不支持或不允许此操作。"));
         if (action == SystemAction.Lock) { if (!LockWorkStation()) throw new Win32Exception(); return; }
         if (action == SystemAction.Sleep)
         {
@@ -47,9 +47,9 @@ internal static class SystemActions
         }
         var info = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, action == SystemAction.SwitchUser ? "tsdiscon.exe" : "shutdown.exe")) { UseShellExecute = false, CreateNoWindow = true };
         foreach (var arg in Arguments(action)) info.ArgumentList.Add(arg);
-        using var process = Process.Start(info) ?? throw new InvalidOperationException("系统未能启动操作。");
+        using var process = Process.Start(info) ?? throw new InvalidOperationException(L.T("系统未能启动操作。"));
         await process.WaitForExitAsync();
-        if (process.ExitCode != 0) throw new InvalidOperationException("Windows 拒绝了此操作，请检查权限或未保存的工作。");
+        if (process.ExitCode != 0) throw new InvalidOperationException(L.T("Windows 拒绝了此操作，请检查权限或未保存的工作。"));
     }
     internal static string[] Arguments(SystemAction action) => action switch
     {
@@ -63,7 +63,7 @@ internal static class SystemActions
         if (enabled)
         {
             if (string.Equals(Path.GetFileNameWithoutExtension(Environment.ProcessPath), "dotnet", StringComparison.OrdinalIgnoreCase))
-                throw new NotSupportedException("请使用安装版设置开机启动。");
+                throw new NotSupportedException(L.T("请使用安装版设置开机启动。"));
             key.SetValue("iStart", "\"" + Environment.ProcessPath + "\" --background");
         }
         else key.DeleteValue("iStart", false);

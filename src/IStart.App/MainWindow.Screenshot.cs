@@ -24,7 +24,7 @@ public partial class MainWindow
     private async Task Capture(bool fromHotkey)
     {
         if (capturing) return;
-        if (OwnedWindows.Count > 0) { StatusText.Text = "请先关闭设置或升级窗口，再开始截屏。"; return; }
+        if (OwnedWindows.Count > 0) { StatusText.Text = L.T("请先关闭设置或升级窗口，再开始截屏。"); return; }
         capturing = true;
         ScreenshotButton.IsEnabled = false;
         var screen = fromHotkey && WinInput.GetCursorPos(out var cursor)
@@ -42,7 +42,7 @@ public partial class MainWindow
             StatusText.Text = editor.ResultMessage;
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or System.OutOfMemoryException or System.Runtime.InteropServices.ExternalException)
-        { capturing = false; StatusText.Text = "暂时无法截屏，请关闭其他截屏窗口后重试。"; ShowMenu(null); }
+        { capturing = false; StatusText.Text = L.T("暂时无法截屏，请关闭其他截屏窗口后重试。"); ShowMenu(null); }
         finally { capturing = false; ScreenshotButton.IsEnabled = true; }
     }
 }
