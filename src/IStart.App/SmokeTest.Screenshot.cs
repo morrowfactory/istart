@@ -83,5 +83,9 @@ internal static partial class SmokeTest
         editor.Close();
         surface.ResetSelection();
         Check(!surface.HasSelection && surface.Marks.Count == 0, "右键重选清除选区和旧标注");
+        surface.Tool = CaptureTool.Select;
+        surface.BeginDrag(new(10, 10)); surface.DragTo(new(100, 100));
+        surface.ResetSelection(); surface.DragTo(new(150, 150)); surface.EndDrag();
+        Check(!surface.HasSelection, "拖动途中右键重选停止旧手势");
     }
 }

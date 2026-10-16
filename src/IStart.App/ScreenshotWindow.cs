@@ -237,7 +237,14 @@ internal sealed class CaptureSurface : FrameworkElement
     internal void Undo() { if (Marks.Count > 0) { undone.Push(Marks[^1]); Marks.RemoveAt(Marks.Count - 1); } Refresh(); }
     internal void Redo() { if (undone.TryPop(out var mark)) Marks.Add(mark); Refresh(); }
     internal void ClearMarks() { Marks.Clear(); undone.Clear(); Refresh(); }
-    internal void ResetSelection() { ClearMarks(); Selection = Rect.Empty; Refresh(); }
+    internal void ResetSelection()
+    {
+        dragging = false;
+        pending = null;
+        ReleaseMouseCapture();
+        Marks.Clear(); undone.Clear(); Selection = Rect.Empty;
+        Refresh();
+    }
     protected override void OnMouseRightButtonDown(MouseButtonEventArgs e) { BackRequested?.Invoke(); e.Handled = true; }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
