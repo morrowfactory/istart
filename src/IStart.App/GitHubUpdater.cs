@@ -36,12 +36,12 @@ internal static class GitHubUpdater
     {
         try { return ParseReleases(json, current); }
         catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException or FormatException or OverflowException)
-        { throw new InvalidDataException("GitHub 版本信息格式无法识别，请稍后重试。", ex); }
+        { throw new InvalidDataException(L.T("GitHub 版本信息格式无法识别，请稍后重试。"), ex); }
     }
 
     private static AppRelease? ParseReleases(string json, string current)
     {
-        var installed = ParseVersion(current) ?? throw new InvalidDataException("当前版本无法识别。");
+        var installed = ParseVersion(current) ?? throw new InvalidDataException(L.T("当前版本无法识别。"));
         using var document = JsonDocument.Parse(json);
         var releases = new List<AppRelease>();
         foreach (var release in document.RootElement.EnumerateArray())
@@ -79,7 +79,7 @@ internal static class GitHubUpdater
         int read;
         while ((read = await stream.ReadAsync(buffer, timeout.Token)) > 0)
         {
-            if (data.Length + read > 2 * 1024 * 1024) throw new InvalidDataException("版本信息超出读取上限。");
+            if (data.Length + read > 2 * 1024 * 1024) throw new InvalidDataException(L.T("版本信息超出读取上限。"));
             data.Write(buffer, 0, read);
         }
         return SelectRelease(System.Text.Encoding.UTF8.GetString(data.ToArray()), CurrentVersion);
@@ -90,7 +90,7 @@ internal static class GitHubUpdater
         if (ParseVersion(release.Version) is null || release.Bytes <= 0 || release.Bytes > MaxInstaller
             || !Regex.IsMatch(release.Sha256, "^[a-fA-F0-9]{64}$")
             || release.Installer.AbsoluteUri != $"{Repository}/releases/download/v{release.Version}/iStart-Setup-{release.Version}.exe")
-            throw new InvalidDataException("安装包来源不符合此仓库的发布规则。");
+            throw new InvalidDataException(L.T("安装包来源不符合此仓库的发布规则。"));
         // 每次下载独立文件夹；失败或取消只删除本次文件，保留已验证安装包。
         Directory.CreateDirectory(directory);
         var session = Path.Combine(directory, Guid.NewGuid().ToString("N"));
@@ -103,7 +103,7 @@ internal static class GitHubUpdater
             timeout.CancelAfter(TimeSpan.FromMinutes(15));
             using var response = await (client ?? Client).GetAsync(release.Installer, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
             response.EnsureSuccessStatusCode();
-            if (response.Content.Headers.ContentLength is long length && length != release.Bytes) throw new InvalidDataException("安装包大小不一致。");
+            if (response.Content.Headers.ContentLength is long length && length != release.Bytes) throw new InvalidDataException(L.T("安装包大小不一致。"));
             await using (var input = await response.Content.ReadAsStreamAsync(timeout.Token))
             await using (var output = new FileStream(partial, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, true))
             using (var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256))
@@ -114,13 +114,13 @@ internal static class GitHubUpdater
                 while ((read = await input.ReadAsync(buffer, timeout.Token)) > 0)
                 {
                     received += read;
-                    if (received > release.Bytes || received > MaxInstaller) throw new InvalidDataException("安装包超出预期大小。");
+                    if (received > release.Bytes || received > MaxInstaller) throw new InvalidDataException(L.T("安装包超出预期大小。"));
                     hash.AppendData(buffer, 0, read);
                     await output.WriteAsync(buffer.AsMemory(0, read), timeout.Token);
                     progress.Report(new(received, release.Bytes));
                 }
                 if (received != release.Bytes || !Convert.ToHexString(hash.GetHashAndReset()).Equals(release.Sha256, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException("安装包校验失败，请重新下载。");
+                    throw new InvalidDataException(L.T("安装包校验失败，请重新下载。"));
             }
             token.ThrowIfCancellationRequested();
             File.Move(partial, destination);

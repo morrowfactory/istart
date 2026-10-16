@@ -13,7 +13,7 @@ internal sealed class ScreenshotWindow : Window
     private readonly BitmapSource frame;
     private readonly CaptureSurface surface;
     private readonly TextBlock status = new() { Foreground = Brushes.White, Margin = new Thickness(8), VerticalAlignment = VerticalAlignment.Center };
-    private readonly Button copy = new() { Content = "复制" }, save = new() { Content = "保存 PNG" };
+    private readonly Button copy = new() { Content = L.T("复制") }, save = new() { Content = L.T("保存 PNG") };
     private readonly Dictionary<CaptureTool, Button> tools = new();
     internal CaptureSurface Surface => surface;
     private readonly Canvas overlay = new();
@@ -21,13 +21,13 @@ internal sealed class ScreenshotWindow : Window
     private readonly WrapPanel options = new();
     private readonly TextBox textEditor = new() { Width = 220, MinHeight = 34, AcceptsReturn = true, Visibility = Visibility.Collapsed };
     private Point textOrigin;
-    internal string ResultMessage { get; private set; } = "已取消截屏。";
+    internal string ResultMessage { get; private set; } = L.T("已取消截屏。");
 
     internal ScreenshotWindow(BitmapSource frame, System.Drawing.Rectangle bounds)
     {
         this.frame = frame;
         surface = new CaptureSurface(frame);
-        Title = "iStart 截屏 · Esc 取消";
+        Title = L.T("iStart 截屏 · Esc 取消");
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
@@ -52,7 +52,7 @@ internal sealed class ScreenshotWindow : Window
             button.Click += (_, _) => action();
             bar.Children.Add(button);
         }
-        foreach (var (tool, label) in new[] { (CaptureTool.Select, "调整"), (CaptureTool.Rectangle, "方框"), (CaptureTool.Ellipse, "圆圈"), (CaptureTool.Arrow, "箭头"), (CaptureTool.Pen, "画笔"), (CaptureTool.Mosaic, "马赛克"), (CaptureTool.Text, "文字") })
+        foreach (var (tool, label) in new[] { (CaptureTool.Select, L.T("调整")), (CaptureTool.Rectangle, L.T("方框")), (CaptureTool.Ellipse, L.T("圆圈")), (CaptureTool.Arrow, L.T("箭头")), (CaptureTool.Pen, L.T("画笔")), (CaptureTool.Mosaic, L.T("马赛克")), (CaptureTool.Text, L.T("文字")) })
         {
             var data = tool switch
             {
@@ -71,29 +71,29 @@ internal sealed class ScreenshotWindow : Window
             tools.Add(tool, button);
             bar.Children.Add(button);
         }
-        var colors = new[] { ("红色", Colors.Red), ("蓝色", Colors.DodgerBlue), ("绿色", Colors.LimeGreen), ("橙色", Colors.Orange), ("黑色", Colors.Black), ("白色", Colors.White) };
+        var colors = new[] { (L.T("红色"), Colors.Red), (L.T("蓝色"), Colors.DodgerBlue), (L.T("绿色"), Colors.LimeGreen), (L.T("橙色"), Colors.Orange), (L.T("黑色"), Colors.Black), (L.T("白色"), Colors.White) };
         var palette = new ComboBox { Width = 82, Margin = new Thickness(6, 3, 3, 3) };
         palette.ItemsSource = colors.Select(item => item.Item1).ToArray();
         palette.SelectedIndex = 0;
         palette.SelectionChanged += (_, _) => { if (palette.SelectedIndex >= 0) surface.Color = colors[palette.SelectedIndex].Item2; };
-        System.Windows.Automation.AutomationProperties.SetName(palette, "标注颜色");
+        System.Windows.Automation.AutomationProperties.SetName(palette, L.T("标注颜色"));
         options.Children.Add(palette);
-        var widths = new ComboBox { ItemsSource = new[] { "细线", "中线", "粗线" }, SelectedIndex = 1, Width = 60, Margin = new Thickness(3) };
+        var widths = new ComboBox { ItemsSource = new[] { L.T("细线"), L.T("中线"), L.T("粗线") }, SelectedIndex = 1, Width = L.Current.Language == "en" ? 88 : 60, Margin = new Thickness(3) };
         widths.SelectionChanged += (_, _) => surface.StrokeWidth = new[] { 2d, 4d, 7d }[widths.SelectedIndex];
-        System.Windows.Automation.AutomationProperties.SetName(widths, "标注线宽");
+        System.Windows.Automation.AutomationProperties.SetName(widths, L.T("标注线宽"));
         options.Children.Add(widths);
-        Button("撤销（Ctrl+Z）", "↶", () => surface.Undo());
-        Button("重做（Ctrl+Y）", "↷", () => surface.Redo());
-        Button("清空标注", "⌫", () => surface.ClearMarks());
+        Button(L.T("撤销（Ctrl+Z）"), "↶", () => surface.Undo());
+        Button(L.T("重做（Ctrl+Y）"), "↷", () => surface.Redo());
+        Button(L.T("清空标注"), "⌫", () => surface.ClearMarks());
         copy.Click += async (_, _) => await Copy();
         save.Click += (_, _) => Save();
         bar.Children.Add(save);
-        Button("取消（Esc）", "×", Close);
+        Button(L.T("取消（Esc）"), "×", Close);
         bar.Children.Add(copy);
         Content = grid;
         copy.Content = "✓";
         save.Content = "↓";
-        foreach (var (button, label) in new[] { (copy, "完成并复制（Ctrl+C / Enter）"), (save, "保存（Ctrl+S）") })
+        foreach (var (button, label) in new[] { (copy, L.T("完成并复制（Ctrl+C / Enter）")), (save, L.T("保存（Ctrl+S）")) })
         {
             button.ToolTip = label; button.Width = 32; button.Height = 30; button.FontSize = 18;
             button.Padding = new Thickness(2); button.Background = Brushes.White; button.Foreground = Brushes.DodgerBlue; button.BorderThickness = new Thickness(0);
@@ -153,7 +153,7 @@ internal sealed class ScreenshotWindow : Window
     private void UpdateStatus()
     {
         copy.IsEnabled = save.IsEnabled = surface.HasSelection;
-        status.Text = surface.HasSelection ? $"{surface.Selection.Width:0} × {surface.Selection.Height:0} 像素 · Esc 取消" : "拖选范围，再选择标注工具 · Esc 取消";
+        status.Text = surface.HasSelection ? L.F("{0:0} × {1:0} 像素 · Esc 取消", surface.Selection.Width, surface.Selection.Height) : L.T("拖选范围，再选择标注工具 · Esc 取消");
         if (overlay.ActualWidth < 1 || overlay.ActualHeight < 1) return;
         toolbar.MaxWidth = Math.Max(100, overlay.ActualWidth - 16);
         toolbar.Measure(new Size(toolbar.MaxWidth, double.PositiveInfinity));
@@ -178,25 +178,25 @@ internal sealed class ScreenshotWindow : Window
                 try { Clipboard.SetImage(image); break; }
                 catch (System.Runtime.InteropServices.ExternalException) when (attempt < 2) { await Task.Delay(120); if (!IsVisible) return; }
             }
-            ResultMessage = "截屏已复制，可在其他软件粘贴。";
+            ResultMessage = L.T("截屏已复制，可在其他软件粘贴。");
             Close();
         }
-        catch (System.Runtime.InteropServices.ExternalException) { status.Text = "剪贴板被占用，请重试复制或保存图片。"; }
+        catch (System.Runtime.InteropServices.ExternalException) { status.Text = L.T("剪贴板被占用，请重试复制或保存图片。"); }
         finally { copy.IsEnabled = surface.HasSelection; }
     }
     private void Save()
     {
         CommitText();
         if (!surface.HasSelection) return;
-        var dialog = new Microsoft.Win32.SaveFileDialog { Title = "保存截屏", FileName = $"截屏-{DateTime.Now:yyyyMMdd-HHmmss}.png", Filter = "PNG 图片|*.png", DefaultExt = ".png" };
+        var dialog = new Microsoft.Win32.SaveFileDialog { Title = L.T("保存截屏"), FileName = L.F("截屏-{0:yyyyMMdd-HHmmss}.png", DateTime.Now), Filter = L.T("PNG 图片|*.png"), DefaultExt = ".png" };
         if (dialog.ShowDialog(this) != true) return;
         try
         {
             Screenshot.Save(Screenshot.Render(frame, surface.Selection, surface.Marks), dialog.FileName);
-            ResultMessage = "截屏已保存。";
+            ResultMessage = L.T("截屏已保存。");
             Close();
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { status.Text = "保存失败，请选择可写入的位置后重试。"; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { status.Text = L.T("保存失败，请选择可写入的位置后重试。"); }
     }
 }
 

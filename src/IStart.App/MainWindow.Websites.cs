@@ -25,9 +25,9 @@ public partial class MainWindow
             RuntimeLog.Write($"website-history profiles={result.ReadProfiles} failed={result.FailedProfiles} records={result.Visits.Count}");
             if (websiteView) RefreshEntries();
         }
-        catch (OperationCanceledException) { if (websiteView) SearchStatus.Text = "浏览器历史读取超时；已读记录仍可使用，重新打开此页重试。"; }
+        catch (OperationCanceledException) { if (websiteView) SearchStatus.Text = L.T("浏览器历史读取超时；已读记录仍可使用，重新打开此页重试。"); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
-        { if (websiteView) SearchStatus.Text = "暂时无法读取浏览器历史；重新打开此页重试。"; }
+        { if (websiteView) SearchStatus.Text = L.T("暂时无法读取浏览器历史；重新打开此页重试。"); }
         finally { readingWebsites = false; }
     }
 
@@ -36,5 +36,5 @@ public partial class MainWindow
         {
             if (folderView) s.FoldersRecentFirst = !s.FoldersRecentFirst;
             else s.WebsitesRecentFirst = !s.WebsitesRecentFirst;
-        }), "显示顺序已切换并保存。");
+        }), L.T("显示顺序已切换并保存。"));
 }

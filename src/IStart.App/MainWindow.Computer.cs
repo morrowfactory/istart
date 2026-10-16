@@ -17,18 +17,24 @@ public partial class MainWindow
     {
         if (readingComputer || computerRead is { IsCompleted: false } || !readWebsiteSources) return;
         readingComputer = true;
+        var language = L.Current.Language;
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
             computerRead = Task.Run(() => ComputerItems.Read(timeout.Token), timeout.Token);
             var result = await computerRead.WaitAsync(timeout.Token);
+            if (language != L.Current.Language) return;
             computer = result;
             if (computerView) RenderComputer();
         }
-        catch (OperationCanceledException) { if (computerView) SearchStatus.Text = "设备读取超时；已显示的入口仍可用，重新打开此页重试。"; }
+        catch (OperationCanceledException) { if (computerView) SearchStatus.Text = L.T("设备读取超时；已显示的入口仍可用，重新打开此页重试。"); }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
-        { if (computerView) SearchStatus.Text = "部分系统入口暂不可读取，请重新打开此页重试。"; }
-        finally { readingComputer = false; }
+        { if (computerView) SearchStatus.Text = L.T("部分系统入口暂不可读取，请重新打开此页重试。"); }
+        finally
+        {
+            readingComputer = false;
+            if (computerView && language != L.Current.Language) _ = RefreshComputer();
+        }
     }
 
     private void RenderComputer()
@@ -56,21 +62,21 @@ public partial class MainWindow
             button.Click += (_, _) => OpenComputerItem(item);
             return button;
         }
-        Heading("设备和驱动器");
+        Heading(L.T("设备和驱动器"));
         var drives = new System.Windows.Controls.Primitives.UniformGrid { Columns = 3 };
         foreach (var item in computer?.Drives.Where(Match) ?? []) drives.Children.Add(Card(item));
         ComputerPanel.Children.Add(drives);
-        if (computer is null) ComputerPanel.Children.Add(new TextBlock { Text = "正在读取硬盘分区…" });
-        Heading("系统入口");
+        if (computer is null) ComputerPanel.Children.Add(new TextBlock { Text = L.T("正在读取硬盘分区…") });
+        Heading(L.T("系统入口"));
         var system = new System.Windows.Controls.Primitives.UniformGrid { Columns = 3 };
-        foreach (var item in new[] { new ComputerItem("回收站", ComputerItems.RecycleBin), new ComputerItem("网络", ComputerItems.Network), new ComputerItem("控制面板", ComputerItems.ControlPanel) }.Where(Match))
+        foreach (var item in new[] { new ComputerItem(L.T("回收站"), ComputerItems.RecycleBin), new ComputerItem(L.T("网络"), ComputerItems.Network), new ComputerItem(L.T("控制面板"), ComputerItems.ControlPanel) }.Where(Match))
             system.Children.Add(Card(item));
         ComputerPanel.Children.Add(system);
         var expanded = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
         foreach (var item in computer?.ControlPanel.Where(Match) ?? []) expanded.Children.Add(Card(item));
-        if (computer?.PanelUnavailable == true) expanded.Children.Add(new TextBlock { Text = "无法展开系统项目；可点击上方控制面板打开原生窗口。", TextWrapping = TextWrapping.Wrap });
-        ComputerPanel.Children.Add(new Expander { Header = "控制面板分类", IsExpanded = true, Content = expanded, Margin = new Thickness(0, 6, 0, 0) });
-        SearchStatus.Text = "硬盘分区、回收站、网络与控制面板；点击打开 Windows 原生页面。";
+        if (computer?.PanelUnavailable == true) expanded.Children.Add(new TextBlock { Text = L.T("无法展开系统项目；可点击上方控制面板打开原生窗口。"), TextWrapping = TextWrapping.Wrap });
+        ComputerPanel.Children.Add(new Expander { Header = L.T("控制面板分类"), IsExpanded = true, Content = expanded, Margin = new Thickness(0, 6, 0, 0) });
+        SearchStatus.Text = L.T("硬盘分区、回收站、网络与控制面板；点击打开 Windows 原生页面。");
     }
 
     private void OpenComputerItem(ComputerItem item)
@@ -78,9 +84,9 @@ public partial class MainWindow
         try
         {
             Process.Start(new ProcessStartInfo("explorer.exe") { UseShellExecute = true, ArgumentList = { item.Target } });
-            StatusText.Text = "已交给 Windows 打开。";
+            StatusText.Text = L.T("已交给 Windows 打开。");
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
-        { StatusText.Text = "Windows 暂时无法打开此项目，请检查设备或系统策略。"; }
+        { StatusText.Text = L.T("Windows 暂时无法打开此项目，请检查设备或系统策略。"); }
     }
 }

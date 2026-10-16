@@ -76,19 +76,19 @@ internal sealed class StartMenuAdapter : IDisposable
         {
             await RefreshTargets();
             ObjectDisposedException.ThrowIf(disposed, this);
-            if (requestedGeneration != generation) throw new NotSupportedException("开始入口启用已取消，保留原生菜单。");
+            if (requestedGeneration != generation) throw new NotSupportedException(L.T("开始入口启用已取消，保留原生菜单。"));
             if (targets.Length > 0) break;
             if (attempt < 3) await Task.Delay(400);
         }
         ObjectDisposedException.ThrowIf(disposed, this);
-        if (requestedGeneration != generation) throw new NotSupportedException("开始入口启用已取消，保留原生菜单。");
-        if (targets.Length == 0) throw new NotSupportedException("未能定位开始按钮，已保留 Windows 原生入口。");
+        if (requestedGeneration != generation) throw new NotSupportedException(L.T("开始入口启用已取消，保留原生菜单。"));
+        if (targets.Length == 0) throw new NotSupportedException(L.T("未能定位开始按钮，已保留 Windows 原生入口。"));
         try
         {
             var started = new InputHookThread(keyboardCallback, mouseCallback);
             hookThread = started;
             await started.Ready;
-            if (disposed || requestedGeneration != generation) { started.Dispose(); throw new NotSupportedException("开始入口启用已取消，保留原生菜单。"); }
+            if (disposed || requestedGeneration != generation) { started.Dispose(); throw new NotSupportedException(L.T("开始入口启用已取消，保留原生菜单。")); }
             uiHeartbeat = Environment.TickCount64;
             RuntimeLog.Write("input-hooks dedicated-thread=True");
             timer.Start();
@@ -139,8 +139,8 @@ internal sealed class StartMenuAdapter : IDisposable
         if (waitingForTaskbar == waiting) return;
         waitingForTaskbar = waiting;
         StatusChanged?.Invoke(waiting
-            ? "开始按钮检测暂时不可用，正在重试；Win 键接入保留。"
-            : "开始按钮检测已恢复，自定义菜单继续可用。");
+            ? L.T("开始按钮检测暂时不可用，正在重试；Win 键接入保留。")
+            : L.T("开始按钮检测已恢复，自定义菜单继续可用。"));
     }
     internal static StartTarget[] FindTargets() => ReadTargets(false);
     private static StartTarget[] ReadTargets(bool nativeOnly)

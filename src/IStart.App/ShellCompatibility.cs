@@ -8,9 +8,9 @@ internal static class ShellCompatibility
         && (version.Build is >= 19041 and <= 19045 or 22000 or 22621 or 22631 or 26100 or 26200);
 
     internal static string Description(Version version) => !CanTry(version)
-        ? "此版本不在试用范围内，保持 Windows 原生菜单。"
-        : version.Build == 26200 ? "此版本已验证基本接入；启用前仍会检测开始按钮。"
-        : "此版本允许兼容试用，尚未实机验收；定位成功后才接入，可随时切回原生菜单。";
+        ? L.T("此版本不在试用范围内，保持 Windows 原生菜单。")
+        : version.Build == 26200 ? L.T("此版本已验证基本接入；启用前仍会检测开始按钮。")
+        : L.T("此版本允许兼容试用，尚未实机验收；定位成功后才接入，可随时切回原生菜单。");
 
     internal static bool ValidBounds(Rect button, Rect bar)
     {
