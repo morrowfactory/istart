@@ -28,6 +28,9 @@ jobs:
             artifacts/smoke-*/menu.png
             artifacts/smoke-*/menu-icons.png
             artifacts/smoke-*/menu-computer.png
+            artifacts/smoke-*/language-result.txt
+            artifacts/smoke-*/menu-en-*.png
+            artifacts/smoke-*/settings-en.png
             artifacts/smoke-*/screenshot-*.png
             artifacts/smoke-*/shell-probe.txt
           retention-days: 7
