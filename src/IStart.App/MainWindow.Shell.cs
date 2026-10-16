@@ -17,6 +17,7 @@ public partial class MainWindow
     private string SessionMarker => Path.Combine(store.DirectoryPath, "session.active");
     private void InitializeShell()
     {
+        InitializeScreenshotHotkey();
         adapter = new StartMenuAdapter(Dispatcher, ToggleMenu);
         adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
         var menu = new Forms.ContextMenuStrip();
@@ -191,6 +192,20 @@ public partial class MainWindow
         var theme = new ComboBox { ItemsSource = new[] { "Windows 风格", "Google 风格" }, SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(10, 7, 10, 7) };
         System.Windows.Automation.AutomationProperties.SetName(theme, "外观风格");
         panel.Children.Add(theme);
+        panel.Children.Add(new TextBlock { Text = "截屏快捷键", Margin = new Thickness(0, 10, 0, 6) });
+        var captureShortcut = new ComboBox { ItemsSource = ScreenshotHotkey.Choices, SelectedItem = ScreenshotHotkey.Choices.Contains(store.Library.ScreenshotShortcut) ? store.Library.ScreenshotShortcut : "关闭" };
+        System.Windows.Automation.AutomationProperties.SetName(captureShortcut, "截屏快捷键");
+        panel.Children.Add(captureShortcut);
+        var shortcutStatus = new TextBlock { Text = screenshotHotkey?.Status ?? "验收模式不注册全局快捷键。", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 6, 0, 8) };
+        panel.Children.Add(shortcutStatus);
+        captureShortcut.SelectionChanged += (_, _) =>
+        {
+            if (captureShortcut.SelectedItem is not string shortcut) return;
+            Perform(() => store.Change(s => s.ScreenshotShortcut = shortcut), "截屏快捷键已保存。");
+            screenshotHotkey?.Set(store.Library.ScreenshotShortcut);
+            shortcutStatus.Text = screenshotHotkey?.Status ?? "验收模式不注册全局快捷键。";
+            ScreenshotButton.ToolTip = shortcutStatus.Text;
+        };
         panel.Children.Add(new TextBlock { Text = "选择后立即应用并记住，不改变开始菜单接入模式。", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 0, 0, 18) });
         theme.SelectionChanged += (_, _) =>
         {

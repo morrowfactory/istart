@@ -6,12 +6,30 @@ namespace IStart;
 public partial class MainWindow
 {
     private bool capturing;
+    private ScreenshotHotkey? screenshotHotkey;
+    private void InitializeScreenshotHotkey()
+    {
+        SourceInitialized += (_, _) =>
+        {
+            if (App.IsUITest) return;
+            var source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+            screenshotHotkey = new ScreenshotHotkey(source, async () => await Capture(true));
+            screenshotHotkey.Set(store.Library.ScreenshotShortcut);
+            ScreenshotButton.ToolTip = screenshotHotkey.Status;
+        };
+        Closed += (_, _) => screenshotHotkey?.Dispose();
+    }
     private async void StartScreenshot(object sender, RoutedEventArgs e)
+        => await Capture(false);
+    private async Task Capture(bool fromHotkey)
     {
         if (capturing) return;
+        if (OwnedWindows.Count > 0) { StatusText.Text = "请先关闭设置或升级窗口，再开始截屏。"; return; }
         capturing = true;
         ScreenshotButton.IsEnabled = false;
-        var screen = System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle);
+        var screen = fromHotkey && WinInput.GetCursorPos(out var cursor)
+            ? System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point(cursor.X, cursor.Y))
+            : System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle);
         Hide();
         try
         {

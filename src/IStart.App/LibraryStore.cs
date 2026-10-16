@@ -20,6 +20,7 @@ public sealed class MenuLibrary
     public bool FoldersRecentFirst { get; set; }
     public bool CustomMenuEnabled { get; set; }
     public bool StartWithWindows { get; set; }
+    public string ScreenshotShortcut { get; set; } = "Alt+Shift+A";
     public bool IconView { get; set; }
     public string Theme { get; set; } = "Google";
 }
