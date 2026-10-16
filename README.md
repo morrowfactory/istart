@@ -2,13 +2,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前发布：0.2.0-preview.19 预览版**
+**当前发布：0.2.0-preview.20 预览版**
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.19/iStart-Setup-0.2.0-preview.19.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.19) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.20/iStart-Setup-0.2.0-preview.20.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.20) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 ## 当前功能
 
-开发版 preview.20 按企业微信截图习惯调整：默认全局快捷键 **Alt+Shift+A**，后台运行时也可触发；设置中可改用 Ctrl+Alt+A、Ctrl+Shift+S 或关闭。注册失败时明确显示冲突，不抢占其他软件快捷键。工具栏改为紧凑图标，双击选区或 Enter 完成复制，右键先重选、再次右键取消；Ctrl+Z 撤销、Ctrl+Y 重做、Ctrl+C 复制、Ctrl+S 保存、Esc 取消。全局快捷键截取鼠标所在显示器；菜单按钮仍截取菜单所在显示器。
+preview.20 按企业微信截图习惯调整：默认全局快捷键 **Alt+Shift+A**，后台运行时也可触发；设置中可改用 Ctrl+Alt+A、Ctrl+Shift+S 或关闭。注册失败时明确显示冲突，不抢占其他软件快捷键。工具栏改为紧凑图标，双击选区或 Enter 完成复制，右键先重选、再次右键取消；Ctrl+Z 撤销、Ctrl+Y 重做、Ctrl+C 复制、Ctrl+S 保存、Esc 取消。全局快捷键截取鼠标所在显示器；菜单按钮仍截取菜单所在显示器。
 
 preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当前显示器的范围；支持移动选区、拖动边角缩放，以及彩色箭头、圆圈、方框、画笔、文字和矩形马赛克。工具栏跟随选区，点击“完成”复制图片或保存 PNG；Esc 取消、Ctrl+Z 撤销、Ctrl+C 复制。文字按 Enter 完成，Shift+Enter 换行。截图不会自动保存或上传；不包含文字识别、翻译和滚动长截图。
 
@@ -89,7 +89,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.19.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.20.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
