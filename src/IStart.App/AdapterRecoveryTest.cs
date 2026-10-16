@@ -31,5 +31,35 @@ internal static class AdapterRecoveryTest
         if (adapter.Targets.Single() != moved || changes != 2) throw new InvalidOperationException("任务栏重建后应更新快照并报告恢复");
         adapter.Disable();
         if (adapter.Targets.Count != 0) throw new InvalidOperationException("显式停用应清空快照");
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource<StartTarget[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var delayed = new StartMenuAdapter(Application.Current.Dispatcher, _ => { }, () =>
+        {
+            entered.TrySetResult();
+            return release.Task.GetAwaiter().GetResult();
+        });
+        var refresh = delayed.RefreshTargets();
+        await entered.Task;
+        delayed.ShellChanged();
+        release.TrySetResult([first]);
+        await refresh;
+        if (delayed.Targets.Count != 0) throw new InvalidOperationException("任务栏变化前启动的扫描不能覆盖失效状态");
+        await delayed.RefreshTargets();
+        if (delayed.Targets.Single() != first) throw new InvalidOperationException("任务栏变化后新扫描应恢复");
+        var starting = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var continueScan = new TaskCompletionSource<StartTarget[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var cancelled = new StartMenuAdapter(Application.Current.Dispatcher, _ => { }, () =>
+        {
+            starting.TrySetResult();
+            return continueScan.Task.GetAwaiter().GetResult();
+        });
+        var enable = cancelled.Enable();
+        if (!ReferenceEquals(enable, cancelled.Enable())) throw new InvalidOperationException("并发启用必须共享同一个任务");
+        await starting.Task;
+        cancelled.Disable();
+        continueScan.TrySetResult([first]);
+        try { await enable; throw new InvalidOperationException("停用后不能继续安装钩子"); }
+        catch (NotSupportedException) { }
+        if (cancelled.Enabled) throw new InvalidOperationException("取消启用后必须保持原生入口");
     }
 }

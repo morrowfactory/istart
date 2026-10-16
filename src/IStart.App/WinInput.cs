@@ -17,6 +17,24 @@ internal static class WinInput
     [DllImport("user32.dll")] internal static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(nint window);
+    [DllImport("user32.dll")] private static extern bool AllowSetForegroundWindow(uint process);
+    internal static void AllowExistingInstanceForeground()
+    {
+        var path = Environment.ProcessPath;
+        if (path is null || !System.IO.Path.GetFileNameWithoutExtension(path).Equals("IStart.App", StringComparison.OrdinalIgnoreCase)) return;
+        using var current = Process.GetCurrentProcess();
+        foreach (var process in Process.GetProcessesByName("IStart.App"))
+        {
+            using (process)
+            try
+            {
+                if (process.Id != current.Id && process.SessionId == current.SessionId
+                    && string.Equals(process.MainModule?.FileName, path, StringComparison.OrdinalIgnoreCase))
+                    AllowSetForegroundWindow((uint)process.Id);
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or NotSupportedException) { }
+        }
+    }
     [DllImport("user32.dll")] internal static extern nint GetFocus();
     [DllImport("user32.dll")] internal static extern nint SetFocus(nint window);
     [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window, out uint process);
@@ -26,6 +44,7 @@ internal static class WinInput
     [DllImport("user32.dll")] internal static extern nint WindowFromPoint(Point point);
     [DllImport("user32.dll")] internal static extern nint GetAncestor(nint window, uint flags);
     [DllImport("user32.dll")] internal static extern bool IsWindowVisible(nint window);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern uint RegisterWindowMessage(string name);
     [DllImport("user32.dll")] internal static extern bool SetWindowPos(nint window, nint after, int x, int y, int width, int height, uint flags);
     private static Input Key(ushort key, bool up, nuint marker) => new() { Type = 1, Value = new() { Keyboard = new() { Key = key, Flags = up ? 2u : 0u, Extra = marker } } };
     internal static bool Keys(params (ushort Key, bool Up)[] keys) => Send(keys.Select(k => Key(k.Key, k.Up, Marker)).ToArray());

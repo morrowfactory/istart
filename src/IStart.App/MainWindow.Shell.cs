@@ -14,11 +14,21 @@ public partial class MainWindow
     private bool exitRequested;
     private bool presentingMenu;
     private bool searchFocusPending;
+    private bool activatingMenu;
+    private int presentation;
+    private HwndSource? shellMessages;
+    private uint taskbarCreated;
     private string SessionMarker => Path.Combine(store.DirectoryPath, "session.active");
     private void InitializeShell()
     {
         InitializeScreenshotHotkey();
         adapter = new StartMenuAdapter(Dispatcher, ToggleMenu);
+        taskbarCreated = WinInput.RegisterWindowMessage("TaskbarCreated");
+        SourceInitialized += (_, _) =>
+        {
+            shellMessages = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+            shellMessages.AddHook(ShellMessage);
+        };
         adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("打开 iStart", null, (_, _) => ShowMenu(null));
@@ -41,9 +51,9 @@ public partial class MainWindow
         };
         Deactivated += (_, _) =>
         {
-            if (!presentingMenu && adapter.Enabled && OwnedWindows.Count == 0 && !IsMouseCaptureWithin) Hide();
+            if (!presentingMenu && !activatingMenu && OwnedWindows.Count == 0 && !IsMouseCaptureWithin) Hide();
         };
-        IsVisibleChanged += (_, _) => { if (!IsVisible) Topmost = false; };
+        IsVisibleChanged += (_, _) => { if (!IsVisible) { Topmost = false; activatingMenu = false; presentation++; } };
         Activated += (_, _) => QueueSearchFocus();
         Closing += (_, e) =>
         {
@@ -57,11 +67,18 @@ public partial class MainWindow
         {
             RuntimeLog.Write("window-closed");
             adapter.Dispose();
+            shellMessages?.RemoveHook(ShellMessage);
             tray.Dispose();
             trayIcon.Dispose();
             undoTimer?.Stop();
             try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         };
+    }
+    private nint ShellMessage(nint window, int message, nint wParam, nint lParam, ref bool handled)
+    {
+        if (message == 0x007E || message == 0x001A || taskbarCreated != 0 && (uint)message == taskbarCreated)
+            adapter?.ShellChanged();
+        return 0;
     }
     internal void RequestExit(string reason)
     {
@@ -80,6 +97,7 @@ public partial class MainWindow
             RuntimeLog.Write("adapter-enabled");
             store.Change(s => s.CustomMenuEnabled = true);
             ModeStatus.Text = "自定义菜单 · 试用";
+            EnableMenuButton.Visibility = Visibility.Collapsed;
             StatusText.Text = "开始按钮和 Win 键已接入。原生菜单和托盘恢复入口随时可用。";
             return true;
         }
@@ -96,6 +114,7 @@ public partial class MainWindow
         RuntimeLog.Write("native-mode");
         adapter?.Disable();
         ModeStatus.Text = "原生菜单模式";
+        EnableMenuButton.Visibility = Visibility.Visible;
         try
         {
             store.Change(s => s.CustomMenuEnabled = false);
@@ -105,6 +124,12 @@ public partial class MainWindow
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         { StatusText.Text = "原生入口已恢复，偏好暂时无法保存。"; }
     }
+    private async void EnableStartMenu(object sender, RoutedEventArgs e)
+    {
+        EnableMenuButton.IsEnabled = false;
+        try { await SetCustomMode(); }
+        finally { EnableMenuButton.IsEnabled = true; }
+    }
     private void ToggleMenu(WinInput.Point? point)
     {
         if (capturing) return;
@@ -113,6 +138,8 @@ public partial class MainWindow
     internal void ShowMenu(WinInput.Point? point)
     {
         if (capturing) return;
+        var request = ++presentation;
+        activatingMenu = false;
         presentingMenu = true;
         try
         {
@@ -137,38 +164,52 @@ public partial class MainWindow
                 var handle = new WindowInteropHelper(this).Handle;
                 if (WinInput.GetWindowRect(handle, out var rect))
                 {
+                    var anchor = target?.Bounds ?? new Rect(area.Left, area.Bottom, 0, 0);
+                    if (target is { ButtonWindow: not 0 } && WinInput.GetWindowRect(target.ButtonWindow, out var button)
+                        && WinInput.GetAncestor(target.ButtonWindow, 2) == target.Taskbar)
+                        anchor = new Rect(button.Left, button.Top, Math.Max(0, button.Right - button.Left), Math.Max(0, button.Bottom - button.Top));
                     var position = MenuPlacement.Calculate(new Rect(area.X, area.Y, area.Width, area.Height),
-                        target?.Bounds ?? new Rect(area.Left, area.Bottom, 0, 0), new Size(rect.Right - rect.Left, rect.Bottom - rect.Top));
+                        anchor, new Size(rect.Right - rect.Left, rect.Bottom - rect.Top));
                     WinInput.SetWindowPos(handle, 0, (int)position.X, (int)position.Y, (int)position.Width, (int)position.Height, 0x4);
                 }
             }
             var windowHandle = new WindowInteropHelper(this).Handle;
             WinInput.SetForegroundWindow(windowHandle);
             Activate();
-            if (adapter?.Enabled != true) Topmost = false;
             QueueSearchFocus();
             RuntimeLog.Write($"menu-shown foreground={WinInput.GetForegroundWindow() == windowHandle} topmost={Topmost}");
-            if (adapter?.Enabled == true && WinInput.GetForegroundWindow() != windowHandle)
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
-                {
-                    if (!IsVisible || !Topmost) return;
-                    presentingMenu = true;
-                    try
-                    {
-                        var focused = WinInput.TryForegroundAfterMenuInput(windowHandle);
-                        if (focused) { Activate(); QueueSearchFocus(); }
-                        RuntimeLog.Write($"menu-focus-retry foreground={focused}");
-                    }
-                    finally { presentingMenu = false; }
-                });
+            if (WinInput.GetForegroundWindow() != windowHandle)
+            {
+                activatingMenu = true;
+                _ = RetryMenuFocus(windowHandle, request);
+            }
         }
         finally { presentingMenu = false; }
+    }
+    private async Task RetryMenuFocus(nint handle, int request)
+    {
+        try
+        {
+            for (var attempt = 0; attempt < 4; attempt++)
+            {
+                await Task.Delay(60);
+                if (request != presentation || !IsVisible || exitRequested || OwnedWindows.Count > 0 || capturing) return;
+                if (WinInput.TryForegroundAfterMenuInput(handle))
+                {
+                    Activate(); QueueSearchFocus();
+                    RuntimeLog.Write("menu-focus-retry foreground=True");
+                    return;
+                }
+            }
+            RuntimeLog.Write("menu-focus-retry foreground=False");
+        }
+        finally { if (request == presentation) activatingMenu = false; }
     }
     private void QueueSearchFocus()
     {
         if (searchFocusPending) return;
         searchFocusPending = true;
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, () =>
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
         {
             searchFocusPending = false;
             if (!IsVisible || OwnedWindows.Count > 0) return;

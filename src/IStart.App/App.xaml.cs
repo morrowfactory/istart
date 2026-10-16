@@ -15,6 +15,14 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.Length == 2 && e.Args[0] == "--presentation-test")
+        {
+            IsUITest = true;
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            RuntimeLog.DirectoryPath = Path.GetFullPath(e.Args[1]);
+            RunPresentationTest(Path.GetFullPath(e.Args[1]));
+            return;
+        }
         if (e.Args.Length == 2 && e.Args[0] == "--probe-system")
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -94,7 +102,7 @@ public partial class App : Application
                     try { if (instance.WaitOne(TimeSpan.FromSeconds(10))) instance.ReleaseMutex(); else exitCode = 2; }
                     catch (AbandonedMutexException) { instance.ReleaseMutex(); }
                 }
-                else showSignal.Set();
+                else { WinInput.AllowExistingInstanceForeground(); showSignal.Set(); }
                 instance.Dispose();
                 instance = null;
                 Shutdown(exitCode);
@@ -148,6 +156,11 @@ public partial class App : Application
     {
         try { await InputIntegrationTest.Run(output); Shutdown(); }
         catch (Exception ex) { Directory.CreateDirectory(output); File.WriteAllText(Path.Combine(output, "input-failure.txt"), ex.ToString()); Shutdown(1); }
+    }
+    private async void RunPresentationTest(string output)
+    {
+        try { await PresentationTest.Run(output); Shutdown(); }
+        catch (Exception ex) { Directory.CreateDirectory(output); File.WriteAllText(Path.Combine(output, "presentation-failure.txt"), ex.ToString()); Shutdown(1); }
     }
     private StartMenuAdapter? childAdapter;
     private async void RunHookChild(string output)
