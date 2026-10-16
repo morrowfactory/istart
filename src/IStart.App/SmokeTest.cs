@@ -296,7 +296,7 @@ internal static partial class SmokeTest
         resident.WindowState = WindowState.Minimized;
         resident.ShowMenu(null);
         Check(resident.IsVisible && resident.WindowState == WindowState.Normal, "显示入口恢复最小化窗口");
-        Check(!resident.Topmost, "未接入时不保留浮层");
+        Check(resident.Topmost, "未接入时通过图标打开也保留菜单浮层");
         resident.Topmost = true;
         resident.Close();
         Check(!closed && !resident.IsVisible && !resident.Topmost, "关闭窗口收起到托盘并解除浮层");

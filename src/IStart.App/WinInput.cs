@@ -17,6 +17,24 @@ internal static class WinInput
     [DllImport("user32.dll")] internal static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")] internal static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(nint window);
+    [DllImport("user32.dll")] private static extern bool AllowSetForegroundWindow(uint process);
+    internal static void AllowExistingInstanceForeground()
+    {
+        var path = Environment.ProcessPath;
+        if (path is null || !System.IO.Path.GetFileNameWithoutExtension(path).Equals("IStart.App", StringComparison.OrdinalIgnoreCase)) return;
+        using var current = Process.GetCurrentProcess();
+        foreach (var process in Process.GetProcessesByName("IStart.App"))
+        {
+            using (process)
+            try
+            {
+                if (process.Id != current.Id && process.SessionId == current.SessionId
+                    && string.Equals(process.MainModule?.FileName, path, StringComparison.OrdinalIgnoreCase))
+                    AllowSetForegroundWindow((uint)process.Id);
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or NotSupportedException) { }
+        }
+    }
     [DllImport("user32.dll")] internal static extern nint GetFocus();
     [DllImport("user32.dll")] internal static extern nint SetFocus(nint window);
     [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window, out uint process);

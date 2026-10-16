@@ -6,6 +6,8 @@
 
 ## 模块边界
 
+ShowMenu 的浮层与焦点处理不再依赖 adapter.Enabled，覆盖桌面图标、托盘和二次启动显示路径；窗口隐藏解除 Topmost，失去焦点后收起。焦点失败时最多重试 4 次，每次间隔 60 毫秒，并使用显示代数避免隐藏后的重试把旧窗口拉回。搜索焦点使用 Input 优先级，避免被背景加载拖延。二次启动仅向同路径、同会话的已有 iStart 进程调用 AllowSetForegroundWindow，再发送显示信号，不向任意进程开放。首次启用仍需用户操作底部“启用接入”或设置开关；不自动替换用户选择的原生模式。
+
 InputHookThread 在独立 STA 消息循环安装和卸载低级键鼠钩子，回调仅识别手势、校验本机 HWND 并向 UI Dispatcher 投递；同一待处理打开请求合并，生命周期代数阻止停用前的队列请求在重新启用后执行。UI 心跳超过 2 秒时键盘放行并清理 Win 手势，鼠标后续按下不拦截；已拦截的抬起仍消费，避免半个鼠标手势传给 Explorer。Win10 StartTarget 带真实 ButtonWindow，点击时检查类名、父任务栏、可见性、实时边界；UIAutomation 仍使用 1.5 秒新鲜度限制。主窗口接收 TaskbarCreated、WM_DISPLAYCHANGE、WM_SETTINGCHANGE 后清空快照，并通过快照代数拒绝变化前的扫描覆盖新状态；COM 检测超时尝试纯原生窗口枚举，不累积挂起自动化任务。启用共享同一个待完成任务，有限重试仍失败时保留原生入口。专用线程不注入 Explorer，不添加服务或驱动。
 
 ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT）注册全局组合，通过 HwndSource 的 WM_HOTKEY 回调启动截屏；正常关闭注销快捷键并移除 Hook，与开始菜单钩子独立。配置 ScreenshotShortcut 缺失时默认 Alt+Shift+A，未知值不注册；不读取或修改企业微信配置。发生占用时保留菜单截屏按钮并在设置显示冲突，可选择备用组合或关闭。交互验收模式不注册全局快捷键，纯界面测试不安装全局钩子。
@@ -69,7 +71,7 @@ Windows CI 保存核心结果、布局图、安装校验值及安装结果 7 天
 
 窗口 Closing 默认取消关闭并 Hide 到托盘；显式 RequestExit（菜单、托盘、升级/卸载信号）和系统会话结束允许退出。RuntimeLog 记录生命周期与适配器状态，每份约 64 KiB，仅保留一份旧日志，不记录按键或文件路径。接入修复证据见 [恢复记录](docs/RESIDENT_VALIDATION.md)。
 
-ShowMenu 为用户触发的统一显示入口：恢复 Normal、开启 ShowActivated、临时提升层级并请求 SetForegroundWindow，再聚焦搜索。自定义菜单保持浮层至隐藏；普通独立窗口不保留置顶。呈现期间避免同步 Deactivated 误隐藏；隐藏时清除 Topmost。后台启动的隐藏在首次 Show 后同步完成，不放在异步接入初始化的末尾。前台权限可能被 Windows 拒绝，日志只记录成功标志，不修改系统焦点锁定策略、不借用其他线程输入队列。
+ShowMenu 为用户触发的统一显示入口：恢复 Normal、开启 ShowActivated、临时提升层级并请求 SetForegroundWindow，再聚焦搜索。所有用户触发的菜单显示均保持临时浮层至隐藏，不再依赖是否接入开始按钮。呈现期间避免同步 Deactivated 误隐藏；隐藏时清除 Topmost。后台启动的隐藏在首次 Show 后同步完成，不放在异步接入初始化的末尾。前台权限可能被 Windows 拒绝，日志只记录成功标志，不修改系统焦点锁定策略、不借用其他线程输入队列。
 
 搜索呈现完成后在本线程设置原生 HWND 焦点，再同步 WPF 键盘与逻辑焦点。前台请求失败且修饰键未按住时才使用带标记的平衡 Alt/Ctrl 序列重试。菜单位置按任务栏与物理工作区计算；快捷方式图标读取资源或目标，启动路径不变。
 
