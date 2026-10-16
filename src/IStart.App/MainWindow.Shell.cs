@@ -139,6 +139,7 @@ public partial class MainWindow
     {
         if (capturing) return;
         var request = ++presentation;
+        activatingMenu = false;
         presentingMenu = true;
         try
         {

@@ -20,6 +20,7 @@ internal static class PresentationTest
             for (var i = 0; i < 3; i++)
             {
                 menu.ShowMenu(null);
+                menu.ShowMenu(null);
                 var handle = new WindowInteropHelper(menu).Handle;
                 for (var wait = 0; wait < 30; wait++)
                 {
