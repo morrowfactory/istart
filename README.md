@@ -2,11 +2,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前版本：0.2.0-preview.22 预览版**
+**当前版本：0.2.0-preview.23 预览版**
 
-`0.2.0-preview.22` 新增界面语言设置：默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](docs/LOCALIZATION.md)。
+`0.2.0-preview.23` 优化离线安装包体积：精简未使用的框架语言资源、排除发布调试符号，并提高压缩等级；完整运行环境、中英文及既有功能保留。本地同环境样本由 53.6 MB 降至 50.9 MB，约减少 5%；公开包以发布页和校验清单中的实际大小为准。详见[安装包优化](docs/PACKAGE_SIZE.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.22/iStart-Setup-0.2.0-preview.22.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.22) · [所有版本](https://github.com/morrowfactory/istart/releases)
+界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](docs/LOCALIZATION.md)。
+
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 ## 当前功能
 
@@ -18,7 +20,7 @@ preview.20 按企业微信截图习惯调整：默认全局快捷键 **Alt+Shift
 
 preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当前显示器的范围；支持移动选区、拖动边角缩放，以及彩色箭头、圆圈、方框、画笔、文字和矩形马赛克。工具栏跟随选区，点击“完成”复制图片或保存 PNG；Esc 取消、Ctrl+Z 撤销、Ctrl+C 复制。文字按 Enter 完成，Shift+Enter 换行。截图不会自动保存或上传；不包含文字识别、翻译和滚动长截图。
 
-本版新增“我的电脑”和应用内升级。公开安装包与校验信息见上方发布链接。
+菜单包含“我的电脑”和应用内升级。公开安装包与校验信息见上方发布链接。
 
 | 入口 | 显示内容 | 排序与限制 |
 | --- | --- | --- |
@@ -101,7 +103,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
 
-开发分支 `0.2.0-preview.23` 优化安装体积：保留自包含运行环境、中英文资源及原有功能，只发布当前支持的框架语言资源，不分发 PDB 调试符号，安装器使用 `lzma2/ultra64` 固实压缩。重新打包先清理限定的发布输出目录，防止旧语言资源混入；CI 另运行自包含程序回归。体积对比与边界见[安装包优化](docs/PACKAGE_SIZE.md)。上方下载链接仍为已公开的 preview.22。
+`0.2.0-preview.23` 保留自包含运行环境、中英文资源及原有功能，只发布当前支持的框架语言资源，不分发 PDB 调试符号，安装器使用 `lzma2/ultra64` 固实压缩。重新打包先清理限定的发布输出目录，防止旧语言资源混入；CI 另运行自包含程序回归。体积对比与边界见[安装包优化](docs/PACKAGE_SIZE.md)。
 
 `--probe-system <目录>` 只读检查驱动器、控制面板项目数量和 GitHub 可升级版本，不启动系统项目或安装器。
 
