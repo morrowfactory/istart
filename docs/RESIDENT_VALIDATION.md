@@ -1,23 +1,25 @@
-# 接入恢复修复：0.2.0-preview.4
+[English](RESIDENT_VALIDATION.md) | [简体中文](zh-CN/RESIDENT_VALIDATION.md)
 
-日期：2026-10-13；当前 Win11 26200.9457。用户报告没有点击关闭按钮，几次 Win/开始按钮操作后恢复原生菜单。
+# Integration recovery fix: 0.2.0-preview.4
 
-## 定位与修复
+Date: 2026-10-13; Windows 11 26200.9457. The user reported that after several Windows-key/Start-button interactions the native menu returned, without clicking Close.
 
-第一轮读取时进程已退出，未找到对应崩溃日志，不能确认退出原因。随后运行带生命周期日志的旧接入逻辑，10:57:31 捕捉到开始按钮检测空结果，旧逻辑主动停用整个适配器并将偏好写为原生模式。该事件提供了一个可确认的回退原因，不把它描述为所有退出情形的唯一原因。
+## Diagnosis and fix
 
-修复后空结果和扫描异常不会撤销自定义偏好或卸载键盘钩子。鼠标仅使用最近成功且未过期的快照，并再次验证任务栏根窗口与矩形；超过 1.5 秒则透传，不盲目拦截。后台继续单次扫描，成功时自动更新按钮位置并报告恢复；未完成的扫描不会反复新建并行任务。
+At the first inspection the process had exited and no corresponding crash log was found, so the exit cause was unconfirmed. The older integration logic was then run with lifecycle logging. At 10:57:31, Start-button detection returned no result; the old logic disabled the entire adapter and persisted native mode. This established one fallback cause, not the sole explanation for every exit.
 
-“×”收起到托盘；菜单/托盘的退出和升级/卸载退出信号仍正常结束进程。系统会话结束允许退出。增加本机有界 runtime.log：生命周期、模式与检测状态，不记录按键、收藏路径或文件内容，超过 64 KiB 轮转，仅保留一份旧日志。
+After the fix, empty results and detection exceptions no longer revoke the custom preference or uninstall the keyboard hook. Mouse interception uses only the latest successful, unexpired snapshot and revalidates taskbar root and rectangle. After 1.5 seconds it passes input through instead of intercepting without reliable bounds. A single background detection task continues and updates position/recovery state on success; unfinished tasks are not repeatedly duplicated.
 
-## 验证
+Close (`×`) hides to the tray. Menu/tray Exit, update/uninstall exit signals, and system session shutdown still terminate normally. Local bounded `runtime.log` records lifecycle, mode, and detection state, excluding keys, favorite paths, and file contents. It rotates above 64 KiB and retains one previous log.
 
-- Release 0 警告/0 错误；现有核心与布局检查通过。
-- 模拟扫描成功→空结果→异常→位置恢复：旧快照保留、重复失败不重复通知、恢复后位置更新、显式停用清空快照。测试不安装钩子或注入按键。
-- WPF 生命周期检查：“关闭”隐藏且不触发 Closed；显式退出触发 Closed。
-- 修复后用户实际连续约一分钟交替操作 Win 键/开始按钮，反馈“持续正常，始终打开 iStart”；进程仍运行，CustomMenuEnabled=true。
-- 新安装包的隔离首次/覆盖/卸载及最终 payload 核心检查随本版交付执行；日志保留在 artifacts 下，不上传个人运行日志。
+## Validation
 
-尚不能证明长时间稳定、所有退出原因已消除、Explorer 重启/睡眠恢复或 Win10/其他 Win11 兼容。低级钩子超时移除的可靠健康检测仍未实现。默认不新增开机启动，不修改用户收藏和 Windows 登录流程。
+- Release build: 0 warnings/errors; existing core/layout checks passed.
+- Simulated success → empty result → exception → recovered position retained the old snapshot, avoided duplicate failure notifications, updated the recovered position, and cleared the snapshot on explicit disable. No hooks or injected input were used by this check.
+- WPF lifecycle: Close hid the window without `Closed`; explicit Exit raised `Closed`.
+- After the fix, the user alternated Windows-key/Start-button operations for about a minute and reported consistent iStart opening. The process remained alive with `CustomMenuEnabled=true`.
+- Isolated first/overwrite/uninstall and final-payload core checks were part of delivery. Logs stayed under local `artifacts`; personal runtime logs were not uploaded.
 
-README、ARCHITECTURE 与执行计划已同步；VISION 复核，隐私与产品方向不变。
+This did not prove long-term stability, every exit cause resolved, Explorer/sleep recovery, or Windows 10/other Windows 11 compatibility. Reliable health detection for hooks silently removed after timeout was not yet implemented at this milestone. Startup was not newly enabled by default; favorites and Windows login were unchanged.
+
+README, architecture, and execution plan were synchronized. Vision was reviewed with privacy and direction unchanged.

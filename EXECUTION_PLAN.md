@@ -1,83 +1,75 @@
-# iStart 实施方案与执行计划
+[English](EXECUTION_PLAN.md) | [简体中文](docs/zh-CN/EXECUTION_PLAN.md)
 
-当前版本为 **0.2.0-preview.22**（界面语言设置）：五个入口、活动排序、系统资源、应用内升级、截屏与中文安装包已实现；设置新增跟随系统、简体中文和英文。安装包通过 GitHub Actions 构建与发布。所有可在当前开发机安全完成的构建与基础检查持续执行；Win10/其他版本、Explorer 重启及完整异常安装矩阵仍待隔离环境实测。不可将阶段代码完成等同验收完成。证据见 [验证记录](docs/P0_VALIDATION.md)。
+# iStart implementation and execution plan
 
-## 已采用方案
+The current release is **0.2.0-preview.23**, which reduces installer size while retaining offline operation and both interface languages. Five views, activity ordering, system resources, in-app updates, screenshots, and the Chinese installer are implemented. Interface language can follow Windows or be set to Simplified Chinese/English. GitHub Actions builds and publishes installers. Safe build/core checks continue on the development machine; Windows 10/other builds, Explorer restarts, and the complete abnormal-installation matrix still require isolated system testing. Implemented code is not the same as completed acceptance. See [P0 validation](docs/P0_VALIDATION.md).
 
-0.2.0-preview.3 应用 Material 风格界面；构建、核心保护、中文输入/搜索、图标切换和真实拖拽已验证，默认/图标/紧凑渲染及安装生命周期见 [本版记录](docs/MATERIAL_VALIDATION.md)。此前用户反馈的原生或双菜单继续待复验，本次换肤不将该项标记修复。
+## Adopted approach
 
-C# + WPF/.NET 10，单一普通用户桌面进程；JSON 原子保存及一份备份；进程所属低级钩子与 UIAutomation 接入；Inno Setup 7.1.0 中文当前用户自包含安装包。没有引入 Open-Shell 代码、服务、驱动、云端或全盘索引。Inno 构建工具商业使用许可须在商业发行前落实。
+C# + WPF/.NET 10 in one ordinary-user desktop process; atomic JSON storage with one backup; process-owned low-level hooks and UIAutomation; an Inno Setup 7.1.0 Chinese per-user self-contained installer. There is no copied Open-Shell code, service, driver, cloud service, or whole-disk index. Appropriate Inno commercial licensing is required before commercial distribution.
 
-## 阶段执行状态
+The default repository documentation is English. Complete Chinese pages are separate under `docs/zh-CN/`; filenames use English names and every page links to its counterpart. Future documentation changes must update both versions. PRs, issues, and release/acceptance records continue to follow the repository's separate communication rules.
 
-| 阶段 | 已实现与已验证 | 剩余门槛 |
+## Stage status
+
+| Stage | Implemented and checked | Remaining gates |
 | --- | --- | --- |
-| P0 技术验证 | Windows 11 26200 开始按钮/Win、Win+R、临时原生、禁用及异常子进程恢复通过；接入默认关闭；开发版按已知版本和实际按钮能力允许试用，实机验证状态独立 | Win10、其他 Win11、Explorer 重启和钩子超时恢复；尚不能声明双系统接入完成 |
-| P1 核心菜单 | 双栏、图标/列表、搜索、拖入排序、分类管理、重新定位、8 秒撤销、键盘打开；数据保护与布局检查通过 | 真实鼠标完整交互、多屏缩放、辅助功能验收 |
-| P2 系统整合 | 软件发现和最多 12 项推荐、自身启动记录最多 100 项、关闭清除、托盘、原生切换、账户电源能力/策略入口 | 系统历史来源未采用；账户电源实际执行与会话恢复需隔离验证 |
-| P3 安装体验 | 中文欢迎/位置/选项/真实进度/完成页；当前用户安装；独立 QA 身份首次、覆盖、卸载通过 | 交互取消、权限拒绝、空间不足、运行文件占用、中断回退及缩放视觉验收（基础页面已取证） |
-| P4 测试试用包 | Windows CI、核心检查、win-x64 ZIP、中文安装 EXE 和 SHA256、7 天产物保留 | 完整兼容矩阵、签名、正式发行验收，不能标记正式首版完成 |
+| P0: technical validation | Windows 11 build 26200 Start/Win, Win+R, temporary native access, disable, and abnormal test-child recovery; integration off by default; known builds may opt in after capability detection | Windows 10, other Windows 11 builds, Explorer restart, hook-timeout recovery; dual-system integration is not complete |
+| P1: core menu | Five fixed views, icon/list display, search, adding/hiding, relocation, eight-second undo, keyboard opening, persistence protection, and layouts; legacy category storage retained | Full real-mouse interaction, multi-monitor/scaling, accessibility acceptance |
+| P2: system integration | At most 30 activity-backed apps, up to 100 recent files from bounded sources, frequent/recent folders and websites, My Computer, tray, native switching, account/power capability checks | Complete history is not available; real account/power execution and session recovery need isolation |
+| P3: installation | Chinese welcome/location/options/progress/completion, per-user setup, separate QA first install/overwrite/uninstall | Interactive cancellation, denied permissions, disk-full, running-file locks, interrupted recovery, and scaled visual checks; basic pages have evidence |
+| P4: preview delivery | Windows CI, core and self-contained EXE checks, win-x64 ZIP, Chinese installer/SHA256, GitHub release provenance, seven-day artifacts | Complete compatibility matrix, signing, and formal initial-release acceptance |
 
-## 接下来的执行顺序
+## Next steps
 
-1. 交付当前试用安装包、中文文档和 PR，核对源码版本及 CI 产物；默认保留原生入口。
-2. 当前机先完成版本策略、传统 Start 窗口夹具、诊断导出与 Win11 输入回归；已知 Win10/11 仅允许能力检测后试用，有隔离环境后再补对应系统验收，逐项记录实测状态。
-3. 验证 Explorer 重启、自动隐藏、任务栏位置、多屏/缩放、锁屏和睡眠恢复；失败时保持原生模式并记录具体环境。
-4. 在测试账户/虚拟机验收账户电源与安装异常矩阵，补齐升级失败恢复证据。不得在日常工作会话直接重启、注销或强杀 Explorer。
-5. 完成兼容和恢复门槛、签名与许可核对后，再提出正式发行版本；公开发布和合并另按用户明确请求执行。
+1. Keep the current preview, English/Chinese documentation, source revision, and CI artifacts aligned; preserve native Start by default.
+2. On the development machine, continue build-policy, native Start fixtures, diagnostic export, and Windows 11 input regressions. Known Windows 10/11 builds remain capability-checked trials until corresponding isolated system acceptance is recorded.
+3. Test Explorer restarts, taskbar auto-hide/position, multiple monitors/scaling, lock, and sleep recovery. Retain native mode on failure and record the environment.
+4. Test account/power operations and installation failures in a test account or VM. Complete upgrade-failure recovery evidence. Do not restart, sign out, or terminate Explorer in a daily work session for these tests.
+5. Propose a stable release only after compatibility, recovery, signing, and licensing gates. Public installer publication and merges follow the user's requested scope and the documented GitHub workflow.
 
-## 产品建议与边界
+## Product recommendations and boundaries
 
-- 首次软件推荐透明显示来源。可靠系统历史不可用时，显示已安装候选，之后按 iStart 自身启动次数排序；不猜测常用频率。
-- 手动收藏顺序始终优先，推荐与最近记录独立；文件拖入只添加引用。
-- 中文安装默认不创建桌面图标、不开机启动、不接管系统入口，用户可选择；未知版本保持原生。
-- 登录认证与安全桌面始终由 Windows 管理。账户电源不强制结束应用，只有真实用户点击才执行。
-- 兼容范围按实测内部版本记录，不以单次构建或回调测试替代真实交互验收。
+- My Apps uses bounded local activity evidence or explicit additions, with at most 30 entries. Missing records are acknowledged rather than described as exact usage frequency. There is no separate installed-app recommendation panel.
+- Preserve added items and stored order; activity ordering and recent records have explicit rules. Dragging a file adds a reference without moving its source.
+- Chinese installation defaults to no desktop shortcut, no startup, and no Start takeover; users may opt in. Unknown systems retain native mode.
+- Windows manages authentication and the secure desktop. Account/power actions do not force applications closed and require a real user action.
+- Record compatibility by actual OS build and test evidence; one successful build or callback test does not replace real interaction.
 
-## 实际目录
+## Repository layout
 
-| 路径 | 用途 |
+| Path | Purpose |
 | --- | --- |
-| src/IStart.App/ | 界面、编辑、存储、发现、系统适配、系统动作及聚焦测试 |
-| installer/ | Inno Setup 中文向导及生命周期脚本 |
-| scripts/ | 核心检查、自包含打包、安装构建与隔离验收 |
-| .github/workflows/ | Windows CI 与 7 天构建产物 |
-| docs/ | 原型、兼容取证与验收记录 |
+| src/IStart.App/ | UI, editing, storage, discovery, system integration/actions, and focused tests |
+| installer/ | Inno wizard and lifecycle script |
+| scripts/ | Core checks, self-contained publishing, installer builds, isolated acceptance |
+| .github/workflows/ | Windows CI and GitHub preview publication; seven-day build artifacts |
+| docs/ | English guides, prototypes, compatibility evidence, and acceptance records |
+| docs/zh-CN/ | Separate Chinese counterparts with English filenames |
 
-保持少量模块，避免为规划建立空项目。验收日志留在 artifacts，不提交个人真实收藏或活动数据。安装测试已卸载测试文件，仅保留日志；正式安装与个人配置不会被测试清理。当前无生产发布或生产备份需要清理。
+Keep the project small rather than creating empty planned modules. Acceptance logs remain in ignored artifacts; real personal items and activity are not committed. QA files are uninstalled after installation tests, retaining logs. Test cleanup does not remove the daily installation or personal configuration. There is no remote-server deployment or server-backup cleanup; public releases and verified rollback packages follow the GitHub retention policy.
 
-0.2.0-preview.4 修复任务栏短暂缺失导致全局退回原生模式的问题，增加关闭收起与有界生命周期日志。用户一分钟连续操作反馈正常；模拟空结果/扫描异常/恢复以及关闭/显式退出检查通过。长期钩子健康、Explorer 重启和其他系统版本仍不按通过处理。见 [恢复验收](docs/RESIDENT_VALIDATION.md)。
+## Historical milestones
 
-0.2.0-preview.5 提供 Windows/Google 双风格，设置选择即时保存；往返切换、重开、旧配置默认、未知值回退和收藏/接入不变检查通过，实机下拉点击因窗口工具绑定失败未验收。详见 [双风格记录](docs/THEME_VALIDATION.md)。
+These entries record their original dates and test scope. Pending items describe the state at that milestone; consult current guides for the present UI. Later previews replaced the early recommendation/category interface.
 
-0.2.0-preview.6 处理窗口被其他应用遮挡与后台异步隐藏竞态，统一所有显式打开路径。最小化恢复和隐藏解除浮层已有自动检查；最大化其他应用时的实际置前与搜索输入，以用户复验为准。
-
-2026-10-13 preview.6：用户确认位置、无箭头图标、英文与中文直接搜索通过；最终安装包与隔离安装回归继续执行。
-
-2026-10-13 preview.7：修复仅收藏参与搜索的问题；补充商店入口和名称/标识匹配。实际发现 166 个入口、Codex 标识 1 个；大小写、超过 12 项、关闭推荐搜索、无结果和商店别名检查通过。最终安装与人工界面确认继续执行。
-
-2026-10-13 preview.8：补齐商店应用图标。实际读取 Codex 的 32×32 图标，白底预览确认是原应用标志；回归通过。最终安装包与当前安装更新继续执行。
-
-2026-10-13 preview.9：增加 Windows 最近文档读取、排序去重合并、独立开关和空状态。样本检查：当前 Recent 文档快捷方式 0 条，iStart Launches 0 条；不能声称恢复了过去文件历史。夹具验证读取、过滤、去重、合并与偏好持久化通过。
-
-2026-10-13 preview.10：补齐用户要求的跨软件最近文件。Jump List 有效 51 条（13 图片、20 办公文档）；LibreOffice 有效 24 条、WPS 有效 31 条；合并去重限 100 条（13 图片、45 办公文档）。构建、真实只读来源及夹具回归通过；UI 最终显示仍需用户确认。
-
-2026-10-13 preview.11：按要求默认隐藏软件推荐区及标题，启用入口仅设置；主动搜索保留。默认关闭、搜索可见、清空全部收起检查通过，旧开关处理器已移除。
-
-2026-10-13 preview.12：全部收藏增加程序与文件/文件夹分割线，两类分行、组内保序；图标和列表渲染目视检查通过，分组与配置顺序保护及核心回归通过。分组后的真实鼠标拖放仍需人工反馈。
-
-2026-10-13 preview.13：Figma Win11 Fluent 可编辑稿完成，局部组件/变量/文字样式已建立；Windows 风格应用到 WPF。默认/紧凑 Windows 预览和边界、双主题往返、导航资源检查通过；Google 原资源值保留。标准标题栏和状态诊断按现有实现保留，字体替代和动态内容差异已记录。
-
-2026-10-13 用户明确授权 PR #1 合并并发布 v0.2.0-preview.13。补充 GitHub Release 工作流、精确 main/CI 来源与产物哈希校验；发布目标为 GitHub 预览安装包，不是服务器部署。合并、main 构建、公开发布与下载验收将分别记录。
-
-2026-10-15 preview.18 开发版：补充 Win10 19041–19045 和已知 Win11 的兼容试用、传统 Start 子窗口定位、每任务栏独立容错与有界几何校验；设置可导出只读诊断。当前 Win11 的 Win/开始按钮、组合键、原生恢复及独立子进程异常退出测试通过，Win10 仅有版本和窗口结构夹具证据，不视为实机通过。详见 [兼容记录](docs/WINDOWS_COMPATIBILITY.md)。
-
-2026-10-16 preview.19 开发版：加入本地截屏入口、选区调整、浮动标注工具栏、画笔/文字/马赛克、复制与 PNG 保存；合成画面与导出测试通过，真实桌面交互待验收。详见 [截屏验证](docs/SCREENSHOT_VALIDATION.md)。
-
-2026-10-16 preview.20 开发版：企业微信式截屏交互与 Alt+Shift+A 全局快捷键；提供备用组合、关闭与冲突提示，图标工具栏、双击完成、右键重选、Ctrl+Y 重做和 Ctrl+S 保存。快捷键映射与偏好、标注回归通过；首轮全量回归遇到既有商店扫描超时，重跑通过。真实后台热键和企业微信同时运行待验收。
-
-2026-10-16 preview.22 开发版：界面语言默认跟随当前 Windows 用户显示语言，可立即切换简体中文或 English 并保存。主菜单、设置、托盘、截屏和升级页统一翻译，导航及快捷键保留稳定标识；用户内容不翻译。语言回退、旧配置、持久化、未保存设置保留、英文双主题默认/紧凑布局、核心回归及隔离安装/覆盖/卸载通过；实际英文 Windows 用户会话与 Win10 语言验收尚未执行。详见 [界面语言](docs/LOCALIZATION.md)。
-
-2026-10-16 preview.21 开发版：专用输入线程、原生 Start HWND 实时命中与定位、启动有限重试、自动化超时后备、任务栏变化失效保护和 UI 无响应原生放行。夹具回归与当前 Win11 输入集成通过；Win10 版本与故障触发信息等待用户补充，Win10 实机仍待验收。
-
-2026-10-16 preview.21 追加两项联合修复：原生模式图标打开也置前与重试焦点，重复启动转交前台权限，提供显式启用接入入口。当前 Win11 实际窗口/输入联合验证通过；尚未 Win10 实测，未合并发布。
+- **preview.3:** Material styling. Build, core protection, Chinese input/search, icon switching, and real dragging checked. Default/icon/compact rendering and install lifecycle are in [Material validation](docs/MATERIAL_VALIDATION.md). Styling did not itself establish a fix for reports of native or simultaneous menus.
+- **preview.4:** prevented a briefly missing taskbar from globally restoring native mode; added hide-on-close and bounded lifecycle logging. The user reported one minute of normal use. Empty-result/scan-error/recovery and close/explicit-exit checks passed; long-running hooks, Explorer restart, and other builds remained pending. See [Resident validation](docs/RESIDENT_VALIDATION.md).
+- **preview.5:** Windows/Google themes with immediate persistence. Round trips, reopen, legacy defaults, unknown-value fallback, and unchanged items/integration passed. Actual dropdown clicking was not accepted because the window-control tool could not bind. See [Theme validation](docs/THEME_VALIDATION.md).
+- **preview.6:** unified explicit opening paths, addressing obscured windows and delayed background hides. Minimize recovery and clearing topmost on hide were checked; real foreground/search behavior under another maximized app depended on user feedback.
+- **2026-10-13, preview.6:** the user confirmed placement, arrow-free icons, and direct English/Chinese typing. Final packaging and isolated-installation regressions continued separately.
+- **2026-10-13, preview.7:** expanded search beyond saved items, adding packaged-app discovery and name/ID matching. A real read-only scan found 166 entries, including one Codex ID. Case-insensitivity, results beyond the former 12-item recommendation limit, search with recommendations disabled, empty results, and store aliases passed. Final installation/UI confirmation was still separate.
+- **2026-10-13, preview.8:** store-app icons. A real 32×32 Codex icon was visually checked against the original app mark. Regression passed; final packaging/current-installation replacement continued separately.
+- **2026-10-13, preview.9:** Windows Recent reading, ordering/deduplicated merge, a separate preference, and empty states. The machine had zero Recent document shortcuts and zero iStart launches, so historical recovery was not claimed. Reading/filtering/merge/persistence fixtures passed.
+- **2026-10-13, preview.10:** cross-app recent files. Valid Jump List entries: 51, including 13 images and 20 office documents; LibreOffice: 24; WPS: 31. The deduplicated result was capped at 100, including 13 images and 45 office documents. Build, real read-only sources, and fixtures passed; final UI display needed user confirmation.
+- **2026-10-13, preview.11:** recommendations and their headings hidden by default, enabled only in Settings; explicit search retained. Default-off, visible search, and collapse-on-clear checks passed; obsolete menu-switch handlers were removed.
+- **2026-10-13, preview.12:** programs separated from files/folders in All Favorites, on separate rows with internal order retained. Icon/list rendering, grouping/order protection, and core regression passed. Real dragging after grouping still needed feedback.
+- **2026-10-13, preview.13:** editable Figma Fluent screen with local components, variables, and text styles; Windows WPF styling implemented. Default/compact boundaries, theme round trips, and navigation resources passed. Google resource values remained unchanged. Standard chrome/status diagnostics, font substitution, and dynamic-content differences were documented.
+- **2026-10-13, first GitHub release:** the user authorized PR #1 and v0.2.0-preview.13. Added an exact-main/CI-provenance release workflow and artifact hashes. The destination was GitHub preview installers, not a server. Merge, main build, public publication, and download acceptance were separate gates.
+- **2026-10-15, preview.18 development:** Windows 10 19041–19045/known Windows 11 trials, native Start children, per-taskbar isolation, bounded geometry, and exported diagnostics. Current Windows 11 Win/Start/combinations/native recovery/test-child termination passed. Windows 10 had policy/window fixtures only. See [Compatibility](docs/WINDOWS_COMPATIBILITY.md).
+- **2026-10-16, preview.19 development:** local region screenshots, selection changes, floating annotations, pen/text/mosaic, copy, and PNG save. Synthetic-image/export tests passed; real desktop interaction remained pending. See [Screenshot validation](docs/SCREENSHOT_VALIDATION.md).
+- **2026-10-16, preview.20 development:** WeCom-style interaction and global Alt+Shift+A, alternatives/Off/conflict reporting, icon toolbar, double-click completion, right-click reselection, Ctrl+Y, and Ctrl+S. Shortcut mapping/persistence and annotation regression passed. A first full run hit an existing packaged-app scan timeout; the rerun passed. Real background hotkeys alongside WeCom remained pending.
+- **2026-10-16, preview.21 development:** dedicated input thread, current native Start HWND/geometry checks, bounded startup retry, automation-timeout fallback, taskbar generation protection, and native passthrough when UI stalls. Fixtures and current Windows 11 input integration passed. Windows 10 build/trigger details and system acceptance remained pending.
+- **2026-10-16, preview.21 combined fixes:** icon opening in native mode also used temporary topmost/focus retries; repeated launches handed off foreground permission; an explicit enable action was added. Current Windows 11 presentation/input validation passed. Windows 10 was untested and this entry preceded merge/publication.
+- **2026-10-16, preview.22:** immediate system/Simplified Chinese/English preference. Product surfaces were localized using stable navigation/shortcut IDs without translating user content. Fallback, legacy configuration, persistence, unsaved options, compact/default English layouts, core, and isolated installation passed. Actual English Windows sessions and Windows 10 localization remained pending. See [Localization](docs/LOCALIZATION.md).
+- **2026-10-16, preview.23:** excluded unused framework languages and published PDBs and increased installer compression. Local and self-contained regressions plus isolated installation passed. PR #12 was merged and GitHub published the exact-main CI package. The public installer was 50,957,124 bytes, 5.01% below preview.22; anonymous-download hashes/provenance and old-version update discovery were verified. See [Package size](docs/PACKAGE_SIZE.md).

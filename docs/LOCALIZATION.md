@@ -1,27 +1,31 @@
-# 界面语言
+[English](LOCALIZATION.md) | [简体中文](zh-CN/LOCALIZATION.md)
 
-`0.2.0-preview.22` 提供“设置 → 界面语言”。安装包与校验文件通过仓库的 GitHub Actions 发布流程生成，下载入口见 [README](../README.md)。
+# Interface localization
 
-## 行为
+`0.2.0-preview.22` introduced Settings → Interface language. GitHub Actions builds and publishes installers/checksums; downloads are linked in the [README](../README.md).
 
-- 默认“跟随系统”：使用当前 Windows 用户的显示语言，中文显示简体中文，英文及暂未支持的语言显示英文，不使用日期格式或键盘输入法判断语言。
-- 手动选择“简体中文”或“English”后立即应用并保存，无需重启；重新选择“跟随系统”恢复系统决定。
-- 旧配置无需迁移，Language 缺失、空值或未知值均回退 System；不改变收藏、记录、主题、截图快捷键、开机启动或自定义菜单接入偏好。
-- 已打开的设置窗口即时翻译，未保存的复选项保持不变；主页面和搜索词保持。语言选择本身即时保存，其他设置仍按原按钮保存。
-- 主菜单、五个导航、设置、托盘、右键菜单、账户与电源确认、截屏工具和升级页提供中英文。系统管理的七个控制面板标题按类别编号翻译。
-- 用户软件名、文件名、文件夹名、磁盘卷标、网址和截图输入的文字不翻译。Shell 提供的内容名称、Windows 原生对话框、现有中文安装向导和 GitHub 发布说明保留其自身语言。
-- 本版启动时读取系统语言；运行期间修改 Windows 显示语言后，重新选择“跟随系统”或重启 iStart 刷新。不修改 Windows 语言，不联网翻译。
+## Behavior
 
-## 维护
+- System is the default and uses the current Windows user's display language. Chinese maps to Simplified Chinese; English and unsupported languages use English. Date formatting and keyboard/IME settings do not determine the language.
+- Selecting Simplified Chinese or English applies and saves immediately without restarting. Selecting System restores automatic selection.
+- Older configurations need no schema migration. Missing, empty, or unknown Language values become System without changing items, history, theme, screenshot shortcut, startup, or integration preferences.
+- An open Settings window updates immediately while retaining unsaved checkboxes. The current page and search text remain. Language saves immediately; other settings still use the existing Save action.
+- The menu, five navigation views, Settings, tray, context menus, account/power confirmation, screenshot tools, and updater are localized. Seven Control Panel titles use stable category IDs.
+- App/file/folder names, volume labels, URLs, and screenshot text are not translated. Shell-supplied names, native Windows dialogs, the existing Chinese installation wizard, and GitHub release notes retain their own language.
+- System language is read at startup. After changing the Windows display language while iStart runs, reselect System or restart iStart. Windows language is not modified, and no online translation is used.
 
-`Localization.cs` 的 `L.T` 读取集中英文映射 `Strings.en.json`，中文源文作为默认回退；`L.F` 按选择的界面语言格式化产品提示。JSON 显式作为中性嵌入资源打包，不依赖外部文件或卫星程序集。XAML 使用 `TrExtension`，设置固定文字使用语言绑定；动态视图在切换后重绘。
+## Maintenance
 
-新增产品文字时补齐英文映射。格式化文字保留相同占位符和类型格式，不能将已经格式化的用户数据作为翻译键。导航、快捷键和保存值依赖稳定标识，不能按显示文字判断功能。
+Localization.cs uses `L.T` to read the centralized English `Strings.en.json` mapping, with Chinese source text as fallback. `L.F` formats product messages using the selected UI language. JSON is explicitly embedded as a neutral resource, without external files or product satellite assemblies. XAML uses TrExtension; fixed Settings text uses language bindings; dynamic views redraw after a switch.
 
-## 验证
+New product strings require English mappings with the same format placeholders and types. Do not use already-formatted user data as a translation key. Navigation, shortcut, and persisted-value logic must use stable identifiers rather than displayed labels.
 
-2026-10-16 在当前 Win11 25H2 x64 开发机完成构建（0 警告/0 错误）、核心回归、248 条英文映射及格式检查、英文双主题五个页面的紧凑布局、设置与截屏预览，以及独立 QA 安装包的首次安装/覆盖/卸载检查。已人工查看渲染结果。此记录不代表 Win10 或英文 Windows 会话验收通过。
+Documentation localization is separate from the application's resource mapping. Default Markdown is English, Chinese pages live under `docs/zh-CN/`, and each page links to its counterpart. Update both versions when changing documented behavior; keep filenames in English.
 
-`SmokeTest.Localization.cs` 纳入既有 `scripts/Test-Prototype.ps1`：验证系统语言解析、未支持语言回退、手动优先、旧配置和未知值、英文持久化、设置与 XAML 即时往返、当前页面/搜索词/未保存选项保留、用户数据/隐私/主题/接入偏好不变、快捷键 Off 显示与原有标识分离、控制面板标题以及英文双主题的默认/紧凑布局。所有英文条目的格式占位符同时检查。
+## Validation
 
-运行产物包括 `language-result.txt`、英文 Windows/Google 默认及紧凑菜单、设置和截屏工具预览。测试只使用隔离配置和模拟画面，不修改宿主显示语言、开机启动或开始菜单偏好。系统语言解析用明确文化参数覆盖；尚未在实际英文 Windows 用户会话或 Win10 中完成语言验收。
+On 2026-10-16, the current Windows 11 25H2 x64 machine passed build checks with zero warnings/errors, core regression, 248 English mappings/format checks, compact layouts of five pages in both English themes, Settings/screenshot previews, and separate QA first install/overwrite/uninstall. Rendered results were visually inspected. This is not Windows 10 or an actual English Windows session acceptance claim.
+
+SmokeTest.Localization.cs runs through scripts/Test-Prototype.ps1. It covers system-language parsing, unsupported-language fallback, manual precedence, old/unknown configuration, English persistence, immediate Settings/XAML round trips, retaining page/search/unsaved options, unchanged user data/privacy/theme/integration, the Off shortcut label versus its stable identifier, Control Panel labels, and default/compact English layouts. Format placeholders are checked for every English entry.
+
+Artifacts include language-result.txt, default/compact Windows/Google English menus, Settings, and screenshot-tool previews. Fixtures use isolated configuration and synthetic images without changing host display language, startup, or Start preference. Explicit culture parameters test parsing; actual English Windows and Windows 10 language sessions remain pending.

@@ -1,11 +1,13 @@
-# 截屏与标注验证
+[English](SCREENSHOT_VALIDATION.md) | [简体中文](zh-CN/SCREENSHOT_VALIDATION.md)
 
-preview.20 开发调整：企业微信截图提示中的 Alt+Shift+A 用作默认全局组合，提供备用组合与关闭入口；工具栏改成图标，加入双击/Enter 完成、右键重选和重做。夹具检查组合映射、未知组合不注册、偏好保存重开、撤销重做及重选清空。真实热键注册冲突、后台触发及企业微信同时运行仍需交互验收；这些不计作夹具通过。合成画面不触发真实桌面截图。
+# Screenshot and annotation validation
 
-preview.19 截屏功能；公开状态以 GitHub Release 为准。
+preview.20 development changes used Alt+Shift+A, as shown in the WeCom capture hint, as the default global shortcut, with alternate combinations and an Off option. The toolbar switched to icons and added double-click/Enter completion, right-click reselection, and redo. Fixtures checked shortcut mapping, rejection of unknown combinations, preference persistence, undo/redo, and clearing annotations on reselection. Actual shortcut conflicts, background activation, and simultaneous WeCom use still required interactive acceptance; fixture success did not cover them. Synthetic tests did not capture the real desktop.
 
-自动夹具通过：拖选、移动、边角调整、选区外拒绝标注、箭头/圆圈/方框颜色像素、画笔路径、文字和马赛克导出、撤销/清空、PNG 解码及尺寸保持。测试仅使用合成画面，不读取真实桌面，不写用户剪贴板。工具栏跟随选区的渲染已检查。
+The screenshot feature originated in preview.19. Public availability is determined by GitHub Releases.
 
-仍需交互验收：点击截屏后菜单确实消失、真实桌面内容正确、不同 DPI 与多屏定位、文字输入法、复制粘贴和保存取消。当前只截取开始菜单所在显示器，不支持跨屏选区、滚动长截图、文字识别或翻译。马赛克仅是视觉标注，不保证彻底去除敏感信息。
+Automated fixtures passed for dragging a selection, moving/resizing its edges and corners, rejecting annotations outside it, arrow/ellipse/rectangle color pixels, pen paths, text/mosaic export, undo/clear, PNG decoding, and retained dimensions. They used synthetic imagery without reading the desktop or writing the user's clipboard. Toolbar positioning beside the selection was rendered and checked.
 
-操作：截屏 → 拖选 → 调整或标注 → 完成复制 / 保存 PNG。Esc 取消，Ctrl+Z 撤销，Ctrl+C 复制；文字 Enter 完成，Shift+Enter 换行。不会自动保存或上传截图。
+Interactive acceptance remained pending for actually hiding the menu before capture, correct real-desktop contents, DPI/multiple-monitor placement, text IME, copy/paste, and save cancellation. Capture is limited to the menu's current monitor, without cross-monitor selections, scrolling capture, OCR, or translation. Mosaic is a visual annotation and does not guarantee irreversible removal of sensitive information.
+
+Workflow: Capture → drag selection → adjust/annotate → finish and copy, or save PNG. Esc cancels; Ctrl+Z undoes; Ctrl+C copies. In text mode, Enter completes text and Shift+Enter adds a line break. Screenshots are not automatically saved or uploaded.

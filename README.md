@@ -1,96 +1,104 @@
+[English](README.md) | [简体中文](docs/zh-CN/README.md)
+
 # iStart
 
-把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
+A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**当前版本：0.2.0-preview.23 预览版**
+**Current release: 0.2.0-preview.23**
 
-`0.2.0-preview.23` 优化离线安装包体积：精简未使用的框架语言资源、排除发布调试符号，并提高压缩等级；完整运行环境、中英文及既有功能保留。本地同环境样本由 53.6 MB 降至 50.9 MB，约减少 5%；公开包以发布页和校验清单中的实际大小为准。详见[安装包优化](docs/PACKAGE_SIZE.md)。
+This release reduces the offline installer size by excluding unused framework language resources and debug symbols and increasing compression. The complete runtime, both interface languages, and existing features are retained. A local comparison decreased from 53.6 MB to 50.9 MB, approximately 5%; the published package size is recorded on the release page and in its manifest. See [Package size](docs/PACKAGE_SIZE.md).
 
-界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](docs/LOCALIZATION.md)。
+The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, tray, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [All releases](https://github.com/morrowfactory/istart/releases)
 
-## 当前功能
+## Features
 
-preview.21 加固 Win10/11 开始入口：输入钩子使用专用消息线程，减少主界面卡顿导致的失效；Win10 原生 Start 按钮点击时重新验证位置和 HWND。任务栏重建、显示与系统设置变化会丢弃旧定位，自动化检测超时可使用原生窗口后备；启动时短暂重试。界面超过约 2 秒不响应时放行后续原生输入。目标仍是已知 Win10/11 版本，尚不代表 Win10 实机通过。
-
-同版修复从 iStart 图标打开时被其他窗口遮挡：原生模式也使用临时浮层和有界焦点重试，切到其他窗口后收起。重复运行快捷方式会向已有实例转交前台权限。底部“启用接入”可主动接管系统开始按钮；未启用时系统开始按钮仍打开原生菜单。
-
-preview.20 按企业微信截图习惯调整：默认全局快捷键 **Alt+Shift+A**，后台运行时也可触发；设置中可改用 Ctrl+Alt+A、Ctrl+Shift+S 或关闭。注册失败时明确显示冲突，不抢占其他软件快捷键。工具栏改为紧凑图标，双击选区或 Enter 完成复制，右键先重选、再次右键取消；Ctrl+Z 撤销、Ctrl+Y 重做、Ctrl+C 复制、Ctrl+S 保存、Esc 取消。全局快捷键截取鼠标所在显示器；菜单按钮仍截取菜单所在显示器。
-
-preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当前显示器的范围；支持移动选区、拖动边角缩放，以及彩色箭头、圆圈、方框、画笔、文字和矩形马赛克。工具栏跟随选区，点击“完成”复制图片或保存 PNG；Esc 取消、Ctrl+Z 撤销、Ctrl+C 复制。文字按 Enter 完成，Shift+Enter 换行。截图不会自动保存或上传；不包含文字识别、翻译和滚动长截图。
-
-菜单包含“我的电脑”和应用内升级。公开安装包与校验信息见上方发布链接。
-
-| 入口 | 显示内容 | 排序与限制 |
+| View | Contents | Ordering and limits |
 | --- | --- | --- |
-| 我的软件 | 有本机活动依据或手动添加的软件 | 使用多的在前，最多 30 个；搜索也最多 30 个 |
-| 最近打开 | iStart、Windows、WPS、LibreOffice 等留下记录的有效文件 | 最近优先、去重，最多 100 项；不显示文件夹和程序 |
-| 常用文件夹 | 已添加目录及本机活动中的目录 | 默认常用优先，同页按钮切换最近打开；按窗口空位补充 |
-| 我的网站 | Chrome 和 Edge 的有限本机浏览历史，按域名合并 | 默认常用优先，同页按钮切换最近网址清单，最多 30 个 |
-| 我的电脑 | 硬盘分区、可用容量、回收站、网络、可展开的 7 个控制面板大类（不含轻松使用） | 点击系统项目打开 Windows 原生页面；支持当前页搜索 |
+| My Apps | Installed apps with local activity evidence and apps you add | Most used first; at most 30 apps, including search results |
+| Recently Opened | Valid files recorded by iStart, Windows, WPS, LibreOffice, and other supported sources | Most recent first, deduplicated, at most 100 files; folders and programs are excluded |
+| Frequent Folders | Added folders and folders found in local activity | Frequent first by default; switch to recent folders on the same page; suggestions fill available space |
+| My Websites | Bounded Chrome and Edge history, combined by domain | Frequent first by default; switch to recent websites on the same page; at most 30 sites |
+| My Computer | Disk partitions, available space, Recycle Bin, Network, and seven expandable Control Panel categories, excluding Ease of Access | Open the corresponding Windows page; search within this view |
 
-- Windows 11 Fluent / Google 两种风格，在设置中即时切换并保存。
-- 桌面、任务栏、窗口、托盘、安装器和菜单使用统一 iStart 图标。
-- 软件和文件夹可拖入添加；支持图标/列表显示、搜索和隐藏。
-- 保留 Windows 原生菜单恢复、账户、电源和托盘入口。
-- 已移除独立软件推荐区、未分类、新建分类和分类名称输入框；旧入口数据保留兼容。
+- Switch between Windows 11 Fluent and Google styles in Settings. The choice is applied immediately and saved.
+- A consistent iStart icon is used for the desktop shortcut, taskbar, window, tray, installer, and menu.
+- Drag apps and folders into the menu; switch between icons and a list, search, and hide items.
+- Windows Start menu recovery, account actions, power options, and the tray remain available.
+- The separate app recommendation panel, Uncategorized view, category creation, and category-name field have been removed. Legacy item data remains compatible.
 
-![五个入口与我的电脑](docs/prototypes/computer.png)
+Content comes from the current user's local system and activity records. Documentation screenshots use test data, including synthetic disk capacities. See [Activity views](docs/ACTIVITY_VIEWS.md) and the [documentation index](docs/INDEX.md).
 
-界面示意使用测试磁盘容量；实际内容来自当前账户的本机系统与活动记录。详见[活动视图说明](docs/ACTIVITY_VIEWS.md)。
+### Start integration and foreground behavior
 
-## 安装与使用
+Since preview.21, input hooks run on a dedicated message thread to reduce failures caused by a busy UI. On Windows 10, native Start-button clicks revalidate the button bounds and HWND. Taskbar recreation and display or system-setting changes invalidate cached locations. A native-window fallback handles automation timeouts, and startup uses bounded retries. If the UI is unresponsive for about two seconds, subsequent native input is allowed through. These changes target known Windows 10/11 builds; they do not establish Windows 10 hardware acceptance.
 
-1. 下载并运行安装包，按中文向导选择位置与选项，查看实际安装进度。
-2. 安装仅用于当前账户，无需管理员权限，也无需另装 .NET。新安装默认不创建桌面快捷方式、不启用开机启动、不接管开始入口；可按需勾选。
-3. 从五个入口访问内容，直接输入搜索文字；拖入软件快捷方式和文件夹可添加入口。
-4. 在“设置 → 外观风格”选择 Windows 或 Google。网站与文件夹页面的按钮可切换常用/最近，选择会保存。
-5. 在“设置 → 界面语言”选择跟随系统、简体中文或 English，无需重启；旧配置升级后默认跟随系统。
+Opening iStart from its icon also uses a temporary topmost window and bounded focus retries, even in native-menu mode. Switching to another window hides it. Reopening the shortcut hands foreground permission to the existing instance. Use Enable integration at the bottom of the menu to opt in; otherwise, the system Start button continues to open Windows Start.
 
-设置底部显示当前版本；点击“检查更新 / 升级”打开升级页，查看版本说明、下载进度和校验结果，再点击安装进入升级向导。更新仅连接 `morrowfactory/istart` 的 GitHub Releases，预览版跟随更高预览版或正式版，正式版只跟随正式版；不会自动静默安装。下载失败或关闭升级窗口时当前程序继续可用。开发和验收运行不能启动覆盖安装。
+### Screenshots
 
-安装包目前未签名。升级保留原有入口、记录和有效设置；旧分类数据保留，但不再显示分类编辑界面。隐藏入口不会卸载软件、移动原文件或删除浏览器历史。
+The default global shortcut is **Alt+Shift+A**, including while iStart runs in the background. Settings also offers Ctrl+Alt+A, Ctrl+Shift+S, or Off. Shortcut conflicts are reported instead of taking another app's shortcut.
 
-## 原生菜单与退出
+The menu's screenshot button hides iStart before capture. Drag a region, move it, or resize its edges and corners. Add colored arrows, ellipses, rectangles, freehand strokes, text, and rectangular mosaic blocks. The compact toolbar follows the selection. Complete copies the image; PNG saving is also available.
 
-- 底部“Windows 原生菜单”：临时打开系统菜单。
-- 托盘“切回 Windows 原生菜单”：停用自定义接入，恢复默认原生模式。
-- 右上角“×”：收起到托盘；菜单或托盘的“退出”才结束程序并释放接入。
-- 上次异常退出时，下次启动恢复原生模式；卸载默认保留个人配置。
+- Double-click the selection or press Enter to finish and copy.
+- Right-click once to reselect, then again to cancel. Esc cancels.
+- Ctrl+Z undoes, Ctrl+Y redoes, Ctrl+C copies, and Ctrl+S saves.
+- Enter completes text entry; Shift+Enter inserts a line break.
+- The global shortcut captures the monitor under the pointer; the menu button captures the menu's monitor.
 
-账户与电源操作遵循系统能力和策略，注销、关机等需要确认；登录认证、Windows Hello 和安全桌面仍由 Windows 管理。
+Screenshots are not automatically saved or uploaded. Scrolling capture, OCR, and translation are not included.
 
-## 兼容性与已知限制
+## Install and use
 
-本版增加已知 Win10/11 版本的能力检测试用和设置内诊断导出；preview.17 及更旧版本仍只允许 26200 接入。
+1. Download and run the installer. Its wizard is currently in Chinese and shows the selected location, options, and actual installation progress.
+2. Installation is per user, requires no administrator elevation, and includes .NET. A fresh installation does not create a desktop shortcut, enable startup, or replace Start by default; select those options if desired.
+3. Use the five views and type directly to search. Drag app shortcuts and folders into the menu to add them.
+4. Choose Windows style or Google style under Settings → Appearance. Folder and website views save their frequent/recent ordering choices.
+5. Choose System, Simplified Chinese, or English under Settings → Interface language. No restart is needed; older configurations default to System after upgrading.
 
-目标为 Windows 10/11 x64，目前仍是预览版，不能视为已完成双系统兼容验收。
+Settings displays the current version. Check for updates / Upgrade opens an update page with release notes, download progress, and verification results. After downloading, click Install to open the upgrade wizard. Updates come only from `morrowfactory/istart` GitHub Releases. Preview installations can follow newer previews or stable releases; stable installations only follow stable releases. Installation is not automatic or silent. A failed download or closed update window leaves the current program usable. Development and acceptance-test runs cannot launch an upgrade over a real installation.
 
-| 系统 | 当前验证范围 |
+The installer is currently unsigned. Upgrades retain items, history, and valid settings. Legacy category data remains stored, although category editing is no longer shown. Hiding an item does not uninstall an app, move a file, or delete browser history.
+
+## Windows Start and exit behavior
+
+- Windows Start menu at the bottom temporarily opens the system menu.
+- Switch to Windows Start menu in the tray disables integration and restores native mode as the default.
+- The window's × button hides iStart to the tray. Exit in the menu or tray ends the process and releases integration.
+- After an abnormal exit, the next launch restores native mode. Uninstallation keeps personal configuration by default.
+
+Account and power actions follow system capabilities and policies. Sign-out and shutdown require confirmation. Windows continues to manage authentication, Windows Hello, and the secure desktop.
+
+## Compatibility and limitations
+
+The target is Windows 10/11 x64. This remains a preview, with incomplete cross-version acceptance. Known builds can opt into capability-checked integration and export diagnostics; preview.17 and earlier only allowed build 26200.
+
+| System | Verified scope |
 | --- | --- |
-| Windows 11 25H2 x64，26200.9457 | 开始按钮、单独 Win 键、Win+R 保留及基本恢复已实机检查；基本接入与恢复已实机验证；继续优先使用 UIAutomation 定位 |
-| Windows 10 19041–19045；Windows 11 22000、22621、22631、26100 | 允许用户主动启用兼容试用，成功定位按钮后才安装钩子；尚无对应系统实机验收 |
-| 其他版本、定位失败或异常恢复 | 保持原生入口；不猜测开始按钮坐标 |
+| Windows 11 25H2 x64, 26200.9457 | Start-button and standalone Win-key behavior, Win+R passthrough, and basic recovery checked on the current machine; UIAutomation remains the preferred locator |
+| Windows 10 19041–19045; Windows 11 22000, 22621, 22631, 26100 | Opt-in compatibility trials; hooks are installed only after a valid Start button is found; hardware acceptance is pending |
+| Other builds, failed detection, or abnormal recovery | Keep native Start; do not guess button coordinates |
 
-设置中的“导出开始菜单兼容诊断”保存版本策略、显示器数量、按钮数量/边界与识别方式，不包含软件列表、文件路径或网址，不上传数据。详细测试范围见[Windows 兼容说明](docs/WINDOWS_COMPATIBILITY.md)。
+Export Start menu compatibility report in Settings saves the build policy, monitor count, button count/bounds, and detection method. It excludes app lists, file paths, and URLs and is not uploaded. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
 
-Explorer 重启、多屏缩放、自动隐藏任务栏、长期稳定性，以及交互式安装取消/失败回退仍需进一步验证。运行时支持与应用实测需分别判断，参见 [.NET 官方系统矩阵](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md)。
+Explorer restarts, multi-monitor scaling, taskbar auto-hide, long-running stability, and interactive installer cancellation/failure recovery need further validation. Runtime support and application acceptance are separate: see the [.NET supported-OS matrix](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md).
 
-## 本地数据与隐私
+## Local data and privacy
 
-- 配置位于 `%LOCALAPPDATA%\iStart\library.json`，保留一份 `.bak`。卸载不主动删除个人入口和记录。
-- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。检查更新与下载是用户主动触发的 GitHub 网络请求。
-- 软件排序参考 Windows 累计应用切换与 iStart 打开记录；目录排序参考打开次数及近期文件活动，均不是完整系统频率或精确月统计。
-- 网站只读取 Chrome/Edge 保留的有限历史，不读取 Cookie、密码、网页内容或无痕会话；同域名合并后打开网站根地址。
-- 设置可关闭外部文件/文件夹活动或浏览器历史读取。“清除 iStart 记录”不会清除外部历史。
-- 浏览器历史快照仅在本机临时使用，正常读取后清理；不可读、部分失败或超时会提示。
-- 升级下载缓存在 `%LOCALAPPDATA%\iStart\Updates`；取消或失败清理本次下载。成功后清理超过 7 天的旧更新缓存，至少保留最近两次下载，不清理个人数据。
-- `runtime.log` 记录运行与恢复诊断，不记录按键、网址或文件内容；超过 64 KiB 轮转，只保留一份旧日志。
+- Configuration is stored in `%LOCALAPPDATA%\iStart\library.json`, with one `.bak` backup. Uninstallation does not delete personal items or records.
+- Activity is processed locally. App lists, paths, and browsing history are not uploaded, and the entire disk is not scanned. Update checks and downloads are user-initiated GitHub requests.
+- App ordering uses cumulative Windows app-switch counts and iStart launches. Folder ordering uses opens and recent-file activity. These are neither complete system frequency records nor exact monthly statistics.
+- Website history is bounded to records Chrome and Edge retain. Cookies, passwords, page contents, and private sessions are not read. A combined domain opens its site root.
+- Settings can disable external file/folder activity or browser-history reading. Clear iStart history does not clear other applications' history.
+- Browser-history snapshots are temporary and local, with cleanup after normal reads. Unreadable, partially failed, or timed-out sources are reported.
+- Update downloads use `%LOCALAPPDATA%\iStart\Updates`. Cancellation or failure removes the current download. After success, known caches older than seven days are cleaned while retaining at least the latest two downloads; personal data is untouched.
+- `runtime.log` records lifecycle and recovery diagnostics, not keystrokes, URLs, or file contents. It rotates above 64 KiB and keeps one old log.
 
-## 构建与验证
+## Build and validate
 
-需要 Windows、.NET 10 SDK；构建安装包另需 Inno Setup 7.1.0。
+Requires Windows and the .NET 10 SDK. Installer builds also require Inno Setup 7.1.0.
 
 ```powershell
 dotnet run --project src/IStart.App/IStart.App.csproj
@@ -101,29 +109,33 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.23.exe" -Output "$PWD\artifacts\install-test"
 ```
 
-安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
+Installers and SHA256 files are written to `artifacts/setup/`. The QA installer uses a separate identity. Its output directory must be inside `artifacts/` and must not already exist.
 
-`0.2.0-preview.23` 保留自包含运行环境、中英文资源及原有功能，只发布当前支持的框架语言资源，不分发 PDB 调试符号，安装器使用 `lzma2/ultra64` 固实压缩。重新打包先清理限定的发布输出目录，防止旧语言资源混入；CI 另运行自包含程序回归。体积对比与边界见[安装包优化](docs/PACKAGE_SIZE.md)。
+preview.23 publishes only the currently supported framework language resources, excludes PDB symbols, and uses `lzma2/ultra64` solid compression. A bounded output-directory cleanup prevents stale resources from entering a new package. CI additionally runs the self-contained executable. See [Package size](docs/PACKAGE_SIZE.md).
 
-`--probe-system <目录>` 只读检查驱动器、控制面板项目数量和 GitHub 可升级版本，不启动系统项目或安装器。
+Diagnostic and acceptance entry points:
 
-`--ui-test <目录>` 使用独立配置验收界面，不修改真实开机启动；`--probe-activity <目录>` 只输出活动来源数量。`--input-test <目录>` 会操作原生菜单/运行窗口并结束它自己启动的测试子进程，仅在空闲交互桌面手动执行，不纳入 CI。
+- `--probe-system <directory>` reads drive and Control Panel counts and checks the available GitHub version; it does not launch system items or an installer.
+- `--ui-test <directory>` uses isolated configuration and does not alter real startup settings.
+- `--probe-activity <directory>` outputs source counts only.
+- `--input-test <directory>` operates native Start and Run and terminates only its own test child. Run it manually on an idle interactive desktop; it is excluded from CI.
 
-GitHub CI 验证构建、核心行为、布局及隔离安装/覆盖/卸载，临时产物保留 7 天。公开安装包通过[发布流程](docs/GITHUB_RELEASE.md)使用最新 main 的已验证 CI 产物，核对来源 SHA 和哈希后发布；不包含个人配置或历史。
+GitHub CI checks the build, core behavior, layouts, and isolated install/upgrade/uninstall, retaining temporary artifacts for seven days. Public installers follow the [release procedure](docs/GITHUB_RELEASE.md): validated latest-main CI artifacts, exact source SHA, and verified hashes. Personal configuration and history are excluded.
 
-Win10 桌面兼容测试使用独立虚拟机，运行 `scripts/Test-WindowsVm.ps1`；宿主机可用 `-PreflightOnly` 只读预检。环境隔离、安装包校验和人工验收矩阵见 [Windows 测试环境](docs/WINDOWS_TEST_LAB.md)。脚本与环境准备不代表 Win10 验收通过。
+Windows 10 desktop acceptance uses `scripts/Test-WindowsVm.ps1` in a dedicated VM. The host can use `-PreflightOnly` for a read-only check. See [Windows test lab](docs/WINDOWS_TEST_LAB.md). Preparing scripts or the environment does not establish Windows 10 acceptance.
 
-Inno Setup 7 有商业使用许可要求，商业发行前需取得适用授权，参见 [Inno 许可](https://jrsoftware.org/isorder.php)。项目未复制 Open-Shell 代码。
+Inno Setup 7 requires an appropriate commercial license for commercial distribution; see [Inno licensing](https://jrsoftware.org/isorder.php). This project does not copy Open-Shell code.
 
-## 项目文档
+## Documentation
 
-- [架构](ARCHITECTURE.md)：模块、存储、活动来源和恢复边界。
-- [愿景](VISION.md)：产品方向、体验与隐私原则。
-- [执行计划](EXECUTION_PLAN.md)：阶段进展和待完成验收。
-- [活动视图](docs/ACTIVITY_VIEWS.md)：软件、目录、网站的排序、字段与读取限制。
-- [统一图标](docs/BRAND_ICON.md)：Figma 来源和资源维护。
-- [窗口与焦点验证](docs/FOREGROUND_VALIDATION.md)：置前、定位与直接输入。
-- [当前系统实机验收](docs/CURRENT_SYSTEM_VALIDATION.md)：历史实测范围与未执行项。
-- [我的电脑与升级验证](docs/COMPUTER_UPDATE_VALIDATION.md)：系统项目、更新来源与已测范围。
-- [界面语言](docs/LOCALIZATION.md)：系统语言回退、切换与验证边界。
-- [GitHub 发布](docs/GITHUB_RELEASE.md)：版本来源、完整性校验与回退。
+The default documentation is English. Each page links to its separate Simplified Chinese counterpart; filenames and directories use English names or language codes. See the [complete documentation index](docs/INDEX.md).
+
+- [Architecture](ARCHITECTURE.md): modules, storage, activity sources, and recovery boundaries.
+- [Vision](VISION.md): product direction and privacy principles.
+- [Execution plan](EXECUTION_PLAN.md): delivery stages and remaining acceptance work.
+- [Activity views](docs/ACTIVITY_VIEWS.md): app, folder, and website ordering and source limits.
+- [Brand icon](docs/BRAND_ICON.md): Figma source and asset maintenance.
+- [Foreground validation](docs/FOREGROUND_VALIDATION.md) and [current-system validation](docs/CURRENT_SYSTEM_VALIDATION.md).
+- [My Computer and updates](docs/COMPUTER_UPDATE_VALIDATION.md).
+- [Interface localization](docs/LOCALIZATION.md) and [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
+- [GitHub releases](docs/GITHUB_RELEASE.md) and [package size](docs/PACKAGE_SIZE.md).

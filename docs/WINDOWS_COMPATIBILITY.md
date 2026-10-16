@@ -1,34 +1,36 @@
-# Windows 兼容试用与验证
+[English](WINDOWS_COMPATIBILITY.md) | [简体中文](zh-CN/WINDOWS_COMPATIBILITY.md)
 
-preview.21 追加联合修复：原生模式从图标打开也保留临时浮层并进行焦点重试，二次启动向已有实例转交前台权限；底部增加“启用接入”。本轮当前 Win11 联合验证通过：最大化背景下 3 次打开均置前且搜索获得焦点，离开后收起，最小化恢复正常；使用实际“启用接入”按钮后，Win 和系统开始按钮均打开真实 iStart 窗口。独立配置与测试窗口自动关闭，原 preview.20 恢复。二次启动授权路径已代码核对，未在 Win10 验证；仍不把上述结果写成 Win10 已修复。
+# Windows compatibility trials and validation
 
-2026-10-16 preview.21 开发加固：低级键鼠钩子移到专用消息线程，Win10 原生按钮点击实时校验，任务栏/显示变化使快照失效，自动化超时使用原生后备，启动有限重试。窗口夹具已覆盖按钮移动和销毁、过期扫描不回写、检测恢复。当前 Win11 的输入集成另含 1300 毫秒 UI 阻塞探针；结果以本轮验收记录为准。没有 Win10 实机证据，不能认定用户报告的偶发打不开已在 Win10 解决。
+preview.21 combined foreground and integration fixes: opening from the app icon in native mode retains a temporary topmost layer and retries focus; a second launch grants foreground permission to the existing instance; the footer provides Enable Integration. On the current Windows 11 PC, three opens over a maximized background reached the foreground with search focus, switching away dismissed the menu, and minimized state restored. After using the actual enable button, the Windows key and system Start button opened the real iStart window. Isolated test configuration/windows were closed and the previous preview.20 was restored. Second-launch permission handoff was code-reviewed, not validated on Windows 10. These results do not establish a Windows 10 fix.
 
-依据：[微软低级键盘钩子说明](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc)明确说明超时后可能静默移除，并建议使用专用线程；[任务栏通知说明](https://learn.microsoft.com/en-us/windows/win32/shell/taskbar)定义 TaskbarCreated 通知。未修改系统钩子超时、前台锁定策略或 Explorer 文件。
+Hardening on 2026-10-16 moved low-level keyboard/mouse hooks to a dedicated message thread, validated native Windows 10 Start clicks at event time, invalidated snapshots on taskbar/display changes, used native fallback on UI Automation timeout, and bounded startup retries. Window fixtures covered moved/destroyed buttons, rejection of stale detection results, and recovery. Current Windows 11 input validation included a 1,300 ms UI-blocking probe. There was no real Windows 10 acceptance evidence for the user's intermittent opening problem.
 
-日期：2026-10-15；版本 preview.18。公开状态、来源和安装包哈希以 GitHub Release 为准。
+[Microsoft's low-level keyboard-hook documentation](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc) describes silent removal after timeout and recommends a dedicated thread; [taskbar documentation](https://learn.microsoft.com/en-us/windows/win32/shell/taskbar) defines `TaskbarCreated`. System hook timeouts, foreground-lock policy, and Explorer files were not modified.
 
-## 允许试用与实际验证
+## Trial eligibility versus actual validation
 
-| 系统版本 | 接入策略 | 证据 |
+The version-policy baseline below originated in preview.18 on 2026-10-15. Public version, source, and installer hash are established by GitHub Releases.
+
+| OS build | Integration policy | Evidence |
 | --- | --- | --- |
-| Win10 19041–19045 | 用户主动启用，成功识别按钮后接入 | 版本分支、原生 Start 结构夹具通过；未在 Win10 实机运行 |
-| Win11 22000 / 22621 / 22631 / 26100 | 同上 | 版本分支通过；未在这些系统实机运行 |
-| 当前 Win11 26200 | 同上，保持原有 UIAutomation 优先 | 本机只读发现 1 个按钮；输入与恢复测试通过 |
-| 更旧、未知版本（包括测试的服务器版本 20348） | 保留原生入口 | 拒绝策略测试通过 |
+| Windows 10 19041–19045 | Explicit opt-in; integrate after successful button detection | Version-policy and native Start-structure fixtures passed; no real Windows 10 application run accepted. |
+| Windows 11 22000 / 22621 / 22631 / 26100 | Same opt-in policy | Version branches passed; no real run on these builds accepted. |
+| Current Windows 11 26200 | Same policy; UI Automation remains preferred | One Start button discovered read-only locally; input/recovery checks passed. |
+| Older/unknown builds, including tested Server build 20348 | Retain native Start | Rejection-policy tests passed. |
 
-运行时官方支持范围与本应用接入试用范围需分别判断；此表不是完整兼容声明。
+The runtime's official support and this app's trial-integration policy are separate questions. This table is not a complete compatibility claim.
 
-## 验证
+## Validation
 
-- Release 构建零警告、零错误，完整数据、主题、紧凑布局及恢复回归通过。
-- 使用屏幕外、不激活的本进程窗口模拟传统任务栏的 Start 子窗口，真实调用原生窗口枚举；隐藏和越界窗口不加入结果，清理仅涉及本进程夹具。
-- 当前 Win11 的只读发现保持 UIAutomation，按钮数量 1；无猜测坐标。
-- 当前电脑输入测试通过：单独 Win、开始按钮、Win+R 保留、临时原生入口、显式禁用、独立测试子进程异常退出恢复。原有日常 iStart 在测试前正常退出，测试后恢复运行；未终止其他用户软件、重启 Explorer 或更改个人配置。
-- 诊断在本机保存版本、策略和按钮几何信息；不读取个人文件/网址，不上传数据。读取超时不会累积并行挂起扫描。
+- Release build had no warnings/errors; data, themes, compact layout, and recovery regressions passed.
+- Off-screen, nonactivating, process-owned windows simulated a traditional taskbar's Start child. Real native enumeration excluded hidden/out-of-bounds windows; cleanup touched only these fixtures.
+- Current Windows 11 read-only discovery retained UI Automation and found one button without guessed coordinates.
+- Local input tests passed for standalone Windows key, Start button, preserved Win+R, temporary native access, explicit disable, and recovery after an isolated child process exited abnormally. Everyday iStart exited normally before testing and was restored afterward. Other user software was not terminated; Explorer and personal configuration were unchanged.
+- Local diagnostics record OS version, policy, and button geometry without personal files/URLs or uploads. Timeouts do not accumulate parallel hung scans.
 
-## 仍待验证
+## Remaining work
 
-已在本机创建 Win10 22H2 评估虚拟机并进入过桌面，隔离验收脚本与后台准备流程已安排，详见 [Windows 测试环境](WINDOWS_TEST_LAB.md)。当前仍未产生 Win10 应用验收结果，不能把版本模拟、窗口夹具或环境建立写成 Win10 兼容通过。实际 Win10 19041–19045、其他 Win11、多屏缩放、自动隐藏任务栏、Explorer 重启、锁屏/睡眠恢复仍需后续实测。识别失败时保持原生，托盘和退出恢复入口保留。
+A Windows 10 22H2 evaluation VM was created and reached its desktop. An isolated acceptance script and preparation workflow were arranged; see the [Windows test lab](WINDOWS_TEST_LAB.md) for the dated preparation snapshot. No Windows 10 application acceptance result had been produced. Version simulation, window fixtures, and VM setup do not establish compatibility. Real Windows 10 19041–19045, other Windows 11 builds, multiple displays/scaling, auto-hide, Explorer restart, and lock/sleep recovery still need testing. Detection failure retains native behavior; tray and exit recovery remain available.
 
-本轮实测：当前 Win11 26200，1300 毫秒 UI 阻塞探针、单独 Win、开始按钮、Win+R、临时原生菜单、显式禁用及独立测试子进程异常退出恢复均通过。测试后恢复原 preview.20；未重启 Explorer、锁屏或睡眠，未在 Win10 实机运行。
+The current Windows 11 26200 run passed the 1,300 ms UI-blocking probe, standalone Windows key, Start button, Win+R, temporary native menu, explicit disable, and abnormal test-child recovery. The previous preview.20 was restored afterward. Explorer restart, lock, sleep, and real Windows 10 execution were not performed.

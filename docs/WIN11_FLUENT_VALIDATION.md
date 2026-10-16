@@ -1,26 +1,28 @@
-# Windows 11 Fluent 美化验证：preview.13
+[English](WIN11_FLUENT_VALIDATION.md) | [简体中文](zh-CN/WIN11_FLUENT_VALIDATION.md)
 
-日期：2026-10-13。
+# Windows 11 Fluent visual validation: preview.13
 
-## 设计与实现
+Date: 2026-10-13.
 
-[Figma 可编辑稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=10-173) 在原 Material 稿旁新增，原稿保留。设计包含 Button、Navigation、EntryTile 三个局部组件族、16 个颜色/间距/圆角变量、四个文字样式和菜单阴影样式。界面由可编辑节点与 34 个实例组成，12 个图像节点仅为原应用图标，未使用整屏截图代替界面。
+## Design and implementation
 
-Windows 配色采用 #F3F6FB 背景、白色内容、#0067C0 强调、#EAF2FA 选中底色与浅边框；输入/按钮 6 DIP 圆角、内容 12 DIP。增加灰色导航图标、左侧蓝色指示、搜索焦点底线、账户图标及更淡的状态区。默认宽度六列，窄窗口自动换行。Google 沿用原颜色、尺寸和字体值，保持即时切换。
+The [editable Figma design](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=10-173) was added beside the retained Material design. It included local Button, Navigation, and EntryTile component families, 16 color/spacing/corner variables, four text styles, and a menu-shadow style. Editable nodes and 34 instances formed the UI. Twelve image nodes were original application icons; the interface was not replaced with a full-screen screenshot.
 
-保留软件/文件分割线、推荐隐藏、全部收藏顺序、最近文件来源、拖入排序、账户电源、原生恢复和开始接入。新分类输入增加 Windows 风格占位说明。应用和文件夹图标仍由数据目标实时读取，示例目录不写入用户配置。
+Windows colors used background `#F3F6FB`, white content, accent `#0067C0`, selection `#EAF2FA`, and light borders. Inputs/buttons had 6 DIP corners; content had 12 DIP corners. Gray navigation icons, a blue selection indicator, search-focus underline, account icon, and lighter status area were added. Default width fit six columns; narrower windows wrapped. Google retained its previous color, size, and font values with immediate switching.
 
-## 资源证据
+App/file dividers, hidden recommendations, favorites order, recent-file sources, dragging/ordering, account/power, native recovery, and Start integration were retained at this milestone. The new-category field gained a Windows placeholder. App/folder icons still came from actual targets; example directories were not written to user configuration. Category creation and the recommendation panel were later removed from current navigation.
 
-导航 all/recent/folder/apps 分别来自 Figma 节点 10:130、10:135、10:144、10:153；搜索来自 10:182，账户来自 10:329。原 SVG 留在 Assets/Fluent，派生 PNG 对应 18 DIP 导航/搜索和 22 DIP 账户槽位，均按 2× 像素导出栅格资源；检查非透明像素与尺寸通过。PNG 作为 WPF Resource 嵌入，无临时 Figma URL 或运行时网络依赖。品牌四窗格复用现有相同图形。
+## Asset evidence
 
-## 验证与差异
+Navigation `all` / `recent` / `folder` / `apps` came from Figma nodes `10:130`, `10:135`, `10:144`, `10:153`; search from `10:182`, account from `10:329`. Source SVGs remain in `Assets/Fluent`. Derived PNGs cover 18 DIP navigation/search and 22 DIP account slots, exported at 2× pixels. Nontransparent-pixel and dimension checks passed. PNGs are embedded WPF Resources without temporary Figma URLs or runtime network dependencies. The brand reused the existing four-pane geometry at this milestone.
 
-- 构建、数据保护、最近记录、分组和双主题核心回归通过；导航图片冻结与 36×36 尺寸检查通过。
-- 712×604 默认内容预览与 592×484 紧凑预览已渲染，搜索/视图/模式提示/列表均在边界内；账户按钮增加最小宽度，避免图标挤压文字。
-- Win11 真实程序预览使用公开应用名称和示例目录，未将用户真实文件路径放入截图。
-- Figma 仅提供 Noto Sans SC，已核对稿内文字都使用该替代字体；因此不宣称与系统字体逐像素相同。Windows 程序采用 Segoe UI Variable / Microsoft YaHei UI；标准标题栏和状态条保留。阴影由系统窗口提供，未实现原生 Mica 模糊。
-- 真实目录数量、名称和应用标题由配置决定；长标题截断并保留提示，内容超出时滚动。
-- 未通过自动化发送 Win 键或执行电源动作；最终安装更新及手动界面反馈另记。
+## Validation and differences
 
-README、ARCHITECTURE、执行计划同步，VISION 复核，方向不变。
+- Build, data protection, recent history, grouping, and both-theme regressions passed; frozen navigation images and 36×36 dimensions were checked.
+- Default 712×604 content and compact 592×484 previews were rendered. Search, view controls, mode status, and list stayed in bounds. A minimum account-button width avoided icon/text crowding.
+- The real Windows 11 preview used public application names and sample directories, without personal file paths in captures.
+- Figma provided only Noto Sans SC; all design text was checked against that substitute. Pixel identity with system fonts was not claimed. The Windows app uses Segoe UI Variable / Microsoft YaHei UI, with standard title/status bars. The OS provides window shadow; native Mica blur was not implemented.
+- Actual directory counts, names, and app titles depend on configuration. Long names truncate with tooltips; excess content scrolls.
+- No automated Windows-key input or power action was performed in this visual check. Final installation updates and manual UI feedback were recorded separately.
+
+README, architecture, and execution plan were synchronized; vision was reviewed without a direction change.

@@ -1,60 +1,64 @@
-# 当前系统实机验收
+[English](CURRENT_SYSTEM_VALIDATION.md) | [简体中文](zh-CN/CURRENT_SYSTEM_VALIDATION.md)
 
-日期：2026-10-13。范围为 iStart 在当前电脑的运行、交互与恢复，不是整机硬件诊断或系统压力测试。
+# Validation on the current PC
 
-## 环境与结论
+Date: 2026-10-13. This record covers iStart operation, interaction, and recovery on the current PC. It is not a hardware diagnostic or a system stress test.
 
-- Windows 11 25H2 x64，26200.9457；EditionID=CoreCountrySpecific。
-- 当前检测到 1 个活动屏幕，1920×1080，工作区 1920×1032。未改动系统缩放、任务栏、安全、隐私或电源配置。
-- 基线为 0.2.0-preview.1（d439810）；交互验收使用同一界面与存储代码，增加独立测试配置入口。修复后的 0.2.0-preview.2 已复验文件夹重新定位及恢复行为。
-- 结论：下列非中断检查通过；仍有人工按键、跨窗口拖入和会话中断项目未完成，不能写成“当前系统全部验收通过”。
+## Environment and conclusion
 
-## 本轮实际检查
+- Windows 11 25H2 x64, 26200.9457; `EditionID=CoreCountrySpecific`.
+- One active display, 1920×1080; work area 1920×1032. System scaling, taskbar, security, privacy, and power settings were unchanged.
+- Baseline: 0.2.0-preview.1 (`d439810`). Interactive validation used the same UI and storage code with a separate test configuration. Folder relocation and recovery were checked again in 0.2.0-preview.2.
+- The non-disruptive checks below passed. Manual keyboard input, external drag-and-drop, and session interruption were not all completed; this is not a claim that every system acceptance check passed.
 
-| 项目 | 结果与证据 |
+This is a historical record. Categories, recommendations, and recent-folder behavior described here belong to these early previews; see the [README](../README.md) for current behavior.
+
+## Checks performed
+
+| Check | Result and evidence |
 | --- | --- |
-| 构建与核心保护 | Release 0 警告/0 错误；添加、去重、排序、迁移、原子保存、损坏恢复、未知版本、失败内存回退通过 |
-| 软件发现 | 实际窗口异步填充 12 项带图标的软件候选；仅本机处理，未把安装候选描述为系统历史常用频率 |
-| 中文分类创建 | 从实际界面创建测试分类，配置文件写入正确 |
-| 列表真实鼠标排序 | 乙拖到甲之前，界面与持久化顺序均变为乙→甲→文件夹 |
-| 拖入分类 | 文件夹拖至分类甲，categoryId 写入正确；源文件夹仍在原位 |
-| 分类真实鼠标排序 | 分类乙拖至甲之前，持久化顺序为未分类→乙→甲 |
-| 图标视图与真实排序 | 切换图标后，将甲拖至乙之前；IconView=true，顺序正确保存 |
-| 中文搜索 | 搜索“测试文档甲”只显示匹配入口；清空恢复完整收藏 |
-| 右键与重命名 | 实际弹出管理菜单，使用独立对话框将甲改名，配置与界面一致 |
-| 新文件添加 | 系统文件对话框添加合成文档丙，收藏从 3 增至 4 项 |
-| 重复文件添加 | 重复选择甲，收藏仍为 3 项（发生在添加丙之前），未复制源文件 |
-| Shell 启动与最近记录 | 双击合成文件夹，显示已交给 Windows，新增 1 次自身启动记录；最近列表显示该文件夹 |
-| 失效目标 | 临时移动合成文件后双击，提示失效且保留 4 项收藏；随后恢复原文件 |
-| 重新打开 | 分类顺序、入口顺序、改名、归类和图标偏好保持一致 |
-| 自定义接入启用 | 在设置实际启用，状态为自定义试用、CustomMenuEnabled=true，session.active 存在 |
-| 完整菜单进程异常恢复 | 只结束本次独立测试进程；会话标记保留。重新打开后自动回到原生模式，标记删除、4 项收藏及顺序仍保留 |
-| 临时原生按钮 | 原生模式下点击后隐藏 iStart；后续窗口截图可见实际原生菜单。自定义模式下完整交接仍沿用上一轮专项证据，本轮未独立重复验收 |
-| 文件夹重新定位修复 | 原先只有文件选择器；已拆分文件/文件夹入口。实际选中新文件夹后，目标路径更新且原入口 id 保留 |
-| 账户入口 | 当前显示锁定、注销；系统不存在 tsdiscon.exe，隐藏切换用户，符合能力判断；未执行会话操作 |
-| 电源入口 | 当前显示睡眠、重启、关机；powercfg /a 确认 S3 可用、休眠未启用，因此不显示休眠；未执行电源操作 |
-| 默认与最大化布局 | 当前屏幕默认窗口、最大化与还原正常，主要按钮及内容可见；未完成最小尺寸与其他缩放交互验收 |
-| 单实例与退出 | 后台启动，再次启动只保留 1 个进程；--exit 等待正常退出，无强制结束 |
-| 安装生命周期 | 独立 QA AppId、中文路径：首次安装、覆盖、卸载通过；卸载日志 Removed all? Yes，无需重启 |
-| 短时资源采样 | 接入已启用时采样 10 秒，CPU 约 0.25%（按全部逻辑处理器计），工作集约 201.4 MB；不是压力、长期泄漏或性能承诺 |
-| 收尾 | 测试进程已退出，原生模式恢复；原始合成文档哈希保持一致。QA 程序已卸载，只保留验收日志与合成资料 |
+| Build and core protection | Release build: 0 warnings/errors. Add, deduplication, ordering, migration, atomic saving, corruption recovery, unknown-version handling, and in-memory fallback after save failure passed. |
+| Application discovery | The actual window asynchronously populated 12 application candidates with icons. Processing remained local; installed candidates were not described as historical usage rankings. |
+| Chinese category creation | A test category created through the UI was stored correctly. |
+| Mouse-based list ordering | Dragging B before A produced B → A → folder in both the UI and saved data. |
+| Moving an entry to a category | Dragging the folder to category A saved the correct `categoryId`; the source folder stayed in place. |
+| Mouse-based category ordering | Moving category B before A saved Uncategorized → B → A. |
+| Icon view and ordering | Moving A before B in icon view saved the correct order and `IconView=true`. |
+| Chinese search | A Chinese test-document query showed only the matching entry; clearing it restored the full favorites list. |
+| Context menu and rename | The management menu opened; renaming A in a separate dialog updated both the UI and configuration. |
+| Adding a file | Adding synthetic document C through the system file picker increased favorites from 3 to 4. |
+| Duplicate handling | Selecting A again left 3 entries, before C was added; no source file was copied. |
+| Shell launch and recent history | Double-clicking a synthetic folder handed it to Windows and added one iStart launch record. The early recent view displayed the folder. |
+| Missing target | Temporarily moving a synthetic file produced a missing-target message while retaining all 4 entries. The file was then restored. |
+| Reopening | Category order, entry order, names, category assignment, and icon preference were retained. |
+| Enabling integration | Enabling it in Settings produced the custom trial state, `CustomMenuEnabled=true`, and a `session.active` marker. |
+| Recovery after menu-process failure | Only the isolated test process was terminated. Its session marker remained. Reopening restored native mode and removed the marker while retaining all 4 entries and their order. |
+| Temporary native-menu button | In native mode, the button hid iStart and a subsequent capture showed the real native menu. Complete custom-mode handoff relied on earlier P0 evidence and was not independently repeated here. |
+| Folder relocation fix | Separate file/folder pickers replaced the file-only picker. Selecting a new folder updated the target while preserving the entry ID. |
+| Account actions | Lock and sign-out were shown. Switch user was hidden because `tsdiscon.exe` was unavailable. No session action was executed. |
+| Power actions | Sleep, restart, and shutdown were shown. `powercfg /a` confirmed S3 availability and disabled hibernation, so Hibernate was hidden. No power action was executed. |
+| Default/maximized layout | Default, maximized, and restored windows showed the main controls and content. Minimum size and other scaling settings were not interactively accepted. |
+| Single instance and exit | A background launch followed by another launch retained one process. `--exit` completed gracefully without forced termination. |
+| Installation lifecycle | First install, overwrite install, and uninstall passed with a separate QA AppId and a Chinese path. The uninstall log reported `Removed all? Yes`; no reboot was needed. |
+| Short resource sample | A 10-second sample with integration enabled measured about 0.25% CPU across all logical processors and a 201.4 MB working set. This is not a stress, leak, or long-term performance guarantee. |
+| Wrap-up | The test process exited and native mode was restored. Synthetic source-document hashes were unchanged. The QA app was uninstalled; validation logs and synthetic materials were retained. |
 
-核心输出：`artifacts/smoke-500b495dbd864f8ea421b9865bf88aaa/`、修复后的 `artifacts/smoke-93ec621526a241248800d0c79ab2d365/`；交互配置及单实例记录在 `artifacts/current-system-test/`；本轮安装结果在 `artifacts/current-system-installer-test/`。这些是本地忽略提交的测试产物，没有上传个人真实收藏、文件内容或使用记录。
+Core outputs: `artifacts/smoke-500b495dbd864f8ea421b9865bf88aaa/` and the fixed build's `artifacts/smoke-93ec621526a241248800d0c79ab2d365/`. Interactive configuration and single-instance evidence are in `artifacts/current-system-test/`; installer results are in `artifacts/current-system-installer-test/`. These are ignored local artifacts. Personal favorites, file contents, and usage history were not uploaded.
 
-## 限制与待执行
+## Limits and pending checks
 
-- 用户后续反馈“出现原生菜单或两个菜单同时出现”。此项不按通过处理；反馈发生在测试结束并恢复原生模式之后收到，实际操作时间与当时启用状态尚待确认，不能据此断定双菜单的具体原因。复查时 iStart 进程未运行，默认配置 CustomMenuEnabled=false。上一轮专项回调与异常子进程恢复证据保留在 P0 记录，但不能冒充本轮完整 GUI 手测。
-- 当前 Windows 界面测试技能禁止自动使用 Win 键及操作运行窗口；需要用户手动触发。技能来源为本机 `computer-use/SKILL.md` 及其 `docs/guidance.md`，原文包括“Do not use the Windows key or shortcuts involving the Windows key.”和“Do not use the Windows Run dialog.”。
-- 未通过真实跨窗口操作验收外部拖入文件/文件夹/快捷方式；已通过内部真实拖动及文件对话框添加，不混为同一结果。
-- 移除与撤销、分类删除只覆盖已有模型保护检查，本轮未执行实际界面删除。当前界面测试技能对界面删除要求动作时确认，不能把其他代码检查当作该交互通过。
-- Explorer 重启、锁屏/注销、切换用户、睡眠/唤醒、重启和关机未执行，以保留当前工作会话。登录认证和安全桌面未修改，也不通过自动化操作认证界面。
-- 多显示器在当前单屏环境不可验；其他缩放、自动隐藏和任务栏布局变化未更改用户环境验证。
-- 安装中途取消、空间不足、权限拒绝、外部文件锁及失败回退矩阵未通过本机实机演练；首次/覆盖/卸载通过不能替代这些项目。
+- The user later reported the native menu or both menus appearing. This was not accepted as passing. The report arrived after the test had ended and native mode had been restored, but the actual interaction time and integration state were uncertain. At inspection, iStart was not running and `CustomMenuEnabled=false`. Earlier callback and child-process recovery evidence cannot substitute for a full GUI retest.
+- The computer-use skill used for this historical session prohibited automated Windows-key and Run-dialog operations, requiring manual user input. Its local `computer-use/SKILL.md` and `docs/guidance.md` stated: “Do not use the Windows key or shortcuts involving the Windows key.” and “Do not use the Windows Run dialog.” These describe the constraints of that session.
+- Real external dragging of files, folders, and shortcuts between windows was not accepted. Internal mouse dragging and file-picker addition passed as separate checks.
+- Remove/undo and category deletion had model-level protection checks only; actual UI deletion was not performed. The UI skill then required confirmation at deletion time.
+- Explorer restart, lock/sign-out, user switching, sleep/wake, restart, and shutdown were not performed, preserving the working session. Authentication and the secure desktop were unchanged.
+- Multiple monitors could not be checked on this single-display PC. Other scaling settings, auto-hide, and taskbar layouts were not changed for testing.
+- Mid-install cancellation, insufficient space, permission denial, external file locks, and failure rollback were not exercised on the PC. Successful first/overwrite/uninstall checks do not cover them.
 
-## 修复与配置隔离
+## Fixes and configuration isolation
 
-增加 `--ui-test <新建测试目录>`，使用该目录的独立 JSON、会话标记与测试资料；窗口标题为“交互验收”。此模式禁用真实开机启动修改，临时系统入口仍会影响本会话，退出后释放。一次只运行一个交互验收实例。
+`--ui-test <new-test-directory>` uses separate JSON data, session markers, and synthetic materials, with an interactive-validation window title. It disables real startup-setting changes. Temporary Start integration still affects the current session and is released on exit. Run only one interactive-validation instance at a time.
 
-补齐“重新定位文件夹”选择器，失效提示指向右键重新定位。产品愿景、隐私范围和默认原生原则未改变。
+The folder-relocation picker was added, and missing-target messages now direct users to relocation in the context menu. Product direction, privacy scope, and the native-by-default principle were unchanged.
 
-测试开始时不存在个人 library.json。初始主窗口创建了一个空测试分类；收尾删除配置文件的操作被自动审批拒绝，因此改用保留文件、归档原内容、仅撤回确定由本次创建且无收藏的分类。当前默认配置为空收藏、仅未分类、原生模式、不开机启动；没有删除用户源文件。独立测试资料和小型日志保留供复核。
+No personal `library.json` existed at the start. The initial window created an empty test category. Automatic approval review rejected deleting the configuration during cleanup, so the file was retained, its original content archived, and only the known empty category created by this test was removed. The resulting default configuration had no favorites, only Uncategorized, native mode, and no startup registration. No user source file was deleted. Isolated materials and small logs were retained for review.

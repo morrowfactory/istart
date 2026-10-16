@@ -1,60 +1,62 @@
-# iStart 产品愿景
+[English](VISION.md) | [简体中文](docs/zh-CN/VISION.md)
 
-## 使命
+# iStart vision
 
-让 Windows 开始菜单成为用户自己的工作入口：软件、文件、项目资料和网站随手可达，桌面不再承担所有收纳任务。
+## Mission
 
-## 面向谁
+Make Windows Start a personal work entry point: frequently used apps, files, project materials, and websites within easy reach, without relying on the desktop to store every shortcut.
 
-面向同时使用多个软件、经常打开文档、项目文件夹和工作网站，希望集中访问常用内容的 Windows 10/11 用户。优先满足日常个人桌面整理，不把首版扩展为企业桌面管理系统。
+## Audience
 
-## 核心体验
+Windows 10/11 users who work across multiple apps, documents, project folders, and websites and want to keep everyday tools together. The first release focuses on personal desktop organization rather than enterprise desktop management.
 
-提供轻量本地截屏入口：收起菜单、框选、标注后复制或保存，减少日常沟通中切换工具的步骤。截图由用户主动发起和输出，不自动收集或上传屏幕内容。
+## Core experience
 
-点击熟悉的开始按钮，看到紧凑、清楚、稳定的个人菜单。按软件、最近文件、文件夹、网站和我的电脑五个入口访问常用内容，使用多的优先，文件夹和网站可随时切换最近打开；需要原生菜单时随时切回。登录、账户和电源操作仍遵循 Windows 的行为。
+Click the familiar Start button to open a compact, clear, reliable menu. Access My Apps, Recently Opened, Frequent Folders, My Websites, and My Computer. Prioritize frequently used items and switch folders and websites to recent ordering when needed. Windows Start remains easy to restore; authentication, account actions, and power behavior stay under Windows control.
 
-界面默认尊重用户的系统显示语言，也允许手动选择。先提供简体中文与英文，逐步按实际需求扩展；语言切换不改写用户的软件、文件和网站名称，也不影响已选择的系统接入方式。
+Provide lightweight local screenshots: hide the menu, select a region, annotate it, and copy or save. Capture and output are user-initiated, with no automatic collection or upload of screen contents.
 
-从下载到第一次使用也应简单：打开安装包后看到友好的中文向导，了解正在安装什么、进展到哪里、何时可以开始使用。安装失败或取消时有清楚的结果和恢复方式。设置中能看到当前版本，主动检查和下载新版，升级进度清楚可见；升级保留个人入口与设置。我的电脑集中展示分区、回收站、网络和控制面板，具体系统管理继续使用 Windows 原生页面。
+Respect the user's Windows display language by default while allowing an explicit preference. Start with Simplified Chinese and English and add languages when there is demonstrated demand. Changing the interface language must not rename apps, files, or websites or change Start integration. Documentation follows the same accessibility goal: English defaults and separate, clearly linked Chinese pages rather than two languages mixed into one document.
 
-不另设本机软件推荐区。我的软件最多显示 30 个有活动依据或用户明确添加的软件，按使用活动排序；缺少记录时明确提示，不用全部已安装应用填满。网站历史只在本机读取，常用与最近视图可切换，不上传浏览活动。
+The first-use experience should be straightforward: a friendly Chinese installation wizard explains what is being installed, shows real progress, and makes completion clear. Cancellation or failure should have understandable outcomes and recovery paths. Settings shows the version and supports user-initiated update checks and downloads with visible progress. Upgrades retain personal items and settings. My Computer groups disks, Recycle Bin, Network, and Control Panel, while Windows continues to handle system management.
 
-## 产品原则
+Do not introduce a separate installed-app recommendation panel. My Apps shows at most 30 apps with activity evidence or explicit user additions, ordered by usage. Missing history must be acknowledged instead of filling the menu with every installed app. Browser history stays local, with frequent and recent website views and no browsing-activity upload.
 
-1. **用户掌握入口**：允许添加、隐藏和选择常用/最近顺序，保留原有入口数据，自动显示不移动源文件。
-2. **紧凑而清楚**：减少大块留白和装饰，支持适当调整密度，同时保留可读文字、键盘操作和清晰反馈。
-3. **随时恢复原生**：临时打开与默认切换都容易找到，故障不能让开始入口失效。
-4. **引用优先**：收纳的是访问入口，移除收藏不会删除文件，拖入也不会移动原文件。
-5. **本地与克制**：默认不上传文件路径和活动记录，不为了推荐扫描全部磁盘；最近记录范围透明并可清除。
-6. **兼容有证据**：区分目标支持、兼容试用和实机已验证。未实测版本只能在能力检测成功后由用户主动试用，失败保留原生入口；诊断由用户掌握，不承诺所有未来 Windows 更新。
-7. **安装过程透明**：选项清楚、进度真实、结果明确；是否启用自定义菜单由用户选择，失败不妨碍继续使用 Windows 原生菜单。
+## Product principles
 
-## 范围边界
+1. **User control:** allow adding, hiding, and choosing frequent/recent order. Retain existing data; automatic suggestions never move source files.
+2. **Compact and clear:** reduce empty space and decoration, allow sensible density adjustments, and preserve legibility, keyboard access, and clear feedback.
+3. **Recover native Start:** make temporary access and default-mode switching easy to find. A failure must not leave Start unusable.
+4. **References first:** store access points. Removing an item does not delete its source; dropping a file does not move it.
+5. **Local and restrained:** do not upload paths or activity by default or scan the entire disk for recommendations. Make history scope transparent and clearable.
+6. **Evidence-based compatibility:** distinguish targets, compatibility trials, and tested systems. Untested builds require successful capability detection and explicit opt-in; failures retain native Start. Users control diagnostics. Do not promise compatibility with every future Windows update.
+7. **Transparent installation:** explain options, show actual progress, and make results clear. Users decide whether to enable integration; a failure must not prevent access to Windows Start.
 
-首版聚焦开始菜单、软件与文件入口、拖拽整理、搜索和可靠恢复。不包含替换登录认证、完整桌面外壳、全盘文件内容搜索、云同步、广告推荐或远程设备管理。后续扩展须以真实需求为依据，不预先增加复杂基础设施。
+## Scope boundaries
 
-## 阶段目标
+The first release focuses on Start integration, apps and file access, drag-and-drop organization, search, and reliable recovery. It excludes replacement authentication, a full desktop shell, whole-disk content search, cloud synchronization, advertising recommendations, and remote-device management. Future extensions should follow real needs rather than speculative infrastructure.
 
-执行上先以最小技术验证确认系统接入与恢复可行，再投入完整菜单开发。具体交付门槛见 [执行计划](EXECUTION_PLAN.md)，不以独立启动器代替开始菜单接入验收。
+## Delivery stages
 
-| 阶段 | 交付目标 | 完成依据 |
+Validate integration and recovery with the smallest viable implementation before expanding the menu. See the [execution plan](EXECUTION_PLAN.md); a standalone launcher does not substitute for Start-integration acceptance.
+
+| Stage | Deliverable | Completion evidence |
 | --- | --- | --- |
-| 需求与原型 | 中文文档与紧凑视觉方案 | 已记录拖入、排序、原生回退及系统功能保留要求；静态原型已形成 |
-| 技术验证（当前） | 最小可运行验证版与恢复方案取证 | 已形成可运行试用版；Win11 26200 基本接入与异常退出恢复通过，双系统完整兼容仍待验证 |
-| 本地交互 | 可运行菜单、分类、拖放、搜索和保存 | 用户能添加入口、调整顺序，关闭重开后结果一致 |
-| 系统接入验证 | Win10/11 开始按钮与 Win 键接入、原生切换与恢复 | 指定版本测试通过，异常退出仍有可靠恢复方式 |
-| 完整首版 | 软件发现、有限最近记录、账户、电源、中文安装向导与卸载 | 安装进度真实，取消与失败可恢复，兼容矩阵与核心验收通过，已知限制公开 |
-| 后续优化 | 按使用反馈改进密度、性能和可访问性 | 改进可验证，不牺牲恢复能力或增加不必要采集 |
+| Requirements and prototype | Product documentation and compact visual design | Drag-in, ordering, native fallback, and system-function retention recorded; static prototypes available |
+| Technical validation, current | Runnable preview and recovery evidence | Windows 11 build 26200 basic integration and abnormal-exit recovery checked; complete dual-system acceptance pending |
+| Local interaction | Menu, item organization, drag-and-drop, search, and persistence | Added items and chosen ordering survive closing and reopening |
+| System integration | Start button and Win key on Windows 10/11, native switching, and recovery | Named system builds pass; abnormal exit retains a recovery path |
+| Complete initial release | App discovery, bounded history, account/power actions, Chinese installation, and uninstall | Real progress, cancellation/failure recovery, compatibility matrix, core acceptance, and public limitations |
+| Later refinements | Density, performance, and accessibility improvements based on feedback | Measurable improvements without weakening recovery or adding unnecessary collection |
 
-## 成功标准
+## Success criteria
 
-- 用户能添加软件与文件夹，通过五个清楚的入口找到常用软件、最近文件、常用目录、网站和系统资源。
-- 排序规则可以理解，常用/最近切换会保存，重启或升级不丢失原有入口。
-- 开始按钮、Win 键、原生回退和系统账户、电源操作在已声明系统版本上通过验证。
-- 退出、崩溃、Explorer 重启及卸载不会留下不可用的开始入口。
-- 用户无需命令行即可安装，能看懂当前步骤与进度；安装成功可启动，取消或失败后已有收藏和原生入口保持可用。
-- 活动读取异步且有界，历史缺失时有明确提示；隐藏、关闭及升级均不删除用户入口或外部历史。
-- 常用内容能在少量操作内找到，菜单紧凑且适配实际显示缩放；性能目标在可运行原型完成后测量确定。
+- Users can add apps and folders and find apps, recent files, folders, websites, and system resources through five recognizable views.
+- Ordering is understandable; frequent/recent preferences persist; restarts and upgrades preserve existing items.
+- Start-button and Win-key integration, native fallback, and account/power behavior pass on the declared tested builds.
+- Exit, crashes, Explorer restarts, and uninstall do not leave Start unusable.
+- Installation requires no command line. Users can understand the current step and progress; cancellation or failure preserves existing items and native Start.
+- Activity reads are asynchronous and bounded. Missing history has a clear explanation. Hiding items, disabling features, and upgrading do not delete external history or source files.
+- Frequently used content takes few actions to reach. The menu stays compact and adapts to real display scaling. Performance targets are measured after the runnable prototype exists.
 
-当前已有可运行试用版、中文安装向导和受限 Win11 入口接入；双系统完整兼容、复杂恢复与异常安装验收仍是正式首版的必要门槛。
+A runnable preview, Chinese installation wizard, and constrained Windows 11 integration are available. Complete cross-system compatibility, complex recovery, and abnormal-installation acceptance remain prerequisites for a full initial release.

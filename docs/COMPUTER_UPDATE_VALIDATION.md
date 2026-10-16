@@ -1,19 +1,21 @@
-# 我的电脑与升级验证
+[English](COMPUTER_UPDATE_VALIDATION.md) | [简体中文](zh-CN/COMPUTER_UPDATE_VALIDATION.md)
 
-日期：2026-10-14。版本：0.2.0-preview.17。此文记录开发验证范围，公开状态、精确来源与安装包哈希以 GitHub Release 为准。
+# My Computer and update validation
 
-## 验证范围
+Date: 2026-10-14. Version: 0.2.0-preview.17. This is a historical development-validation record; GitHub Releases supplies the authoritative publication state, exact source, and package hash.
 
-- Release 构建零警告、零错误；完整核心回归通过。
-- 隔离夹具验证五个入口切换、我的电脑搜索、容量卡片与系统入口渲染；Windows/Google 主题原有回归通过。示例图见 prototypes/computer.png，容量为测试值。
-- 五个磁盘与七个控制面板大类的默认窗口布局无需滚动；磁盘三列，系统入口单行，控制面板双列。
-- 本机只读探测发现 5 个驱动器、7 个允许的控制面板大类；控制面板类别枚举可用。GitHub Releases 请求成功，当前开发版 17 高于公开版本 16，返回无更高版本。
-- 升级隔离 HTTP 夹具验证数值版本比较、草稿排除、外部下载来源拒绝、正式/预览通道、下载字节与 SHA256 校验、校验失败清理及取消清理；夹具文件不执行。
-- 隔离 QA 安装器首次安装、覆盖安装、卸载及中文空格目录验证通过；不启动真实菜单。
-- 应用内安装使用现有 Inno 安装向导，当前目录和开机启动选项传给安装器；准备安装时正常请求旧实例退出。开发/验收运行不能启动安装器。
+## Checked scope
 
-## 仍需验证
+- Release build: zero warnings/errors; complete core regression passed.
+- Isolated fixtures covered five-view navigation, My Computer search, capacity cards/system items, and existing Windows/Google theme regression. [The reference image](prototypes/computer.png) uses synthetic capacities and the Chinese UI.
+- The default window showed five disks and seven Control Panel categories without scrolling: three-column disks, one-row system entries, two-column Control Panel.
+- Read-only inspection found five drives and seven allowed Control Panel categories; enumeration was available. GitHub Releases responded successfully. At this milestone, development version 17 was newer than public version 16, so no update was returned.
+- Isolated HTTP fixtures covered numeric versions, draft exclusion, rejecting external download origins, stable/preview channels, byte/SHA256 validation, failed-hash cleanup, and cancellation cleanup. Fixture files were not executed.
+- QA first install, overwrite, uninstall, and a path with spaces/non-ASCII characters passed without opening the real menu.
+- In-app installation uses the existing Inno wizard, passing the current directory/startup choice and requesting graceful exit at preparation time. Development/acceptance runs cannot launch the installer.
 
-未实际执行未来公开版本的整条应用内下载与覆盖升级链路；当前没有比开发版 17 更高的公开版本。未修改磁盘、网络或控制面板设置，系统管理项目的逐项交互仍待人工验收。Win10、其他 Win11、多屏、安装取消/磁盘不足/权限拒绝等原有兼容和失败矩阵仍待完成。
+## Outstanding at this milestone
 
-升级下载仅由用户主动触发，来源固定为 GitHub 仓库；安装包未签名。README、ARCHITECTURE、VISION 已同步。
+The complete download-and-overwrite path to a future public version had not been exercised because no public release exceeded development version 17. Disk/network/Control Panel settings were unchanged; individual system-item interactions needed manual acceptance. Windows 10, other Windows 11 builds, multiple monitors, cancellation, disk-full, permission-denied, and other failure cases remained pending.
+
+Downloads require user initiation and the fixed GitHub source. The installer was unsigned. README, ARCHITECTURE, and VISION were synchronized for this milestone. Later release/update evidence does not retroactively change this record's scope.

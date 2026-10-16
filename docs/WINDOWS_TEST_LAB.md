@@ -1,61 +1,63 @@
-# Windows 虚拟机兼容测试
+[English](WINDOWS_TEST_LAB.md) | [简体中文](zh-CN/WINDOWS_TEST_LAB.md)
 
-状态：Win10 已安装并进入过桌面，应用自动验收尚未执行，不能据此声明已兼容。本轮虚拟机测试基线固定为 `0.2.0-preview.21`，来源 `cb445edcdf758debc5a139b75b9d8632414e827a`；不是最新公开版本的声明。
+# Windows VM compatibility testing
 
-2026-10-16 本机准备记录：VirtualBox 7.2.20 已安装且基础虚拟机启动成功，无需重启宿主；已创建 4 核、8 GiB、80 GiB 动态磁盘的专用测试机。官方中文评估镜像已下载并通过微软 SHA256 校验，Win10 已完成安装并进入测试账户桌面，Guest Additions 驱动日志确认系统 build 19045；远程执行服务仍在检查，应用验收尚未运行。测试包已校验并打包为只读光盘。脚本已在 Windows PowerShell 5.1 完成只读预检，确认 Win11 宿主会被交互测试防护拒绝。
+Preparation snapshot: 2026-10-16. Windows 10 was installed and reached its desktop, but application acceptance had not run. This does not establish compatibility. The fixed test baseline is `0.2.0-preview.21`, source `cb445edcdf758debc5a139b75b9d8632414e827a`; this is not a claim about the latest public release.
 
-本机后台流程已经启动，当前等待 Windows 正常关机收尾后重新启动，再检查远程执行服务、保存系统快照、挂载测试光盘并启动普通权限验收。状态与错误写入工作区旁的 `.istart-testlab/setup-state.json` 和 `setup-error.txt`；实际结果导出至 `.istart-testlab/win10-results`。Windows 许可状态未就绪时停止应用验收并记录前置检查失败，不将准备失败计为产品兼容失败。快照和应用测试尚未完成；限时等待失败会保存现场。
+VirtualBox 7.2.20 was installed and a basic VM booted without rebooting the host. The dedicated VM had 4 vCPUs, 8 GiB RAM, and an 80 GiB dynamic disk. The official Chinese evaluation image passed Microsoft's SHA256 check. Windows 10 installation reached the dedicated test account's desktop, and Guest Additions driver logs identified build 19045. Remote execution was still being checked; app acceptance had not started. The verified package was placed on a read-only ISO. Windows PowerShell 5.1 read-only preflight confirmed that the interactive-test guard rejects the Windows 11 host.
 
-## 环境与隔离
+At that snapshot, background preparation was waiting for graceful Windows shutdown/finalization before reboot, remote-execution checks, snapshot creation, test-ISO mounting, and standard-user acceptance. State/errors were recorded in the workspace-adjacent `.istart-testlab/setup-state.json` and `setup-error.txt`; results were intended for `.istart-testlab/win10-results`. An unready Windows license state stops acceptance and records a preflight failure rather than a product compatibility failure. Snapshot/app testing was incomplete; bounded-wait failure preserves evidence. This dated record does not claim the preparation process is still running.
 
-- 当前 Win11 电脑作为宿主；Win10 22H2 x64 虚拟机作为首要目标，后续增加 LTSC 2021（19044）。同一虚拟机无法替代不同厂商硬件实测。
-- 推荐 4 核、8 GiB 内存、80 GiB 动态磁盘，VirtualBox 的基础 NAT 网络；不安装 Extension Pack，不启用桥接网络、共享剪贴板或拖放，不共享个人目录。
-- 使用微软官方评估镜像或有相应授权的安装镜像。评估系统遵循镜像内许可及有效期，不延长或绕过评估期限；Host 的 Windows 授权不能直接视作虚拟机授权。
-- 测试机使用专用本地账户，不导入真实配置、文件、浏览历史或账号。公开安装包与测试脚本通过只读光盘镜像传入。
-- 在系统及 Guest Additions 安装完成后创建 `clean-os` 快照；公开基线安装后创建 `istart-baseline`。保留这两个恢复点及正在调查问题的快照；无默认批量清理。
+## Environment and isolation
 
-## 安装包基线
+- Use the current Windows 11 PC as host, with Windows 10 22H2 x64 as the first guest target and LTSC 2021 (19044) later. One VM does not replace tests across hardware vendors.
+- The selected setup uses 4 vCPUs, 8 GiB RAM, an 80 GiB dynamic disk, and basic VirtualBox NAT. No Extension Pack, bridged networking, shared clipboard, drag-and-drop, or personal-folder shares.
+- Use an official Microsoft evaluation image or an appropriately licensed installation image. Follow its license and evaluation term; do not extend/bypass expiry or assume the host's Windows license covers the VM.
+- Use a dedicated local test account without real configuration, personal files, browser history, or accounts. Transfer the public installer/scripts through a read-only ISO.
+- Create `clean-os` after OS/Guest Additions setup, and `istart-baseline` after installing the public baseline. Retain both recovery points and snapshots for active investigations; no default bulk cleanup.
 
-从 [preview.21 发布页](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.21)下载安装包和 `release-manifest.json`，核对版本、来源 SHA、文件长度和 SHA256。
+## Installer baseline
 
-本轮安装包：`iStart-Setup-0.2.0-preview.21.exe`，53,635,225 字节，SHA256：
+Download the installer and `release-manifest.json` from the [preview.21 release](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.21). Verify version, source SHA, length, and SHA256.
+
+Baseline: `iStart-Setup-0.2.0-preview.21.exe`, 53,635,225 bytes, SHA256:
 
 ```text
 2734c997d0ffb8533da87c4b9f9aeb4ac86723316e308e64f06b63850492d23e
 ```
 
-Win10 22H2 中文 x64 Enterprise Evaluation 镜像校验值来自[微软校验文档](https://download.microsoft.com/download/c/1/1/c11d2ca5-967c-45c0-bc7d-2d9ca3f1fe07/Windows10Enterprise22H2HashValues.pdf)：
+Windows 10 22H2 Chinese x64 Enterprise Evaluation ISO checksum from [Microsoft's hash document](https://download.microsoft.com/download/c/1/1/c11d2ca5-967c-45c0-bc7d-2d9ca3f1fe07/Windows10Enterprise22H2HashValues.pdf):
 
 ```text
 B586B4A2B936B44CEC5A785E0E2696B4816A66A40D287D4203CE18F56970D1C4
 ```
 
-## 自动测试
+## Automated checks
 
-在虚拟机安装公开基线后，从托盘退出日常 iStart，保持虚拟机登录和桌面解锁，再执行：
+After installing the public baseline inside the VM, exit everyday iStart from its tray and keep the guest desktop signed in and unlocked. Run:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Test-WindowsVm.ps1 -Rounds 3
 ```
 
-脚本拒绝在宿主机、非 Win10 19044/19045 x64 虚拟机、管理员或服务会话中注入输入。测试通过交互会话的普通权限运行，避免管理员权限掩盖问题。`-PreflightOnly` 在任何 Windows 中只记录环境和程序版本，不接入开始菜单。
+The script rejects input injection on the host, outside a Windows 10 19044/19045 x64 VM, or in administrator/service sessions. Interactive checks run as a standard user to avoid elevated rights masking problems. `-PreflightOnly` is read-only on any Windows system and records environment/program version without integrating Start.
 
-自动部分使用程序既有验收入口，依次执行按钮发现、数据/布局回归、Win/开始按钮/Win+R/原生切换/测试子进程异常退出恢复，以及最大化背景下置前、搜索焦点、失焦收起、最小化恢复和实际启用接入。配置和输出位于专用测试目录；不改日常 iStart 设置。测试输出保留在虚拟机桌面的 `iStart-test-results`，每次新建目录。自动通过仍显示 `AutomatedPass-ManualPending`。
+The automated sequence uses existing acceptance entry points: button discovery; data/layout regression; Windows key, Start button, Win+R, native switching, abnormal test-child recovery; and presentation over a maximized background, search focus, blur dismissal, minimized restore, and actual integration enablement. Configuration/output use dedicated test directories, preserving everyday settings. New result directories are retained under the guest desktop's `iStart-test-results`. An automated pass still reports `AutomatedPass-ManualPending`.
 
-`-Rounds` 只是重复既有窗口测试，每轮启动新的测试进程，不能代表同一实例长时间稳定运行。脚本未在 Win10 执行前，只能记录语法检查及宿主预检结果。
+`-Rounds` repeats window checks using a new process each round; it does not establish long-running stability of one instance. Before guest execution, report only syntax checks and host-preflight results.
 
-## 人工矩阵与通过门槛
+## Manual matrix and acceptance gates
 
-| 场景 | 操作与验收 |
+| Scenario | Steps and acceptance |
 | --- | --- |
-| 用户报告的两个问题 | 最大化记事本后，分别按 Win、点击系统开始按钮、点击 iStart 快捷方式；菜单置前，搜索可直接输入英文及中文，原生菜单不同时出现 |
-| 连续使用 | 同一实例交替 Win/开始按钮各 50 次，空闲 45 分钟后重复 10 次；不丢接入、不被遮挡、不重复弹出 |
-| 原生与组合键 | Win+R、Win+E 正常；临时原生入口、停用、退出均恢复原生菜单 |
-| 任务栏 | 自动隐藏开/关，底部及左/右/顶部逐项验证；不猜测坐标，识别失败保持原生 |
-| 显示 | 100%、150%、200% 缩放分别测试；切换分辨率后重试；多屏另行标记，不以单屏替代 |
-| 恢复 | 仅在虚拟机重启 Explorer、锁屏解锁、睡眠唤醒及重启登录后验证；不可对宿主机执行这组操作 |
-| 安装维护 | 首次安装默认原生；主动启用后可接入；升级保留测试配置；卸载后原生可用 |
+| The two reported problems | Maximize Notepad; separately press Windows, click system Start, and open the iStart shortcut. Menu reaches foreground, direct English/Chinese search works, and native Start does not appear simultaneously. |
+| Repeated use | In the same instance, alternate Windows-key and Start-button opens 50 times each; idle 45 minutes, then repeat 10 times. No lost integration, obscured menu, or duplicate opening. |
+| Native behavior and shortcuts | Win+R and Win+E work; temporary native access, disable, and exit restore native Start. |
+| Taskbar | Test auto-hide off/on and bottom/left/right/top individually. Do not guess coordinates; detection failure keeps native behavior. |
+| Display | Test 100%, 150%, and 200% scaling and retry after resolution changes. Record multi-monitor work separately; single-monitor testing does not cover it. |
+| Recovery | Restart Explorer, lock/unlock, sleep/wake, and reboot/sign-in inside the VM only. Do not run this group on the host. |
+| Installation maintenance | First install defaults to native; opt-in enables integration; upgrade preserves test configuration; native Start works after uninstall. |
 
-每项记录系统版本/补丁、iStart 来源 SHA、显示设置、步骤、实际结果以及 Pass/Fail/NotRun。截图只包含测试数据。任一核心项失败先保存日志并修复，再复测同场景和已通过核心项。Win10 22H2 与 LTSC 结果分别记录，不合并为“所有 Win10 已通过”。
+For each case record OS/patch, iStart source SHA, display settings, steps, actual result, and Pass/Fail/NotRun. Captures contain test data only. On a core failure, preserve logs, fix it, then rerun that case and previously passed core checks. Record Windows 10 22H2 and LTSC separately rather than claiming every Windows 10 build passed.
 
-GitHub `windows-latest` 当前是 Windows Server 镜像，现有 CI 不能代替桌面 Start 菜单验证，见 [GitHub 镜像说明](https://github.com/actions/runner-images#available-images)。
+The GitHub-hosted Windows CI environment described in this record uses a Windows Server image and cannot replace desktop Start-menu acceptance. See [GitHub runner images](https://github.com/actions/runner-images#available-images) for image definitions.
