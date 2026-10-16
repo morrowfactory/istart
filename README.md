@@ -96,10 +96,12 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.22.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.23.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
+
+开发分支 `0.2.0-preview.23` 优化安装体积：保留自包含运行环境、中英文资源及原有功能，只发布当前支持的框架语言资源，不分发 PDB 调试符号，安装器使用 `lzma2/ultra64` 固实压缩。重新打包先清理限定的发布输出目录，防止旧语言资源混入；CI 另运行自包含程序回归。体积对比与边界见[安装包优化](docs/PACKAGE_SIZE.md)。上方下载链接仍为已公开的 preview.22。
 
 `--probe-system <目录>` 只读检查驱动器、控制面板项目数量和 GitHub 可升级版本，不启动系统项目或安装器。
 
