@@ -28,6 +28,8 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 
 进程不注入 Explorer、不修改系统二进制、不替换登录认证、不添加服务或驱动。临时原生打开与默认原生切换是独立操作。
 
+兼容验收工具 `scripts/Test-WindowsVm.ps1` 独立于产品运行路径，只在已识别的 Win10 x64 虚拟机调用既有诊断/回归/交互入口，配置和报告按轮隔离。只读预检可在宿主运行；实际键鼠输入、窗口抢焦点和恢复验证留在虚拟机。VirtualBox 是测试环境依赖，不随 iStart 安装，虚拟机镜像、磁盘、账户凭据和本地报告不进入仓库或发行包。
+
 Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml 与 MainWindow.xaml 通过 DynamicResource 即时更新按钮、输入框、列表选择与内容卡片。设置中的外观选择单独保存并调用 SetTheme，不重启适配器，也不改写隐私或开机启动选项。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](docs/MATERIAL_VALIDATION.md)。
 
 ## 本地数据

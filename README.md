@@ -104,6 +104,8 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 
 GitHub CI 验证构建、核心行为、布局及隔离安装/覆盖/卸载，临时产物保留 7 天。公开安装包通过[发布流程](docs/GITHUB_RELEASE.md)使用最新 main 的已验证 CI 产物，核对来源 SHA 和哈希后发布；不包含个人配置或历史。
 
+Win10 桌面兼容测试使用独立虚拟机，运行 `scripts/Test-WindowsVm.ps1`；宿主机可用 `-PreflightOnly` 只读预检。环境隔离、安装包校验和人工验收矩阵见 [Windows 测试环境](docs/WINDOWS_TEST_LAB.md)。脚本与环境准备不代表 Win10 验收通过。
+
 Inno Setup 7 有商业使用许可要求，商业发行前需取得适用授权，参见 [Inno 许可](https://jrsoftware.org/isorder.php)。项目未复制 Open-Shell 代码。
 
 ## 项目文档
