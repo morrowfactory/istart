@@ -55,13 +55,7 @@ internal sealed class ScreenshotWindow : Window
         }
         var colors = new[] { ("红色", Colors.Red), ("蓝色", Colors.DodgerBlue), ("绿色", Colors.LimeGreen), ("橙色", Colors.Orange), ("黑色", Colors.Black), ("白色", Colors.White) };
         var palette = new ComboBox { Width = 82, Margin = new Thickness(6, 3, 3, 3) };
-        foreach (var (label, color) in colors)
-        {
-            var sample = new StackPanel { Orientation = Orientation.Horizontal };
-            sample.Children.Add(new Border { Width = 10, Height = 10, Background = new SolidColorBrush(color), BorderBrush = Brushes.Gray, BorderThickness = new Thickness(1), Margin = new Thickness(0, 0, 4, 0) });
-            sample.Children.Add(new TextBlock { Text = label, Foreground = Brushes.Black });
-            palette.Items.Add(new ComboBoxItem { Content = sample, Background = Brushes.White });
-        }
+        palette.ItemsSource = colors.Select(item => item.Item1).ToArray();
         palette.SelectedIndex = 0;
         palette.SelectionChanged += (_, _) => { if (palette.SelectedIndex >= 0) surface.Color = colors[palette.SelectedIndex].Item2; };
         System.Windows.Automation.AutomationProperties.SetName(palette, "标注颜色");
