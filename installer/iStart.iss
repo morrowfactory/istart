@@ -1,4 +1,4 @@
-#define AppVersion "0.2.0-preview.22"
+#define AppVersion "0.2.0-preview.23"
 #ifndef Payload
   #define Payload "..\artifacts\preview-win-x64"
 #endif
@@ -25,7 +25,7 @@ DisableWelcomePage=no
 DisableProgramGroupPage=yes
 OutputDir=..\artifacts\setup
 OutputBaseFilename={#Identity}-Setup-{#AppVersion}
-Compression=lzma2
+Compression=lzma2/ultra64
 SolidCompression=yes
 SetupLogging=yes
 SetupIconFile=..\src\IStart.App\Assets\Brand\istart.ico

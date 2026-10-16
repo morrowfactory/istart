@@ -17,6 +17,17 @@ jobs:
       - name: 构建并验证数据与布局
         shell: pwsh
         run: ./scripts/Test-Prototype.ps1
+      - name: 打包独立运行验证版
+        shell: pwsh
+        run: |
+          ./scripts/Publish-Preview.ps1
+          $sha = git rev-parse HEAD
+          $version = (Get-Item 'artifacts/preview-win-x64/IStart.App.dll').VersionInfo.ProductVersion
+          if (!$version.EndsWith("+$sha")) { throw '程序版本没有绑定当前提交' }
+          $output = Join-Path $PWD ('artifacts/smoke-packaged-' + [Guid]::NewGuid().ToString('N'))
+          $process = Start-Process 'artifacts/preview-win-x64/IStart.App.exe' -ArgumentList @('--smoke-test', $output) -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "自包含发布目录验证失败：$output" }
+          Get-Content (Join-Path $output 'result.txt')
       - name: 保存技术验证输出
         if: always()
         uses: actions/upload-artifact@v4
@@ -34,13 +45,6 @@ jobs:
             artifacts/smoke-*/screenshot-*.png
             artifacts/smoke-*/shell-probe.txt
           retention-days: 7
-      - name: 打包独立运行验证版
-        shell: pwsh
-        run: |
-          ./scripts/Publish-Preview.ps1
-          $sha = git rev-parse HEAD
-          $version = (Get-Item 'artifacts/preview-win-x64/IStart.App.dll').VersionInfo.ProductVersion
-          if (!$version.EndsWith("+$sha")) { throw '程序版本没有绑定当前提交' }
       - uses: actions/upload-artifact@v4
         with:
           name: iStart-preview-win-x64
@@ -61,7 +65,7 @@ jobs:
           $compiler = Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 7\ISCC.exe'
           ./scripts/Build-Installer.ps1 -Compiler $compiler -SkipPublish
           ./scripts/Build-Installer.ps1 -Compiler $compiler -SkipPublish -TestInstall
-          ./scripts/Test-Installer.ps1 -Package (Resolve-Path 'artifacts/setup/iStart-QA-Setup-0.2.0-preview.22.exe') -Output (Join-Path $PWD 'artifacts/install-ci')
+          ./scripts/Test-Installer.ps1 -Package (Resolve-Path 'artifacts/setup/iStart-QA-Setup-0.2.0-preview.23.exe') -Output (Join-Path $PWD 'artifacts/install-ci')
       - name: 保存安装包和校验值
         uses: actions/upload-artifact@v4
         with:
