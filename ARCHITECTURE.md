@@ -6,6 +6,8 @@
 
 ## 模块边界
 
+ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT）注册全局组合，通过 HwndSource 的 WM_HOTKEY 回调启动截屏；正常关闭注销快捷键并移除 Hook，与开始菜单钩子独立。配置 ScreenshotShortcut 缺失时默认 Alt+Shift+A，未知值不注册；不读取或修改企业微信配置。发生占用时保留菜单截屏按钮并在设置显示冲突，可选择备用组合或关闭。交互验收模式不注册全局快捷键，纯界面测试不安装全局钩子。
+
 截屏由 MainWindow.Screenshot 协调隐藏菜单并等待重绘，Screenshot 使用 GDI CopyFromScreen 获取菜单所在显示器的物理像素；ScreenshotWindow / CaptureSurface 提供浮动工具栏、选区移动缩放和标注。编辑期间阻止开始入口再次显示菜单。导出根据选区裁剪原图与标注，不包含遮罩、边框或工具栏；文字和画笔保留本机内存对象，马赛克按块采样。截图不写入活动历史，不联网；只有用户复制或保存才输出，PNG 编码成功后用临时文件替换目标并清理临时文件。当前仅截取单个显示器；真实桌面隐藏效果、剪贴板和不同 DPI 仍需交互验收。
 
 | 模块 | 已实现职责与边界 |

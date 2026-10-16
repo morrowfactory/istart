@@ -18,6 +18,7 @@ internal sealed class ScreenshotWindow : Window
     internal CaptureSurface Surface => surface;
     private readonly Canvas overlay = new();
     private readonly Border toolbar;
+    private readonly WrapPanel options = new();
     private readonly TextBox textEditor = new() { Width = 220, MinHeight = 34, AcceptsReturn = true, Visibility = Visibility.Collapsed };
     private Point textOrigin;
     internal string ResultMessage { get; private set; } = "已取消截屏。";
@@ -34,21 +35,38 @@ internal sealed class ScreenshotWindow : Window
         Background = Brushes.Black;
         var grid = new Grid();
         grid.Children.Add(new Viewbox { Stretch = Stretch.Fill, Child = surface });
-        var bar = new WrapPanel { MaxWidth = 720 };
-        toolbar = new Border { Child = bar, Background = Brushes.White, BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(6) };
+        var bar = new WrapPanel { MaxWidth = 620 };
+        var rows = new StackPanel();
+        rows.Children.Add(bar);
+        rows.Children.Add(options);
+        rows.Children.Add(status);
+        toolbar = new Border { Child = rows, Background = Brushes.White, BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(8), Padding = new Thickness(4) };
         status.Foreground = Brushes.DimGray;
         overlay.Children.Add(toolbar);
         overlay.Children.Add(textEditor);
         grid.Children.Add(overlay);
-        void Button(string label, Action action)
+        void Button(string label, string symbol, Action action)
         {
-            var button = new Button { Content = label, Padding = new Thickness(8, 6, 8, 6) };
+            var button = new Button { Content = symbol, ToolTip = label, Width = 32, Height = 30, Padding = new Thickness(2), Background = Brushes.White, Foreground = Brushes.DimGray, FontSize = 18, BorderThickness = new Thickness(0) };
+            System.Windows.Automation.AutomationProperties.SetName(button, label);
             button.Click += (_, _) => action();
             bar.Children.Add(button);
         }
         foreach (var (tool, label) in new[] { (CaptureTool.Select, "调整"), (CaptureTool.Rectangle, "方框"), (CaptureTool.Ellipse, "圆圈"), (CaptureTool.Arrow, "箭头"), (CaptureTool.Pen, "画笔"), (CaptureTool.Mosaic, "马赛克"), (CaptureTool.Text, "文字") })
         {
-            var button = new Button { Content = label, Padding = new Thickness(8, 6, 8, 6) };
+            var data = tool switch
+            {
+                CaptureTool.Select => "M2,7 L2,2 7,2 M13,2 L18,2 18,7 M18,13 L18,18 13,18 M7,18 L2,18 2,13",
+                CaptureTool.Rectangle => "M3,3 L17,3 17,17 3,17 Z",
+                CaptureTool.Ellipse => "M10,2 A8,8 0 1 1 9.99,2",
+                CaptureTool.Arrow => "M3,17 L17,3 M7,3 L17,3 17,13",
+                CaptureTool.Pen => "M3,17 L5,12 14,3 17,6 8,15 Z M12,5 L15,8",
+                CaptureTool.Mosaic => "M2,2 L18,2 18,18 2,18 Z M2,10 L18,10 M10,2 L10,18 M3,3 L9,3 9,9 3,9 Z M11,11 L17,11 17,17 11,17 Z",
+                _ => "M3,3 L17,3 M10,3 L10,18 M6,18 L14,18"
+            };
+            var icon = new System.Windows.Shapes.Path { Data = Geometry.Parse(data), Stroke = Brushes.DimGray, StrokeThickness = 1.5, Width = 18, Height = 18, Stretch = Stretch.Uniform };
+            var button = new Button { Content = icon, ToolTip = label, Width = 32, Height = 30, Padding = new Thickness(6), BorderThickness = new Thickness(0) };
+            System.Windows.Automation.AutomationProperties.SetName(button, label);
             button.Click += (_, _) => SetTool(tool);
             tools.Add(tool, button);
             bar.Children.Add(button);
@@ -59,21 +77,28 @@ internal sealed class ScreenshotWindow : Window
         palette.SelectedIndex = 0;
         palette.SelectionChanged += (_, _) => { if (palette.SelectedIndex >= 0) surface.Color = colors[palette.SelectedIndex].Item2; };
         System.Windows.Automation.AutomationProperties.SetName(palette, "标注颜色");
-        bar.Children.Add(palette);
+        options.Children.Add(palette);
         var widths = new ComboBox { ItemsSource = new[] { "细线", "中线", "粗线" }, SelectedIndex = 1, Width = 60, Margin = new Thickness(3) };
         widths.SelectionChanged += (_, _) => surface.StrokeWidth = new[] { 2d, 4d, 7d }[widths.SelectedIndex];
         System.Windows.Automation.AutomationProperties.SetName(widths, "标注线宽");
-        bar.Children.Add(widths);
-        Button("撤销", () => surface.Undo());
-        Button("清空标注", () => surface.ClearMarks());
+        options.Children.Add(widths);
+        Button("撤销（Ctrl+Z）", "↶", () => surface.Undo());
+        Button("重做（Ctrl+Y）", "↷", () => surface.Redo());
+        Button("清空标注", "⌫", () => surface.ClearMarks());
         copy.Click += async (_, _) => await Copy();
         save.Click += (_, _) => Save();
-        bar.Children.Add(copy);
         bar.Children.Add(save);
-        Button("取消", Close);
-        bar.Children.Add(status);
+        Button("取消（Esc）", "×", Close);
+        bar.Children.Add(copy);
         Content = grid;
-        copy.Content = "✓ 完成";
+        copy.Content = "✓";
+        save.Content = "↓";
+        foreach (var (button, label) in new[] { (copy, "完成并复制（Ctrl+C / Enter）"), (save, "保存（Ctrl+S）") })
+        {
+            button.ToolTip = label; button.Width = 32; button.Height = 30; button.FontSize = 18;
+            button.Padding = new Thickness(2); button.Background = Brushes.White; button.Foreground = Brushes.DodgerBlue; button.BorderThickness = new Thickness(0);
+            System.Windows.Automation.AutomationProperties.SetName(button, label);
+        }
         textEditor.LostKeyboardFocus += (_, _) => CommitText();
         textEditor.PreviewKeyDown += (_, e) => { if (e.Key == Key.Enter && Keyboard.Modifiers != ModifierKeys.Shift) { CommitText(); surface.Focus(); e.Handled = true; } };
         surface.TextRequested += point =>
@@ -88,6 +113,8 @@ internal sealed class ScreenshotWindow : Window
         overlay.SizeChanged += (_, _) => UpdateStatus();
         SetTool(CaptureTool.Select);
         surface.Changed += UpdateStatus;
+        surface.CompleteRequested += async () => await Copy();
+        surface.BackRequested += () => { if (surface.HasSelection) { surface.ResetSelection(); SetTool(CaptureTool.Select); } else Close(); };
         UpdateStatus();
         SourceInitialized += (_, _) => WinInput.SetWindowPos(new WindowInteropHelper(this).Handle, -1, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x40);
         PreviewKeyDown += async (_, e) =>
@@ -96,19 +123,24 @@ internal sealed class ScreenshotWindow : Window
             else if (textEditor.IsKeyboardFocusWithin) return;
             else if (e.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control) { surface.Undo(); e.Handled = true; }
             else if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control) { await Copy(); e.Handled = true; }
+            else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control) { Save(); e.Handled = true; }
+            else if (e.Key == Key.Y && Keyboard.Modifiers == ModifierKeys.Control) { surface.Redo(); e.Handled = true; }
+            else if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None) { await Copy(); e.Handled = true; }
         };
         Loaded += (_, _) => { WinInput.SetWindowPos(new WindowInteropHelper(this).Handle, -1, bounds.X, bounds.Y, bounds.Width, bounds.Height, 0x40); Activate(); surface.Focus(); };
     }
 
-    private void SetTool(CaptureTool tool)
+    internal void SetTool(CaptureTool tool)
     {
         CommitText();
         surface.Tool = tool;
+        options.Visibility = tool == CaptureTool.Select ? Visibility.Collapsed : Visibility.Visible;
         foreach (var pair in tools)
         {
             pair.Value.FontWeight = pair.Key == tool ? FontWeights.Bold : FontWeights.Normal;
             pair.Value.Background = pair.Key == tool ? Brushes.LightBlue : Brushes.White;
         }
+        UpdateStatus();
     }
     private void CommitText()
     {
@@ -172,6 +204,7 @@ internal sealed class CaptureSurface : FrameworkElement
 {
     private readonly BitmapSource frame;
     internal List<CaptureMark> Marks { get; } = [];
+    private readonly Stack<CaptureMark> undone = new();
     internal Rect Selection { get; private set; } = Rect.Empty;
     internal bool HasSelection => !Selection.IsEmpty && Selection.Width >= 2 && Selection.Height >= 2;
     internal CaptureTool Tool { get; set; }
@@ -179,8 +212,10 @@ internal sealed class CaptureSurface : FrameworkElement
     internal double StrokeWidth { get; set; } = 4;
     internal event Action? Changed;
     internal event Action<Point>? TextRequested;
+    internal event Action? CompleteRequested, BackRequested;
     internal void AddText(Point point, string text)
     {
+        undone.Clear();
         Marks.Add(new(CaptureTool.Text, point, point, Color, StrokeWidth) { Text = text });
         Refresh();
     }
@@ -199,12 +234,17 @@ internal sealed class CaptureSurface : FrameworkElement
     }
     private Point Clamp(Point p) => new(Math.Clamp(Math.Round(p.X), 0, Width), Math.Clamp(Math.Round(p.Y), 0, Height));
     private void Refresh() { InvalidateVisual(); Changed?.Invoke(); }
-    internal void Undo() { if (Marks.Count > 0) Marks.RemoveAt(Marks.Count - 1); Refresh(); }
-    internal void ClearMarks() { Marks.Clear(); Refresh(); }
+    internal void Undo() { if (Marks.Count > 0) { undone.Push(Marks[^1]); Marks.RemoveAt(Marks.Count - 1); } Refresh(); }
+    internal void Redo() { if (undone.TryPop(out var mark)) Marks.Add(mark); Refresh(); }
+    internal void ClearMarks() { Marks.Clear(); undone.Clear(); Refresh(); }
+    internal void ResetSelection() { ClearMarks(); Selection = Rect.Empty; Refresh(); }
+    protected override void OnMouseRightButtonDown(MouseButtonEventArgs e) { BackRequested?.Invoke(); e.Handled = true; }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         base.OnMouseLeftButtonDown(e);
         Focus();
+        if (e.ClickCount == 2 && Tool == CaptureTool.Select && HasSelection && Selection.Contains(e.GetPosition(this)))
+        { CompleteRequested?.Invoke(); e.Handled = true; return; }
         if (!BeginDrag(e.GetPosition(this))) return;
         dragging = CaptureMouse();
         e.Handled = true;
@@ -270,7 +310,7 @@ internal sealed class CaptureSurface : FrameworkElement
     {
         if (!dragging) return;
         dragging = false;
-        if (pending is not null && ((pending.End - pending.Start).Length >= 2 || pending.Tool == CaptureTool.Pen && pending.Points.Length > 2)) Marks.Add(pending);
+        if (pending is not null && ((pending.End - pending.Start).Length >= 2 || pending.Tool == CaptureTool.Pen && pending.Points.Length > 2)) { undone.Clear(); Marks.Add(pending); }
         pending = null;
         Refresh();
     }
