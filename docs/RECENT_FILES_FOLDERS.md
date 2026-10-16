@@ -1,13 +1,15 @@
-# 最近文件与常用文件夹
+[English](RECENT_FILES_FOLDERS.md) | [简体中文](zh-CN/RECENT_FILES_FOLDERS.md)
 
-preview.15 将“最近打开”限定为仍存在的本机文档、图片等文件，排除文件夹、程序、快捷方式和失效目标。筛选同时覆盖 iStart 自身记录与其他软件历史；不会删除已有启动记录或收藏。
+# Recent files and frequent folders
 
-“常用文件夹”先保留该分类手动固定的有效文件夹与顺序，再按可见图标空位补充建议。已有同名分类继续使用；没有该分类时提供虚拟入口，显示所有已收藏文件夹，固定操作保存到未分类。虚拟入口不写入分类配置。
+preview.15 limited Recently Opened to existing local documents, images, and similar files, excluding folders, programs, shortcuts, and missing targets. Filtering covered iStart records and other application history without deleting existing launches or favorites.
 
-补充参考 iStart 打开次数、Windows Recent / 自动跳转列表中的文件夹记录，以及近期文件所在目录的活动数量。高活动量优先，同量按最近时间排序；去重后补齐，固定项超过一屏时不截断。外部记录时间可能近似，次数不代表完整系统访问频率，也不承诺最近一个月统计。不扫描全盘、不读取文档内容，不自动探测 UNC 文件夹。
+At that milestone, Frequent Folders first preserved valid folders manually pinned in that category and their order, then filled visible icon slots with suggestions. An existing category of that name was reused; otherwise a virtual view showed all favorited folders, with pins saved to Uncategorized. The virtual view did not create a stored category. Categories and the All Favorites page were later removed from navigation; see [activity views](ACTIVITY_VIEWS.md) for current behavior.
 
-自动建议不持久化为收藏，不进入“全部收藏”；右键可固定或隐藏本次建议，隐藏状态在重启后重置。程序、文件与目录原始位置保持不变。搜索时扩大候选范围；普通视图按窗口尺寸最多补至 48 项，搜索最多 100 项。
+Suggestions considered iStart launch counts, folder records in Windows Recent/automatic Jump Lists, and activity counts for directories containing recent files. Higher activity ranked first, with recency breaking ties. Candidates were deduplicated; pinned entries exceeding a screen were not truncated. External timestamps could be approximate, and counts were neither complete system visit frequencies nor a guaranteed one-month statistic. No whole-drive scan, document-content reading, or automatic UNC-folder probing was performed.
 
-沿用“显示其他软件最近文件与文件夹活动”开关；关闭后清除内存中的外部缓存并只参考 iStart 自己的记录。异步读取限时 5 秒，失败或超时保留已有视图与手动入口；不会修改 Windows 或其他软件的历史。
+Automatic suggestions were not persisted as favorites and did not enter All Favorites. The context menu could pin or temporarily hide a suggestion; hiding reset after restart. Original program/file/folder locations were unchanged. Search expanded the candidate scope. Normal view filled up to 48 items according to window size; search allowed up to 100.
 
-验证覆盖：最近视图仅文件、文件夹历史独立读取、手动项不重排、重复目标去重、高频优先与最近补位、满额不补充、临时隐藏、常用文件夹视图过滤文件与程序，以及既有核心和双主题布局回归。
+The external recent-file/folder activity setting controlled these sources. Turning it off cleared external in-memory caches and used only iStart records. Reading had a five-second asynchronous budget; failure or timeout retained the existing view and manual entries. Windows and other applications' history was not changed.
+
+Validation covered file-only recent results, independent folder-history reading, preserving manual order, target deduplication, frequency-first/recent fill, no fill when full, temporary hiding, folder-view exclusion of files/programs, and existing core/both-theme layout regressions.

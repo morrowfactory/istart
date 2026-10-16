@@ -1,25 +1,27 @@
-# Material 界面试用版验证
+[English](MATERIAL_VALIDATION.md) | [简体中文](zh-CN/MATERIAL_VALIDATION.md)
 
-日期：2026-10-13。版本：0.2.0-preview.3。环境：当前 Windows 11 25H2 x64 26200.9457；未新增 Win10 兼容证明。
+# Material-style preview validation
 
-## 设计与实现
+Date: 2026-10-13. Version: 0.2.0-preview.3. Environment: Windows 11 25H2 x64 26200.9457. This added no Windows 10 compatibility evidence.
 
-[Figma 可编辑稿](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=1-1245) 的浅色底、蓝色重点、圆角搜索框、分类选择、内容卡片和按钮已应用到 WPF。保留标准窗口边框用于移动/缩放；本机真实图标替代设计示意图标；继续保留文件/文件夹添加、移除撤销、状态提示、账户、电源和原生菜单入口。布局根据真实推荐数量和收藏滚动。
+## Design and implementation
 
-没有新增依赖，没有修改 JSON schema、用户收藏、系统钩子或登录流程。
+The light background, blue accents, rounded search field, category selection, content cards, and buttons from the [editable Figma design](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=1-1245) were applied to WPF. Standard window borders retained move/resize behavior. Real local icons replaced illustration placeholders. File/folder addition, remove/undo, status messages, account, power, and native-menu access remained available. Content scrolled according to actual recommendation and favorite counts.
 
-## 已验证
+No dependency, JSON schema, user favorites, system hook, or login flow changed. Categories and the recommendation panel described here are historical preview.3 behavior, not the current navigation.
 
-- Release 构建 0 警告、0 错误；现有核心数据保护检查通过。
-- 默认、图标和紧凑尺寸渲染检查；紧凑渲染的搜索、视图按钮、模式提示和收藏区边界检查通过。实际鼠标缩小窗口未产生尺寸变化，因此不冒充实机缩放验收。
-- 独立交互验收配置：真实中文输入“项目”、搜索只保留匹配项、清空恢复完整列表。
-- 实际点击切换图标；将会议记录拖到项目计划前方，界面和 JSON 顺序一致。
-- 测试窗口正常退出；默认用户配置与原生菜单模式保持不变。
+## Verified
 
-独立 QA AppId 的首次安装、覆盖安装和卸载已通过（中文路径，无需重启）；日志在 artifacts/material-install-test/。未在用户日常安装位置自动安装。最终交付程序来自本分支提交，自包含 payload 再执行核心检查；SHA256 随安装包提供。
+- Release build: 0 warnings/errors; existing core data-protection checks passed.
+- Default, icon, and compact-size rendering was checked. Compact rendering passed bounds checks for search, view controls, mode status, and favorites. Attempted real mouse resizing did not change the window size, so it was not counted as interactive resize acceptance.
+- In isolated interactive configuration, actual Chinese input filtered the matching project entry; clearing search restored the list.
+- Clicking switched to icon view. Dragging meeting notes before the project plan produced matching UI and JSON order.
+- The test window exited normally. Default user configuration and native-menu mode were unchanged.
 
-## 限制
+First install, overwrite install, and uninstall passed using a separate QA AppId and Chinese path, without reboot. Logs: `artifacts/material-install-test/`. The app was not automatically installed over the user's everyday installation. The delivery program came from this branch's commit; core checks were repeated against the self-contained payload and a SHA256 file accompanied the installer.
 
-此前人工反馈原生菜单或双菜单，具体操作时间不确定，此项保留为待复验。本版未改变入口实现，不宣称解决此问题。未执行 Win 键自动输入、Explorer 重启、锁屏/注销或电源操作；未验收跨窗口外部拖入、多屏/其他 DPI、安装中途取消和失败回退矩阵。安装包尚未签名。
+## Limits
 
-README 与 ARCHITECTURE 已同步；VISION 已复核，产品方向与隐私原则未变，无需改写。
+Earlier manual feedback about the native menu or both menus had uncertain timing and remained pending. This UI version did not change integration and did not claim to fix that report. Automated Windows-key input, Explorer restart, lock/sign-out, and power actions were not performed. External cross-window dragging, multiple monitors/other DPI, installation cancellation, and failure rollback remained unaccepted. The installer was unsigned.
+
+README and architecture were synchronized; vision was reviewed with product direction and privacy principles unchanged.

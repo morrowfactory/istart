@@ -1,19 +1,25 @@
-# 搜索修复验证：preview.7
+[English](SEARCH_VALIDATION.md) | [简体中文](zh-CN/SEARCH_VALIDATION.md)
 
-2026-10-13。截图输入 codex 后推荐区不变：旧版 TextChanged 仅筛选收藏，推荐前 12 项没有参与搜索；同时只发现传统 exe 快捷方式，漏掉商店应用。
+# Search fix validation: preview.7
 
-当前实现：即时搜索全部已发现软件和跨分类收藏，软件结果滚动展示；无结果有说明。名称和入口标识均忽略大小写匹配。关闭推荐保留本地软件搜索，不扫描全盘文件、不联网上传。商店应用暂不支持固定与拖入，支持交给 Windows 打开。
+Date: 2026-10-13. The capture showed an unchanged recommendation area after entering `codex`. Previously, `TextChanged` filtered favorites only; the first 12 recommendations were outside search. Discovery also found only traditional EXE shortcuts and missed Store apps.
 
-本机只读样本：AppsFolder 显示名 ChatGPT，标识 OpenAI.Codex_2p2nqsd0c76g0!App。程序发现 166 个候选、Codex 标识 1 个。回归检查覆盖软件第 13 项以后、大小写、无结果、关闭推荐后搜索、显示名不同的商店标识。构建 0 警告、0 错误。测试未自动输入系统按键或启动 Codex。
+At this milestone, immediate search covered all discovered applications and favorites across categories, with scrollable app results and a no-results message. Names and entry identifiers matched case-insensitively. Disabling recommendations retained local application search. It did not scan whole drives or upload data. Store apps could be opened through Windows but could not yet be pinned or dragged in.
 
-README、ARCHITECTURE、执行计划同步；VISION 复核，方向未变。界面实际搜索与点击启动仍需用户反馈，不以只读发现冒充启动验收。
+A read-only local sample showed AppsFolder display name `ChatGPT` with identifier `OpenAI.Codex_2p2nqsd0c76g0!App`. Discovery found 166 candidates and one Codex identifier. Regressions covered apps beyond item 12, case handling, no results, search with recommendations disabled, and a Store identifier differing from its display name. Build: 0 warnings/errors. Tests did not automatically send system keys or launch Codex.
 
-## preview.8 商店图标
+README, architecture, and execution plan were synchronized; vision was reviewed without a direction change. Actual UI search and click-to-launch still required user feedback; read-only discovery was not launch acceptance.
 
-用户截图确认商店结果只有文字、图标空白。改为解析 Shell PIDL 后读取原生图标；失败回退通用应用图标。HICON 和 PIDL 均释放，冻结位图沿用有界缓存。本机实际 Codex 32×32 图标保存为测试输出 codex-icon.png，白底预览确认原应用标志；构建与核心回归通过。VISION 复核，方向不变。
+## Store icons in preview.8
 
-API 依据：[微软 SHGetFileInfo 文档](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfow)。
+The user confirmed that a Store result had text but no icon. The fix parsed the Shell PIDL and read its native icon, falling back to a generic application icon. HICON/PIDL resources were released, and frozen bitmaps used the bounded cache. The actual local Codex 32×32 icon was saved as test output `codex-icon.png`; a white-background preview showed the original app mark. Build and core regressions passed. Vision was unchanged.
 
-preview.11：推荐默认关闭，整个容器收起并无占位；菜单内不再有启用/关闭按钮，设置为唯一开启入口。正常推荐模式也隐藏标题/说明；搜索时才显示搜索结果标题。默认值、关闭时搜索可见、清空时容器与标题收起回归通过。README/ARCHITECTURE/执行计划同步；VISION 复核无方向变化。
+API reference: [Microsoft SHGetFileInfo](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shgetfileinfow).
 
-preview.12 收藏视觉分组：全部收藏无搜索且两类入口并存时，程序组在上、文件组在下，第二组显示一条细横线，无新标题。图标/列表预览已目视核对，不改变 Entries 保存顺序；搜索和最近视图不分组。README、ARCHITECTURE、执行计划同步，VISION 复核无方向变化。
+## Later historical UI changes
+
+preview.11 disabled recommendations by default, collapsing the entire container without blank space. Settings became the only way to enable it; in-menu enable/disable controls were removed. Normal recommendations hid their heading/description; only search showed a results heading. Default-value, disabled-search visibility, and clear-search collapse regressions passed. Documentation was synchronized and vision reviewed.
+
+preview.12 visually grouped All Favorites: with no search and both entry types present, programs appeared above files with a thin divider before the second group, without a new heading. Icon/list previews were visually checked. Stored `Entries` order did not change; search and recent views were not grouped. Documentation was synchronized and vision reviewed.
+
+These are historical implementation records. The recommendation panel and category navigation were later removed. Current My Apps behavior and its 30-item limit are documented in [activity views](ACTIVITY_VIEWS.md).

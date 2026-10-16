@@ -1,35 +1,39 @@
-# 窗口置前与后台显示：0.2.0-preview.6
+[English](FOREGROUND_VALIDATION.md) | [简体中文](zh-CN/FOREGROUND_VALIDATION.md)
 
-日期：2026-10-13；当前 Win11 26200.9457。用户截图显示点击开始后，iStart 只出现在任务栏，其他最大化窗口仍在前方。检查时进程仍存在、接入偏好开启；不能据此称为启动失败或崩溃。
+# Foreground and background presentation: 0.2.0-preview.6
 
-## 处理
+Date: 2026-10-13; Windows 11 26200.9457. The user's capture showed iStart appearing only on the taskbar after Start was clicked, behind another maximized window. The process was still running and integration was enabled; this evidence did not establish a startup failure or crash.
 
-- 开始按钮、Win、托盘与重复启动共用 ShowMenu，恢复最小化状态后显示并请求前台焦点。
-- 自定义菜单可见期间使用浮层；呈现期间不被同步 Deactivated 误隐藏，收起即解除置顶；preview.21 起，未接入时从图标打开也保持临时浮层至收起。
-- 可见但未激活的菜单仍可通过 Win 再次收起。
-- 后台启动不请求焦点，并在首次 Show 后立即隐藏。移除异步接入初始化结束后才 Hide 的时序，避免用户已打开菜单又被迟到的初始化隐藏。
-- 日志增加 menu-shown 的前台成功/浮层标志，不记录其他应用名、按键或文件内容。
+## Changes
 
-[微软前台激活规则](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow) 允许系统拒绝焦点请求。本版不修改前台锁定策略、不连接其他应用输入线程。仅在用户打开菜单后前台请求失败且没有修饰键按住时，发送带标记、平衡释放的 Alt/Ctrl 序列重试前台请求；不发送文字或命令，不能承诺覆盖安全桌面或所有全屏/置顶应用。
+- Start-button, Windows-key, tray, and repeated-launch entry points share `ShowMenu`, restoring a minimized window before showing it and requesting foreground focus.
+- A visible custom menu uses a temporary topmost layer. Synchronous `Deactivated` events during presentation do not immediately hide it; hiding clears `Topmost`. Since preview.21, opening from the app icon in native mode also keeps this layer until dismissal.
+- Pressing the Windows key can hide a menu that is visible but inactive.
+- Background startup does not request focus and hides immediately after its initial `Show`. The later asynchronous integration initialization no longer hides a menu that the user has already opened.
+- `menu-shown` diagnostics record foreground success and topmost flags, without other app names, keystrokes, or file contents.
 
-## 验证
+[Windows foreground activation rules](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setforegroundwindow) allow the OS to refuse focus requests. iStart does not change foreground-lock policy or attach to other apps' input threads. Only after a user opens the menu, if the foreground request fails and no modifiers are held, it retries with a marked, balanced Alt/Ctrl sequence. This sends no text or commands and does not guarantee activation over the secure desktop or every full-screen/topmost app.
 
-构建、核心数据保护、双主题、扫描恢复与生命周期检查通过。新增最小化→ShowMenu→正常可见，以及隐藏后解除 Topmost 的检查；测试未安装接入钩子或自动发送 Win 键。
+## Validation
 
-已请用户在其他应用最大化时手动点击开始按钮并使用 Win 开关、输入搜索；人工反馈单独记录，不以代码检查替代。首次/覆盖/卸载与最终 payload 仍通过既有打包和 CI 路径验证。
+Build, core data protection, both themes, discovery recovery, and lifecycle checks passed. Added checks covered minimized → `ShowMenu` → normal visible state and clearing `Topmost` on hide. Those checks did not install integration hooks or automatically send the Windows key.
 
-README、ARCHITECTURE 与执行计划已同步；VISION 复核，产品方向与隐私原则不变。
+The user was asked to manually test Start, Windows-key toggling, and direct search input with another app maximized. Manual feedback is recorded separately from code checks. First/overwrite/uninstall checks and the final payload continued through the established packaging and CI path.
 
-## 最终人工反馈
+README, architecture, and execution-plan documentation were updated. Vision was reviewed; product direction and privacy principles were unchanged.
 
-2026-10-13，用户确认菜单位置和软件图标正常；补上原生 SetFocus 后，用户确认不点击搜索框即可直接输入英文和中文。日志同时显示 foreground、WPF keyboard、native 焦点均为 true，修饰键及 Win 均未按住。此前只有 WPF 焦点为 true 的两轮仍不能输入，不能算通过。
+## Final manual feedback
 
-菜单按开始按钮所在任务栏和屏幕工作区定位，Win 入口选择前台窗口所在屏幕；使用物理像素限制边界，新增上下左右任务栏与负坐标检查。快捷方式从其图标资源或目标读取图标，避免快捷箭头，启动仍使用原快捷方式保留参数。
+On 2026-10-13, the user confirmed menu placement and application icons. After native `SetFocus` was added, the user confirmed direct English and Chinese input without clicking the search box. Logs showed foreground, WPF keyboard, and native focus all true, with no modifiers or Windows key held. Two earlier rounds that showed only WPF focus true still failed actual input and were not accepted.
 
-日志只记录焦点和修饰键状态，不记录输入字符。当前机器人工验收通过；多屏、其他系统版本和长时间运行仍需后续验证。
+Placement uses the clicked Start button's taskbar and monitor work area; Windows-key activation selects the foreground window's monitor. Physical-pixel clamping checks cover top/bottom/left/right taskbars and negative coordinates. Shortcut icons come from their icon resource or target to avoid shortcut arrows, while launching still uses the original shortcut to preserve arguments.
 
-## preview.21 联合验证（2026-10-16）
+Logs record focus and modifier state, not typed characters. Manual acceptance passed on this PC; multiple monitors, other OS versions, and long-running behavior still need validation.
 
-修复原生模式打开后撤掉浮层、跳过焦点重试的问题；搜索聚焦使用 Input 优先级。二次启动向同路径同会话已有进程转交前台权限，再发出显示信号。底部提供主动启用接入按钮。
+## Combined preview.21 validation — 2026-10-16
 
-当前 Win11 26200 的独立配置测试通过：最大化背景下三次打开均置前、搜索获焦；切走收起并解除浮层；最小化恢复；通过启用按钮安装接入后，Win 与系统开始按钮打开实际 iStart 窗口。首轮固定等待测试曾未及时满足焦点条件，加入诊断、提升搜索聚焦优先级及有界等待后联合验证通过。真实 Win10、重复快捷方式转交权限、其他置顶/全屏应用尚待实测。测试 CLI 为 --presentation-test <目录>，会创建临时最大化背景并发送 Win/开始按钮测试，仅在空闲桌面手动运行，不纳入 CI；不改个人配置，结束清理测试窗口和钩子。
+The fix retained the temporary topmost layer and focus retries when opening in native mode. Search focus uses Input dispatcher priority. A second launch grants foreground permission to the existing process in the same path and session before signaling it to show. The footer offers an explicit integration-enable button.
+
+On the current Windows 11 26200 PC, isolated tests passed: three opens over a maximized background reached the foreground with search focus; switching away hid the menu and cleared topmost; minimized windows restored; after the enable button installed integration, the Windows key and system Start button opened the actual iStart window. An initial fixed-delay check missed its focus condition. Diagnostics, Input-priority focusing, and a bounded wait were added before the combined check passed.
+
+Actual Windows 10, foreground-permission handoff from repeated shortcut launches, and other topmost/full-screen applications remain untested. `--presentation-test <directory>` creates a temporary maximized background and sends Windows-key/Start-button test input. Run it manually only on an idle desktop; it is excluded from CI. It uses isolated configuration and cleans up its test windows and hooks.
