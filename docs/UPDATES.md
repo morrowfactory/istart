@@ -2,7 +2,7 @@
 
 # Updates
 
-Implemented in development preview.24. The published preview.23 installer still uses manual updates. Merge/publication and public cross-version acceptance are separate gates.
+Available from preview.24. Earlier installers use manual updates. GitHub publication and complete cross-version upgrade acceptance are separate gates.
 
 ## Notifications and release details
 
