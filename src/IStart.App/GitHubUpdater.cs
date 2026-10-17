@@ -32,6 +32,14 @@ internal static class GitHubUpdater
         return int.TryParse(match.Groups[2].Value, out var preview) ? (core, preview) : null;
     }
 
+    internal static string DisplayNotes(string notes)
+    {
+        var end = notes.IndexOf("来源提交：", StringComparison.Ordinal);
+        if (end >= 0) notes = notes[..end];
+        notes = notes.Trim();
+        return notes.Length == 0 ? L.T("此版本暂未提供更新说明。") : notes.Length > 12000 ? notes[..12000] : notes;
+    }
+
     internal static AppRelease? SelectRelease(string json, string current)
     {
         try { return ParseReleases(json, current); }
@@ -134,6 +142,13 @@ internal static class GitHubUpdater
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             throw;
         }
+    }
+
+    internal static async Task VerifyInstaller(string path, AppRelease release, CancellationToken token)
+    {
+        await using var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, true);
+        if (input.Length != release.Bytes || !Convert.ToHexString(await SHA256.HashDataAsync(input, token)).Equals(release.Sha256, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException(L.T("安装包校验失败，请重新下载。"));
     }
 
     private static void Cleanup(string directory, string current)

@@ -11,6 +11,7 @@ namespace IStart;
 public partial class MainWindow : Window
 {
     private readonly LibraryStore store;
+    internal UpdateService Updates { get; }
     private bool ready;
     internal List<SoftwareCandidate> candidates = [];
     internal Dictionary<string, int> softwareUsage = new(StringComparer.OrdinalIgnoreCase);
@@ -25,21 +26,34 @@ public partial class MainWindow : Window
     private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
     private static readonly Guid RecentCategory = new("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     private static readonly Guid FoldersCategory = new("dddddddd-dddd-dddd-dddd-dddddddddddd");
-    public MainWindow(LibraryStore store, bool enableShell = true)
+    public MainWindow(LibraryStore store, bool enableShell = true) : this(store, enableShell, null) { }
+    internal MainWindow(LibraryStore store, bool enableShell, Func<CancellationToken, Task<AppRelease?>>? checkUpdates)
     {
         this.store = store;
+        Updates = new UpdateService(store, () => UpdateInstallation.IsInstalled && !App.IsSessionEnding && !exitRequested
+            && !capturing && !IsVisible && OwnedWindows.Count == 0 && UpdateInstallation.IsIdle(), checkUpdates);
         readWebsiteSources = enableShell;
         Appearance.Apply(store.Library.Theme);
         L.Apply(store.Library.Language);
         InitializeComponent();
+        Updates.Changed += RefreshUpdateIndicators;
         ready = true;
         ApplyView();
         RefreshCategories();
         EntryList.SizeChanged += (_, _) => { if (folderView) RefreshEntries(); };
         if (store.Recovered) StatusText.Text = L.T("主配置损坏，已读取上一份配置。请核对收藏后再修改。");
         Loaded += async (_, _) => await DiscoverSoftware();
-        Closed += (_, _) => discovery?.Cancel();
+        Closed += (_, _) => { discovery?.Cancel(); Updates.Dispose(); };
+        if (enableShell) Loaded += (_, _) => { if (UpdateInstallation.IsInstalled) Updates.Start(); };
         if (enableShell) InitializeShell();
+    }
+
+    private void RefreshUpdateIndicators()
+    {
+        if (!Dispatcher.CheckAccess()) { if (!Dispatcher.HasShutdownStarted) Dispatcher.BeginInvoke(RefreshUpdateIndicators); return; }
+        SettingsUpdateBadge.Visibility = Updates.HasUpdate ? Visibility.Visible : Visibility.Collapsed;
+        SettingsButton.ToolTip = Updates.Release is { } release ? L.F("发现新版 {0}，进入设置查看更新内容。", release.Version) : L.T("设置");
+        System.Windows.Automation.AutomationProperties.SetHelpText(SettingsButton, SettingsButton.ToolTip.ToString());
     }
 
     private async Task DiscoverSoftware()

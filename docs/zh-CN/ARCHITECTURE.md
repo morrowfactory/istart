@@ -25,6 +25,7 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | ShellIconConverter | Shell 图标提取与有界缓存；UNC 使用通用图标，避免远程图标读取 |
 | StartMenuAdapter / ShellCompatibility / WinInput | 版本策略、UIAutomation/原生 Start 子窗口定位；低级键盘/鼠标钩子处理单独 Win 和开始按钮；组合键保留，原生注入使用自有标记避免递归 |
 | NativeMenu | SendInput 发送带标记的 Ctrl+Esc 请求临时原生菜单 |
+| UpdateService / GitHubUpdater / UpdateWindow | 共用更新状态、联网检查与调度、校验下载/安装、红点、更新说明及升级偏好 |
 | SystemActions | 系统策略/能力判断，锁定、注销、切换用户、睡眠、休眠、关机和重启；固定参数，不使用 /f |
 | App | 当前 SID 命名互斥锁与显示/退出事件；已有实例正常退出等待；后台启动与诊断模式；ui-test 使用独立配置并禁用真实开机启动修改 |
 | installer / scripts / CI | 中文向导与真实文件安装进度、升级前正常退出、卸载与校验值；QA 安装使用独立 AppId，无生产部署 |
@@ -69,7 +70,7 @@ preview.23 打包限制 `SatelliteResourceLanguages=en;zh-Hans`，英文使用�
 
 升级前和卸载前调用自身 `--exit`，等待当前用户实例释放互斥锁，超时中止并提示；不强杀用户程序。卸载删除本次安装程序及开机启动值，保留收藏。QA 构建隔离 AppId，跳过真实进程退出/启动设置，不会关闭正在使用的正式 iStart。
 
-安装器复用 Inno 的取消、错误和回滚机制，但尚未完成磁盘不足、权限拒绝、运行文件占用与中断回退的实机验证；不承诺任意升级故障都能自动恢复完整旧版本。签名尚未实现；应用内手动升级见下文，正式分发前核对 Inno 商业许可及 .NET 随附许可。
+安装器复用 Inno 的取消、错误和回滚机制，但尚未完成磁盘不足、权限拒绝、运行文件占用与中断回退的实机验证；不承诺任意升级故障都能自动恢复完整旧版本。签名尚未实现；应用内升级见下文，正式分发前核对 Inno 商业许可及 .NET 随附许可。
 
 ## 验证与发布门槛
 
@@ -117,15 +118,15 @@ GitHub 发布边界：build.yml 将 ProductVersion 绑定检出 SHA；release.ym
 
 活动视图（preview.16，取代上面的历史分类/推荐界面）：MySoftware 精确匹配本机累计 AppSwitched 与 iStart 记录，最多 30 个软件；SoftwareDiscovery 补充 exe 和 AppUserModel.ID 元数据，不再渲染推荐区域。四个固定导航不显示旧分类，原 Entries/Categories 仍保留以兼容。FrequentFolders 默认活动降序，可切换直接目录记录的最近排序；不会修改保存数组。WebsiteHistory 以系统 winsqlite3 只读查询 Chrome/Edge 的本机短暂快照，按域名聚合；MainWindow.Websites 处理异步刷新及同页常用/最近切换。两种排序偏好保存；浏览器历史和建议驻留内存，快照 finally 清理，无 NuGet 或运行时网络依赖。设置可关闭网站读取，异常/部分失败明确提示。数据字段与读取边界见 docs/ACTIVITY_VIEWS.md。
 
-## 我的电脑与应用内升级（preview.17 开发版）
+## 我的电脑与应用内升级
 
 ComputerItems 使用 DriveInfo 读取分区和就绪本机磁盘容量；映射网络盘只展示入口，不查询远程容量。当前用户 Shell.Application 枚举控制面板类别根目录的最多 16 个入口，仅保留系统和安全、网络和 Internet、硬件和声音、程序、用户账户、外观和个性化、时钟和区域这 7 个类别；按系统类别 ID 过滤，排除轻松使用和所有控制面板项，finally 释放 COM 对象。MainWindow.Computer 在独立异步任务读取，等待预算 5 秒；未结束的任务不会重复创建。视图以紧凑三列显示磁盘容量、回收站、网络及默认展开的控制面板项目，支持名称搜索；系统入口通过 explorer.exe 的单个 ArgumentList 参数打开，不写入个人文件历史、不执行清空回收站等操作。ShellIconConverter 沿用 PIDL 图标能力读取虚拟系统入口。
 
-GitHubUpdater 只在用户打开升级页时访问固定仓库的公开 Releases API（最多 100 个版本，响应上限 2 MiB，30 秒预算）。按数值版本比较；预览用户可跟随更高预览或正式版，正式用户不接收预览。排除草稿，只接受精确匹配版本名的 x64 安装资产、固定仓库下载 URL、256 MiB 内大小和 GitHub SHA256 digest。下载流最大 15 分钟，展示实际字节进度，写入独立 GUID 目录的 .part；校验大小和 SHA256 后才改名为 exe。关闭窗口取消请求，失败清理本次临时文件，保留原版本。成功后只清理更新器拥有的超过 7 天且非最近两次下载的已知缓存文件，不递归删除未知内容。
+UpdateService 由 MainWindow 持有，共用版本、下载和安装状态。只有安装版且非测试运行才启动一分钟定时器及网络可用事件订阅；成功检查后间隔六小时，检查/下载失败后等待十五分钟，重新联网可在距上次尝试至少两分钟后请求检查。网络事件仅是提示，实际 HTTP 成功才算连通 GitHub。同一检查/下载共享正在进行的任务；退出取消任务、移除订阅并丢弃迟到结果。GitHubUpdater 只访问固定仓库公开 Releases API，最多 100 个版本、响应 2 MiB、30 秒预算；保持数值版本与预览/正式通道选择、排除草稿、精确 x64 资产名、固定仓库 URL、256 MiB 内大小及 GitHub SHA256 digest 校验。下载预算十五分钟，展示实际字节进度，独立 GUID 目录写 .part；大小和 SHA256 一致后才改为 exe。手动模式关闭升级页取消下载，自动模式继续后台下载；关闭自动升级会取消其后台下载并保留提醒。失败清理本次临时文件；成功后仅清理已知更新缓存中超过七天且非最近两次的内容。
 
-UpdateWindow 显示当前 AssemblyInformationalVersion（去除 SHA 后缀）、升级说明、下载进度、完成与失败结果。用户再点击安装后启动中文 Inno 向导，传入当前安装目录和开机启动偏好；安装进度由向导提供，准备安装时仍通过 --exit 正常退出旧实例，取消向导不提前结束当前程序。仅存在 unins000.exe 的安装版可启动更新安装；ui-test 与开发运行被禁止。配置位置和 schema 不变，更新器不上传本机活动、不使用账户 Token、不自动静默安装。当前安装包未签名，TLS 与哈希校验不能替代发布者代码签名。
+AutomaticUpdates 在 schema 2 保存，缺失时默认 true，设置中立即保存；取消后仍检查并提醒。UpdateWindow 使用共用状态，显示当前 AssemblyInformationalVersion（去掉 SHA 后缀）、目标版本、最多 12,000 字更新说明及进度；过滤已知发布来源尾注。“设置”和升级入口显示红点及辅助文字，打开页面不清除提醒。自动安装要求菜单隐藏、没有所属对话框或截屏、没有退出/会话结束请求，且当前会话空闲至少六十秒；GetLastInputInfo 只读取空闲时间，不记录按键。安装前再次检查大小/SHA256，并重新判断偏好和空闲条件。手动安装需明确点击。统一向安装器传入当前目录、合并后的开机启动任务、/NORESTART 和 /NOCLOSEAPPLICATIONS；自动模式另加 /SILENT（显示进度）、/SP- 和 /AUTOMATICUPDATE=1。生产安装成功后 --background 启动新版，保留原生/自定义菜单偏好。安装器退出而旧程序仍在时可重试，自动重试等待十五分钟。只有存在 unins000.exe 的安装版可执行安装；开发和测试不会后台覆盖。配置位置和 schema 不变，无账户 Token 或本机活动上传；安装包未签名，TLS/哈希不能替代代码签名。
 
-SmokeTest.Updater 使用隔离 HTTP 响应验证通道、版本比较、来源白名单、下载成功、哈希失败和取消清理；不执行夹具安装器。--probe-system 输出当前版本、系统入口数量及可升级版本，不记录实际分区路径或控制面板内容。首次/覆盖/卸载仍由隔离 QA 安装器验证；真实未来版本完整升级、交互取消和异常安装回退仍需实机验证。
+SmokeTest.Updater 和 SmokeTest.AutomaticUpdates 使用隔离 HTTP/状态夹具，验证通道、来源、完整性、取消、断网、自动/手动模式、请求共用、空闲门槛、退出后迟到结果、安装前篡改、安装参数、两处红点、版本对比和中英文双风格布局；不执行夹具安装器。QA 身份验证首次、带自动更新参数覆盖安装和卸载。真实公开版本间升级、生产安装后重启、交互取消及异常回退仍需实测，见[升级说明](UPDATES.md)和[历史系统入口验证](COMPUTER_UPDATE_VALIDATION.md)。
 
 ## Windows 兼容试用（preview.18 开发版）
 

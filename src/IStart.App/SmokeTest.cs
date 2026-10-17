@@ -48,6 +48,7 @@ internal static partial class SmokeTest
         VerifySoftwareDiscovery(fixture);
         VerifyWebsiteHistory(fixture);
         VerifyUpdater(fixture);
+        VerifyAutomaticUpdates(output, fixture);
         VerifyCompatibility();
         VerifyScreenshot(output);
         Check(ComputerItems.IsControlPanelCategory(ComputerItems.ControlPanel[6..] + "\\5")

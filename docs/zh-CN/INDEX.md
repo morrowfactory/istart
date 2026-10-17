@@ -19,6 +19,7 @@
 | [WINDOWS_COMPATIBILITY.md](WINDOWS_COMPATIBILITY.md) | 兼容策略与实测边界 |
 | [WINDOWS_TEST_LAB.md](WINDOWS_TEST_LAB.md) | 虚拟机测试与准备状态快照 |
 | [GITHUB_RELEASE.md](GITHUB_RELEASE.md) | GitHub 发布与回退 |
+| [UPDATES.md](UPDATES.md) | 联网提醒、自动/手动升级及验证 |
 | [PACKAGE_SIZE.md](PACKAGE_SIZE.md) | 安装包体积与打包 |
 | [BRAND_ICON.md](BRAND_ICON.md) | 品牌图标来源与维护 |
 

@@ -237,7 +237,7 @@ public partial class MainWindow
         panel.Children.Add(language);
         panel.Children.Add(new TextBlock { Text = L.T("中文系统显示简体中文；其他系统语言显示英文。可随时手动切换。"), TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 8, 0, 18) });
         panel.Children.Add(new TextBlock { Text = L.T("外观风格"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) });
-        var theme = new ComboBox { ItemsSource = new[] { new ComboBoxItem { Content = L.T("Windows 风格") }, new ComboBoxItem { Content = L.T("Google 风格") } }, SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(10, 7, 10, 7) };
+        var theme = new ComboBox { Name = "ThemeChoice", ItemsSource = new[] { new ComboBoxItem { Content = L.T("Windows 风格") }, new ComboBoxItem { Content = L.T("Google 风格") } }, SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(10, 7, 10, 7) };
         System.Windows.Automation.AutomationProperties.SetName(theme, L.T("外观风格"));
         panel.Children.Add(theme);
         panel.Children.Add(new TextBlock { Text = L.T("截屏快捷键"), Margin = new Thickness(0, 10, 0, 6) });
@@ -270,10 +270,10 @@ public partial class MainWindow
             theme.SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1;
         };
         panel.Children.Add(new TextBlock { Text = L.T("菜单与隐私"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 14) });
-        CheckBox Option(string label, bool selected)
+        CheckBox Option(string label, bool selected, StackPanel? container = null)
         {
             var box = new CheckBox { Content = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap }, IsChecked = selected, Margin = new Thickness(0, 7, 0, 7) };
-            panel.Children.Add(box);
+            (container ?? panel).Children.Add(box);
             return box;
         }
         var custom = Option(L.T("使用自定义开始菜单（试用）"), adapter?.Enabled == true);
@@ -336,13 +336,43 @@ public partial class MainWindow
             finally { save.IsEnabled = true; }
         };
         panel.Children.Add(save);
-        panel.Children.Add(new TextBlock { Text = L.T("版本与升级"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 18, 0, 8) });
+        var updatePanel = new StackPanel { Name = "UpdateSection", Margin = new Thickness(0, 0, 0, 18) };
+        panel.Children.Insert(0, updatePanel);
+        updatePanel.Children.Add(new TextBlock { Text = L.T("版本与升级"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 8) });
         var versionLabel = new TextBlock();
         L.Bind(versionLabel, TextBlock.TextProperty, "当前版本 {0}", GitHubUpdater.CurrentVersion);
-        panel.Children.Add(versionLabel);
-        var update = new Button { Content = L.T("检查更新 / 升级"), Margin = new Thickness(0, 8, 0, 0) };
-        update.Click += (_, _) => new UpdateWindow(window, store.Library.StartWithWindows).ShowDialog();
-        panel.Children.Add(update);
+        updatePanel.Children.Add(versionLabel);
+        var update = new Button { Margin = new Thickness(0, 8, 0, 0) };
+        var updateContent = new StackPanel { Orientation = Orientation.Horizontal };
+        var updateText = new TextBlock();
+        L.Bind(updateText, TextBlock.TextProperty, "检查更新 / 升级");
+        var updateBadge = new System.Windows.Shapes.Ellipse { Name = "UpgradeUpdateBadge", Width = 7, Height = 7, Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(217, 45, 32)), Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Top };
+        updateContent.Children.Add(updateText); updateContent.Children.Add(updateBadge); update.Content = updateContent;
+        var updateStatus = new TextBlock { Name = "UpdateStatus", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 7, 0, 0) };
+        void RefreshUpdate()
+        {
+            if (!window.Dispatcher.CheckAccess()) { if (!window.Dispatcher.HasShutdownStarted) window.Dispatcher.BeginInvoke(RefreshUpdate); return; }
+            updateBadge.Visibility = Updates.HasUpdate ? Visibility.Visible : Visibility.Collapsed;
+            updateStatus.Text = Updates.Release is { } release ? L.F("发现新版 {0}", release.Version) : L.T("联网后会自动检查新版本。");
+            System.Windows.Automation.AutomationProperties.SetName(update, L.T("检查更新 / 升级"));
+            System.Windows.Automation.AutomationProperties.SetHelpText(update, updateStatus.Text);
+        }
+        Updates.Changed += RefreshUpdate;
+        L.Current.PropertyChanged += LanguageChanged;
+        void LanguageChanged(object? source, System.ComponentModel.PropertyChangedEventArgs args) => RefreshUpdate();
+        window.Closed += (_, _) => { Updates.Changed -= RefreshUpdate; L.Current.PropertyChanged -= LanguageChanged; };
+        RefreshUpdate();
+        update.Click += (_, _) => new UpdateWindow(window, Updates).ShowDialog();
+        updatePanel.Children.Add(update);
+        updatePanel.Children.Add(updateStatus);
+        var automatic = Option(L.T("自动升级（推荐）"), store.Library.AutomaticUpdates, updatePanel);
+        automatic.Name = "AutomaticUpdatesChoice";
+        automatic.Click += (_, _) =>
+        {
+            Perform(() => { store.Change(s => s.AutomaticUpdates = automatic.IsChecked == true); Updates.PreferenceChanged(); }, "更新方式已保存。");
+            automatic.IsChecked = store.Library.AutomaticUpdates;
+        };
+        updatePanel.Children.Add(new TextBlock { Text = L.T("勾选：后台下载并校验，菜单收起且空闲 1 分钟后自动安装；取消：仅提醒，手动升级。选择立即保存，不重启电脑。"), TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 0, 0, 8) });
         window.MaxHeight = SystemParameters.WorkArea.Height - 40;
         window.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         L.BindSettings(window);
@@ -357,6 +387,7 @@ public partial class MainWindow
         SectionTitle.Text = SearchBox.Text.Trim().Length > 0 ? recentView ? L.T("最近记录搜索结果") : L.T("搜索结果") : ((MenuCategory)CategoryList.SelectedItem).Name;
         ModeStatus.Text = adapter?.Enabled == true ? L.T("自定义菜单 · 试用") : L.T("原生菜单模式");
         ScreenshotButton.ToolTip = screenshotHotkey?.Status ?? L.T("隐藏菜单后拖选范围，支持彩色标注");
+        RefreshUpdateIndicators();
         if (tray is not null)
         {
             tray.Text = L.T("iStart · 个人开始菜单");

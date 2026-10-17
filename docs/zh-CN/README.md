@@ -12,6 +12,8 @@
 
 [下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
+**preview.24 开发版：**增加联网检查、两处新版红点、版本说明和默认自动升级，详见[升级说明](UPDATES.md)。尚未包含在已公开的 preview.23 安装包中。
+
 ## 当前功能
 
 preview.21 加固 Win10/11 开始入口：输入钩子使用专用消息线程，减少主界面卡顿导致的失效；Win10 原生 Start 按钮点击时重新验证位置和 HWND。任务栏重建、显示与系统设置变化会丢弃旧定位，自动化检测超时可使用原生窗口后备；启动时短暂重试。界面超过约 2 秒不响应时放行后续原生输入。目标仍是已知 Win10/11 版本，尚不代表 Win10 实机通过。
@@ -50,7 +52,7 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 4. 在“设置 → 外观风格”选择 Windows 或 Google。网站与文件夹页面的按钮可切换常用/最近，选择会保存。
 5. 在“设置 → 界面语言”选择跟随系统、简体中文或 English，无需重启；旧配置升级后默认跟随系统。
 
-设置底部显示当前版本；点击“检查更新 / 升级”打开升级页，查看版本说明、下载进度和校验结果，再点击安装进入升级向导。更新仅连接 `morrowfactory/istart` 的 GitHub Releases，预览版跟随更高预览版或正式版，正式版只跟随正式版；不会自动静默安装。下载失败或关闭升级窗口时当前程序继续可用。开发和验收运行不能启动覆盖安装。
+从 preview.24 开发版开始，安装版在启动联网时及后续定时检查 GitHub 新版，在“设置”和升级按钮显示红点。“版本与升级”位于设置顶部，升级页显示当前版本、目标版本、更新说明及下载进度。**默认勾选自动升级**，旧配置也采用此默认值：后台下载并校验，菜单已收起、没有设置或截图窗口、当前 Windows 会话空闲一分钟后安装。取消勾选则只提醒，手动下载与安装；选择立即保存。安装显示进度，保留个人入口和设置，不重启 Windows、不强制关闭其他软件。仅接受 `morrowfactory/istart` Releases；预览版可跟随更高预览或正式版，正式版只接收正式版。开发和测试运行不启动后台升级或执行安装器。详见[升级与验证](UPDATES.md)。
 
 安装包目前未签名。升级保留原有入口、记录和有效设置；旧分类数据保留，但不再显示分类编辑界面。隐藏入口不会卸载软件、移动原文件或删除浏览器历史。
 
@@ -82,7 +84,7 @@ Explorer 重启、多屏缩放、自动隐藏任务栏、长期稳定性，以�
 ## 本地数据与隐私
 
 - 配置位于 `%LOCALAPPDATA%\iStart\library.json`，保留一份 `.bak`。卸载不主动删除个人入口和记录。
-- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。检查更新与下载是用户主动触发的 GitHub 网络请求。
+- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。开发版自动检查固定公开 GitHub 仓库，可在设置关闭自动下载。这些请求不发送本机活动数据。
 - 软件排序参考 Windows 累计应用切换与 iStart 打开记录；目录排序参考打开次数及近期文件活动，均不是完整系统频率或精确月统计。
 - 网站只读取 Chrome/Edge 保留的有限历史，不读取 Cookie、密码、网页内容或无痕会话；同域名合并后打开网站根地址。
 - 设置可关闭外部文件/文件夹活动或浏览器历史读取。“清除 iStart 记录”不会清除外部历史。
@@ -100,7 +102,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.23.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.24.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
