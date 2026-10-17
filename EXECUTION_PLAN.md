@@ -10,6 +10,8 @@ Implement online update checks, red dots on both entry points, current/target ve
 
 ## Adopted approach
 
+Development preview.24 also implements the approved distinct themes: Windows top navigation/six columns and Google sidebar/five columns, with local action icons, translated tooltips, and accessible names. A focused Win11 check covers stale-marker re-enable and session cleanup; real reboot, Windows 10, and hook-timeout recovery remain pending. See [Theme checks](docs/THEME_VALIDATION.md) and [Recovery checks](docs/RESIDENT_VALIDATION.md).
+
 C# + WPF/.NET 10 in one ordinary-user desktop process; atomic JSON storage with one backup; process-owned low-level hooks and UIAutomation; an Inno Setup 7.1.0 Chinese per-user self-contained installer. There is no copied Open-Shell code, service, driver, cloud service, or whole-disk index. Appropriate Inno commercial licensing is required before commercial distribution.
 
 The default repository documentation is English. Complete Chinese pages are separate under `docs/zh-CN/`; filenames use English names and every page links to its counterpart. Future documentation changes must update both versions. PRs, issues, and release/acceptance records continue to follow the repository's separate communication rules.

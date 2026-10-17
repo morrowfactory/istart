@@ -12,7 +12,7 @@ The interface follows the Windows display language by default. You can select Si
 
 [Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [All releases](https://github.com/morrowfactory/istart/releases)
 
-**Development preview.24:** online update checks, red-dot notifications, release details, and automatic updates enabled by default. See [Updates](docs/UPDATES.md). This change is not yet in the published preview.23 installer.
+**Development preview.24:** online updates, two distinct compact themes, and explicit Start-integration recovery. Windows uses top navigation and a flat six-column grid; Google uses a capsule sidebar and a rounded five-column card. Secondary actions use icons with translated tooltips and accessible names; account/power choices retain text. See [Themes](docs/THEME_VALIDATION.md), [Updates](docs/UPDATES.md), and [Integration recovery](docs/RESIDENT_VALIDATION.md). These changes are not yet in the published preview.23 installer.
 
 ## Features
 
@@ -69,7 +69,7 @@ The installer is currently unsigned. Upgrades retain items, history, and valid s
 - Windows Start menu at the bottom temporarily opens the system menu.
 - Switch to Windows Start menu in the tray disables integration and restores native mode as the default.
 - The window's × button hides iStart to the tray. Exit in the menu or tray ends the process and releases integration.
-- After an abnormal exit, the next launch restores native mode. Uninstallation keeps personal configuration by default.
+- After an abnormal exit, an ordinary launch restores native mode. An explicit `--enable-menu` request can re-enable integration, including in an existing background instance. Normal session ending releases integration and clears its marker while retaining the preference. Uninstallation keeps personal configuration by default.
 
 Account and power actions follow system capabilities and policies. Sign-out and shutdown require confirmation. Windows continues to manage authentication, Windows Hello, and the secure desktop.
 

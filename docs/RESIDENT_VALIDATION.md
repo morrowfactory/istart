@@ -2,6 +2,14 @@
 
 # Integration recovery fix: 0.2.0-preview.4
 
+## Development preview.24: explicit re-enable and session cleanup
+
+Date: 2026-10-17; Windows 11 build 26200. A leftover session marker was present while native Win-key behavior was reported. Restarting with `--enable-menu` reproduced an incorrect fallback: the marker took priority over the explicit request. Existing-instance launches also discarded this flag and only sent Show. Missing lifecycle logs from the preceding process do not establish why it stopped working.
+
+Explicit enable now takes priority over a leftover marker. A current-SID enable signal delivers it to an existing instance. Ordinary abnormal recovery still keeps native Start. Accepted session ending releases hooks and clears the marker before process termination while retaining the preference; cancellation keeps integration intact.
+
+Isolated `--presentation-test` passed foreground/search focus, Win/Start opening, session-cleanup preference retention, native fallback, and explicit re-enable after a stale marker. `--input-test` passed input processing during a 1.3-second UI stall, Win, Start, Win+R, temporary native access, disable, and abnormal exit of a separate test child. Test configurations and markers were isolated. Real sign-out/shutdown, Explorer restart, and Windows 10 acceptance remain pending; calling the session-cleanup handler is not a real reboot. Earlier records follow.
+
 Date: 2026-10-13; Windows 11 26200.9457. The user reported that after several Windows-key/Start-button interactions the native menu returned, without clicking Close.
 
 ## Diagnosis and fix

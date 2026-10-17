@@ -2,6 +2,14 @@
 
 # Windows / Google theme validation
 
+## Development preview.24: distinct compact layouts
+
+Date: 2026-10-17. Approved [Windows design](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=49-747) and [Google design](https://www.figma.com/design/fChA8PN9ewvBN02v9O1OjA?node-id=49-1000) were adapted to existing WPF controls. Windows uses top navigation, a flat neutral six-column grid, and a bottom system bar; Google uses a capsule sidebar, rounded white content card, and five columns. Secondary actions use local icons with translated tooltips and accessible names. Navigation/app names and expanded account/power choices retain text. Search, sorting, adding, screenshots, native recovery, and update badges retain their handlers.
+
+Checks passed for six/five-column placement, icon resources, default and compact English bounds, language switching, state preservation, and update badges. WPF renders with twelve non-executed test app entries were inspected against the design. SVG originals and derived PNGs are local; actual app icons remain dynamic. The native titlebar and OS outer-window geometry remain for compatibility. Figma fonts are adapted to installed Segoe UI / Microsoft YaHei UI fonts.
+
+The production window retains its existing 740 by 660 DIP capacity to avoid increasing scrolling in My Computer and real app lists; the content area expands with the window. The compact design-reference renders exercise smaller content sizes. This is development evidence, not a published preview.24 release or Windows 10 acceptance. Pointer dragging, other DPI/monitors, and every account/power action remain outside these layout checks. Earlier milestone records follow.
+
 Version: 0.2.0-preview.5. Date: 2026-10-13. Environment: Windows 11 26200.9457.
 
 ## Usage at this milestone

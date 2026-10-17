@@ -34,7 +34,7 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 
 兼容验收工具 `scripts/Test-WindowsVm.ps1` 独立于产品运行路径，只在已识别的 Win10 x64 虚拟机调用既有诊断/回归/交互入口，配置和报告按轮隔离。只读预检可在宿主运行；实际键鼠输入、窗口抢焦点和恢复验证留在虚拟机。VirtualBox 是测试环境依赖，不随 iStart 安装，虚拟机镜像、磁盘、账户凭据和本地报告不进入仓库或发行包。
 
-Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml 与 MainWindow.xaml 通过 DynamicResource 即时更新按钮、输入框、列表选择与内容卡片。设置中的外观选择单独保存并调用 SetTheme，不重启适配器，也不改写隐私或开机启动选项。继续使用 WPF 与 Microsoft YaHei UI、本机 Shell 图标，无额外 UI 库。输入框保留 PART_ContentHost、列表项保留拖入边框和键盘焦点提示；配置格式、系统接入与恢复路径不因换肤改变。设计来源和实测见 [界面验证记录](MATERIAL_VALIDATION.md)。
+Appearance 通过 DynamicResource 提供双主题资源；ApplyThemeLayout 移动同一个导航控件，保留搜索框、入口列表和状态。Windows 使用顶部导航、平面六列网格、4 DIP 控件和整条系统操作栏；Google 使用左侧胶囊导航、圆角搜索、24 DIP 内容卡片及五列网格。UniformGrid 顶部对齐，少量项目不拉伸填满空白。MenuIcons.xaml 复用 WPF 按钮，使用原始 Figma SVG 转换的嵌入式 PNG 透明遮罩；Prepare-MenuIcons.cjs 只用于维护，不引入运行时 SVG 或网络依赖。软件/文件图标仍来自真实 Shell 数据。图标操作保留事件、翻译的悬停说明、无障碍名称和焦点提示；普通帮助放入标题悬停说明，空状态、错误和操作反馈仍可见。保留原生标题栏、边框、阴影及系统决定的外窗圆角，不增加透明分层窗口或 Mica。换肤不重启适配器、不改隐私和开机启动；输入框保留 PART_ContentHost。详见[双风格验证](THEME_VALIDATION.md)。
 
 ## 本地数据
 
@@ -54,7 +54,7 @@ Appearance 统一提供 Windows/Google 两套颜色与形状资源，App.xaml �
 
 StartMenuAdapter 在后台单次扫描任务栏，缓存 StartButton 边界；钩子回调只检查事件与边界并派发 UI 工作，不读配置或运行耗时扫描。鼠标检查窗口根句柄、实时任务栏矩形与缓存新鲜度。运行期间空结果或检测异常只更新重试状态，不撤销用户偏好或停用键盘钩子；保留的旧快照仍须通过 1.5 秒新鲜度与窗口校验，过期则鼠标透传，成功扫描后自动恢复按钮接入；超时未完成的扫描不会反复新建并行扫描任务。
 
-单独 Win 松开时抑制原生弹出并显示菜单，Win 组合键透传；临时原生请求标记注入避免递归。启用前写 session.active，正常退出删除；下次运行发现遗留标记时释放接入、保存原生偏好并提示。进程退出由 Windows 清理所属钩子，已通过独立测试子进程异常退出的原生恢复检查。
+单独 Win 松开时抑制原生弹出并显示菜单，Win 组合键透传；临时原生请求标记注入避免递归。启用前写 session.active，正常退出删除；普通启动发现遗留标记仍退回原生并提示。明确的 --enable-menu 请求优先于遗留标记，独立 enable 信号将请求交给已有实例，避免只显示窗口却没有重新启用。正常会话结束时先释放接入、清理标记并保留用户偏好；取消会话结束则保持接入。进程退出由 Windows 清理所属钩子，已通过独立测试子进程异常退出的原生恢复检查。
 
 低级钩子可能被 Windows 因回调超时移除，当前尚无可靠失效检测；Explorer 重启、多屏/自动隐藏/缩放、锁屏和睡眠恢复仍待隔离验收。版本白名单不是完整兼容性证明。[微软低级键盘钩子说明](https://learn.microsoft.com/en-us/windows/win32/winmsg/lowlevelkeyboardproc)
 

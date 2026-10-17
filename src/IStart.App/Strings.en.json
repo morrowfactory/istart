@@ -265,5 +265,9 @@
   "升级安装器已启动，请在安装窗口查看进度。": "The update installer has started. Follow progress in its window.",
   "新版已就绪，请查看下方更新内容。": "An update is available. See what's new below.",
   "从 GitHub 官方仓库下载并校验，保留个人入口与设置。手动模式关闭窗口会取消下载；自动模式继续后台下载，空闲时安装。安装包目前未签名。": "Downloads from the official GitHub repository and verifies the installer. Your items and settings are preserved. In manual mode, closing this window cancels the download. In automatic mode, downloading continues in the background and installation waits until idle. The installer is currently unsigned.",
-  "暂时无法加载 iStart。请检查本地配置或文件权限。Windows 原生开始菜单仍可正常使用。": "Could not load iStart. Check the local configuration and file permissions. The Windows Start menu is still available."
+  "暂时无法加载 iStart。请检查本地配置或文件权限。Windows 原生开始菜单仍可正常使用。": "Could not load iStart. Check the local configuration and file permissions. The Windows Start menu is still available.",
+  "已接入": "Connected",
+  "账户与锁定": "Account and lock",
+  "电源选项": "Power options",
+  "退出 iStart，恢复系统开始菜单": "Exit iStart and restore Windows Start"
 }

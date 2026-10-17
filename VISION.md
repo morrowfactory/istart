@@ -25,7 +25,7 @@ Do not introduce a separate installed-app recommendation panel. My Apps shows at
 ## Product principles
 
 1. **User control:** allow adding, hiding, and choosing frequent/recent order. Retain existing data; automatic suggestions never move source files.
-2. **Compact and clear:** reduce empty space and decoration, allow sensible density adjustments, and preserve legibility, keyboard access, and clear feedback.
+2. **Compact and clear:** give Windows and Google recognizable layouts; use icons for secondary actions with translated hover descriptions and accessible names, while retaining readable navigation and system-action choices. Reduce empty space and decoration without weakening keyboard access or feedback.
 3. **Recover native Start:** make temporary access and default-mode switching easy to find. A failure must not leave Start unusable.
 4. **References first:** store access points. Removing an item does not delete its source; dropping a file does not move it.
 5. **Local and restrained:** do not upload paths or activity by default or scan the entire disk for recommendations. Make history scope transparent and clearable.

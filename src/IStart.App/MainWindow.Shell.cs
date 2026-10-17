@@ -40,15 +40,7 @@ public partial class MainWindow
             trayIcon = (System.Drawing.Icon)icon.Clone();
         tray = new Forms.NotifyIcon { Icon = trayIcon, Text = L.T("iStart · 个人开始菜单"), ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += (_, _) => ShowMenu(null);
-        Loaded += async (_, _) =>
-        {
-            if (File.Exists(SessionMarker))
-            {
-                SetNativeMode();
-                StatusText.Text = L.T("上次未正常退出，此次已恢复原生模式；可在设置中重新启用。");
-            }
-            else if (store.Library.CustomMenuEnabled || App.EnableMenuRequested) await SetCustomMode();
-        };
+        Loaded += async (_, _) => await InitializeStartMenu(App.EnableMenuRequested);
         Deactivated += (_, _) =>
         {
             if (!presentingMenu && !activatingMenu && OwnedWindows.Count == 0 && !IsMouseCaptureWithin) Hide();
@@ -71,8 +63,37 @@ public partial class MainWindow
             tray.Dispose();
             trayIcon.Dispose();
             undoTimer?.Stop();
-            try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            ClearSessionMarker();
         };
+    }
+    internal async Task InitializeStartMenu(bool enableRequested)
+    {
+        // 明确的用户启用请求优先于异常退出恢复；普通启动仍安全退回原生模式。
+        if (File.Exists(SessionMarker) && !enableRequested)
+        {
+            SetNativeMode();
+            StatusText.Text = L.T("上次未正常退出，此次已恢复原生模式；可在设置中重新启用。");
+        }
+        else if (store.Library.CustomMenuEnabled || enableRequested) await SetCustomMode();
+    }
+    internal async Task RequestEnableMenu()
+    {
+        if (exitRequested || App.IsSessionEnding) return;
+        RuntimeLog.Write("enable-request existing-instance");
+        await SetCustomMode();
+        if (!exitRequested && !App.IsSessionEnding) ShowMenu(null);
+    }
+    internal void PrepareForSessionEnd()
+    {
+        adapter?.Disable();
+        ClearSessionMarker();
+        RuntimeLog.Write("session-integration-released");
+    }
+    private void ClearSessionMarker()
+    {
+        try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { RuntimeLog.Write("session-marker-cleanup-failed " + ex.GetType().Name); }
     }
     private nint ShellMessage(nint window, int message, nint wParam, nint lParam, ref bool handled)
     {
@@ -88,7 +109,7 @@ public partial class MainWindow
     }
     private async Task<bool> SetCustomMode()
     {
-        if (adapter is null) return false;
+        if (adapter is null || exitRequested || App.IsSessionEnding) return false;
         try
         {
             Directory.CreateDirectory(store.DirectoryPath);
@@ -96,14 +117,17 @@ public partial class MainWindow
             await adapter.Enable();
             RuntimeLog.Write("adapter-enabled");
             store.Change(s => s.CustomMenuEnabled = true);
-            ModeStatus.Text = L.T("自定义菜单 · 试用");
+            ModeStatus.Text = L.T("已接入");
+            IntegrationDot.Visibility = Visibility.Visible;
             EnableMenuButton.Visibility = Visibility.Collapsed;
-            StatusText.Text = L.T("开始按钮和 Win 键已接入。原生菜单和托盘恢复入口随时可用。");
+            StatusText.Text = "";
             return true;
         }
+        catch (ObjectDisposedException) when (exitRequested || App.IsSessionEnding) { return false; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or System.ComponentModel.Win32Exception)
         {
             RuntimeLog.Write($"adapter-enable-failed {ex.GetType().Name} 0x{ex.HResult:X8}");
+            if (exitRequested || App.IsSessionEnding) return false;
             SetNativeMode();
             StatusText.Text = ex is NotSupportedException ? ex.Message : L.T("入口启用失败，已恢复 Windows 原生菜单。");
             return false;
@@ -114,6 +138,7 @@ public partial class MainWindow
         RuntimeLog.Write("native-mode");
         adapter?.Disable();
         ModeStatus.Text = L.T("原生菜单模式");
+        IntegrationDot.Visibility = Visibility.Collapsed;
         EnableMenuButton.Visibility = Visibility.Visible;
         try
         {
@@ -385,7 +410,7 @@ public partial class MainWindow
         RefreshCategories();
         RefreshEntries();
         SectionTitle.Text = SearchBox.Text.Trim().Length > 0 ? recentView ? L.T("最近记录搜索结果") : L.T("搜索结果") : ((MenuCategory)CategoryList.SelectedItem).Name;
-        ModeStatus.Text = adapter?.Enabled == true ? L.T("自定义菜单 · 试用") : L.T("原生菜单模式");
+        ModeStatus.Text = adapter?.Enabled == true ? L.T("已接入") : L.T("原生菜单模式");
         ScreenshotButton.ToolTip = screenshotHotkey?.Status ?? L.T("隐藏菜单后拖选范围，支持彩色标注");
         RefreshUpdateIndicators();
         if (tray is not null)
@@ -401,6 +426,20 @@ public partial class MainWindow
     {
         store.Change(s => s.Theme = theme);
         Appearance.Apply(theme);
+        ApplyThemeLayout();
+        RefreshEntries();
+    }
+    private void ApplyThemeLayout()
+    {
+        var windows = store.Library.Theme == "Windows";
+        TopNavigationRow.Height = new GridLength(windows ? 44 : 0);
+        NavigationColumn.Width = new GridLength(windows ? 0 : 160);
+        BrandColumn.Width = new GridLength(windows ? 0 : 140);
+        Grid.SetRow(CategoryList, windows ? 1 : 2);
+        Grid.SetColumnSpan(CategoryList, windows ? 2 : 1);
+        Grid.SetColumn(ContentCard, windows ? 0 : 1);
+        Grid.SetColumnSpan(ContentCard, windows ? 2 : 1);
+        CategoryList.ItemsPanel = (ItemsPanelTemplate)FindResource(windows ? "TopNavigation" : "SideNavigation");
     }
     private void AccountMenu(object sender, RoutedEventArgs e) => ShowSystemMenu((Button)sender, [(L.T("锁定"), SystemAction.Lock), (L.T("注销"), SystemAction.SignOut), (L.T("切换用户"), SystemAction.SwitchUser)]);
     private void PowerMenu(object sender, RoutedEventArgs e) => ShowSystemMenu((Button)sender, [(L.T("睡眠"), SystemAction.Sleep), (L.T("休眠"), SystemAction.Hibernate), (L.T("重启"), SystemAction.Restart), (L.T("关机"), SystemAction.ShutDown)]);

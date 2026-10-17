@@ -36,6 +36,7 @@ public partial class MainWindow : Window
         Appearance.Apply(store.Library.Theme);
         L.Apply(store.Library.Language);
         InitializeComponent();
+        ApplyThemeLayout();
         Updates.Changed += RefreshUpdateIndicators;
         ready = true;
         ApplyView();
@@ -95,8 +96,8 @@ public partial class MainWindow : Window
             store.Library.Launches, store.Library.WebsitesRecentFirst, keyword, hiddenWebsites);
         if (folderView)
         {
-            var columns = Math.Max(1, (int)(EntryList.ActualWidth / ((double)FindResource("TileWidth") + 10)));
-            var rows = Math.Max(1, (int)(EntryList.ActualHeight / ((double)FindResource("TileHeight") + 18)));
+            var columns = (int)FindResource("AppColumns");
+            var rows = Math.Max(1, (int)(EntryList.ActualHeight / (double)FindResource("TileHeight")));
             var capacity = keyword.Length > 0 ? 100 : Math.Clamp(columns * rows, 1, 48);
             source = FrequentFolders.Build(store.Library.Entries,
                 store.Library.Launches, store.Library.ShowWindowsRecentDocuments ? windowsRecent.Concat(recentFolders) : [],
@@ -106,7 +107,7 @@ public partial class MainWindow : Window
         var view = new System.Windows.Data.ListCollectionView(entries);
         EntryList.ItemsSource = view;
         ApplyView();
-        ActivitySortButton.Content = folderView ? store.Library.FoldersRecentFirst ? L.T("最近打开 · 切换常用") : L.T("常用文件夹 · 切换最近")
+        ActivitySortButton.ToolTip = folderView ? store.Library.FoldersRecentFirst ? L.T("最近打开 · 切换常用") : L.T("常用文件夹 · 切换最近")
             : store.Library.WebsitesRecentFirst ? L.T("最近打开 · 切换常用") : L.T("常用网站 · 切换最近");
         if (recentView) SearchStatus.Text = EntryList.Items.Count == 0 ? L.T("暂无有效记录。仅显示软件或 Windows 已保存、且仍存在的本机文件。") : L.T("合并 Windows、软件历史与 iStart 记录；外部历史时间为近似排序。");
         else SearchStatus.Text = websiteView ? !store.Library.ShowBrowserHistory ? L.T("浏览器历史已关闭；仅显示通过 iStart 打开的网站。")
@@ -150,13 +151,14 @@ public partial class MainWindow : Window
         websiteView = category.Id == WebsitesCategory;
         folderView = category.Id == FoldersCategory;
         SectionTitle.Text = category.Name;
-        AddFileButton.Content = softwareView ? L.T("＋ 软件") : L.T("＋ 文件");
+        AddFileButton.ToolTip = softwareView ? L.T("添加常用软件") : L.T("打开文件");
         AddFileButton.Visibility = folderView || websiteView || computerView ? Visibility.Collapsed : Visibility.Visible;
         AddFolderButton.Visibility = folderView ? Visibility.Visible : Visibility.Collapsed;
         ActivitySortButton.Visibility = websiteView || folderView ? Visibility.Visible : Visibility.Collapsed;
         ViewToggle.Visibility = websiteView || computerView ? Visibility.Collapsed : Visibility.Visible;
         EntryList.Visibility = computerView ? Visibility.Collapsed : Visibility.Visible;
         ComputerScroll.Visibility = computerView ? Visibility.Visible : Visibility.Collapsed;
+        EntryCount.Visibility = computerView ? Visibility.Collapsed : Visibility.Visible;
         RefreshEntries();
         ApplyView();
         if (computerView) _ = RefreshComputer();

@@ -6,7 +6,7 @@ $root = [IO.Path]::GetFullPath((Join-Path (Split-Path $PSScriptRoot -Parent) 'ar
 if (!$Output.StartsWith($root + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw '测试目录必须位于 artifacts 内' }
 if (Test-Path $Output) { throw '使用新的测试目录，避免覆盖已有文件' }
 New-Item $Output -ItemType Directory | Out-Null
-$install = Join-Path $Output '已安装程序'
+$install = Join-Path $Output '已安装程序 QA'
 function Run-Setup([string]$Executable, [string[]]$Arguments) {
     $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -WindowStyle Hidden -Wait -PassThru
     if ($process.ExitCode -ne 0) { throw "安装器返回 $($process.ExitCode)" }

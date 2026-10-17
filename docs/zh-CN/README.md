@@ -12,7 +12,7 @@
 
 [下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
-**preview.24 开发版：**增加联网检查、两处新版红点、版本说明和默认自动升级，详见[升级说明](UPDATES.md)。尚未包含在已公开的 preview.23 安装包中。
+**preview.24 开发版：**增加联网升级、两套独立紧凑界面和明确的开始接入恢复。Windows 使用顶部导航和平面六列网格；Google 使用左侧胶囊导航和圆角五列卡片。次要操作改为图标，提供中英文悬停说明与无障碍名称，账户和电源选项保留文字。详见[双风格](THEME_VALIDATION.md)、[升级说明](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)。尚未包含在已公开的 preview.23 安装包中。
 
 ## 当前功能
 
@@ -61,7 +61,7 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 - 底部“Windows 原生菜单”：临时打开系统菜单。
 - 托盘“切回 Windows 原生菜单”：停用自定义接入，恢复默认原生模式。
 - 右上角“×”：收起到托盘；菜单或托盘的“退出”才结束程序并释放接入。
-- 上次异常退出时，下次启动恢复原生模式；卸载默认保留个人配置。
+- 上次异常退出时，普通启动恢复原生模式；明确的 --enable-menu 请求可重新启用，包括已有后台实例。正常注销/关机时先释放接入、清理标记并保留偏好。卸载默认保留个人配置。
 
 账户与电源操作遵循系统能力和策略，注销、关机等需要确认；登录认证、Windows Hello 和安全桌面仍由 Windows 管理。
 

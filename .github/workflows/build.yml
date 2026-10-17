@@ -41,6 +41,8 @@ jobs:
             artifacts/smoke-*/menu-computer.png
             artifacts/smoke-*/language-result.txt
             artifacts/smoke-*/menu-en-*.png
+            artifacts/smoke-*/theme-*.png
+            artifacts/smoke-*/theme-result.txt
             artifacts/smoke-*/settings-en.png
             artifacts/smoke-*/update-*.png
             artifacts/smoke-*/update-result.txt

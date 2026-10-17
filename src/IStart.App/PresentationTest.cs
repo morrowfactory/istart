@@ -56,6 +56,23 @@ internal static class PresentationTest
             WinInput.TestClick(new() { X = (int)(target.Bounds.Left + target.Bounds.Width / 2), Y = (int)(target.Bounds.Top + target.Bounds.Height / 2) });
             await Wait(() => menu.IsVisible && menu.Topmost && WinInput.GetForegroundWindow() == new WindowInteropHelper(menu).Handle, "开始按钮显示实际菜单");
             report.Add("PASS Start click => actual foreground menu");
+            menu.PrepareForSessionEnd();
+            if (!new LibraryStore(Path.Combine(output, "library.json")).Library.CustomMenuEnabled
+                || File.Exists(Path.Combine(output, "session.active")))
+                throw new InvalidOperationException("正常会话结束必须保留接入偏好并删除标记。");
+            report.Add("PASS session ending => hooks released, preference retained, marker removed");
+            File.WriteAllText(Path.Combine(output, "session.active"), "active");
+            await menu.InitializeStartMenu(false);
+            if (enable.Visibility != Visibility.Visible) throw new InvalidOperationException("普通异常恢复必须保留原生入口。");
+            await menu.InitializeStartMenu(true);
+            if (enable.Visibility != Visibility.Collapsed) throw new InvalidOperationException("明确启用请求必须覆盖残留恢复标记。");
+            menu.PrepareForSessionEnd();
+            await menu.RequestEnableMenu();
+            if (enable.Visibility != Visibility.Collapsed) throw new InvalidOperationException("已有实例必须能够重新启用接入。");
+            menu.Hide();
+            WinInput.TestKeys((0x5B, false), (0x5B, true));
+            await Wait(() => menu.IsVisible && WinInput.GetForegroundWindow() == new WindowInteropHelper(menu).Handle, "重新启用后 Win 键");
+            report.Add("PASS explicit enable after stale marker/existing instance => Win opens iStart");
             File.WriteAllLines(Path.Combine(output, "presentation-result.txt"), report);
         }
         finally { menu.RequestExit("presentation-test"); cover.Close(); }

@@ -31,7 +31,8 @@ public partial class MainWindow
         EntryList.ItemTemplate = store.Library.IconView && !recentView && !websiteView ? (DataTemplate)Resources["EntryTile"] : listTemplate;
         var panel = store.Library.IconView && !recentView && !websiteView ? (ItemsPanelTemplate)Resources["IconPanel"] : listPanel;
         EntryList.ItemsPanel = panel;
-        ViewToggle.Content = store.Library.IconView ? L.T("列表") : L.T("图标");
+        ViewToggle.Content = FindResource(store.Library.IconView ? "ListIcon" : "GridIcon");
+        ViewToggle.ToolTip = store.Library.IconView ? L.T("列表") : L.T("图标");
     }
     private void RemoveById(Guid id)
     {

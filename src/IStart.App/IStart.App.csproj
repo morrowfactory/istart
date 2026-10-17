@@ -17,5 +17,7 @@
   </PropertyGroup>
   <ItemGroup><Resource Include="Assets/Fluent/*.png" /></ItemGroup>
   <ItemGroup><Resource Include="Assets/Brand/*.png;Assets/Brand/*.ico" /></ItemGroup>
+  <ItemGroup><Resource Include="Assets/Icons/*.png" /></ItemGroup>
+  <ItemGroup><None Update="Assets/Icons/LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" TargetPath="ThirdParty/Lucide-LICENSE.txt" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="Strings.en.json" LogicalName="IStart.Strings.en.json" WithCulture="false" /></ItemGroup>
 </Project>
