@@ -6,8 +6,8 @@ namespace IStart;
 public partial class App : Application
 {
     private Mutex? instance;
-    private EventWaitHandle? showSignal, exitSignal;
-    private RegisteredWaitHandle? showWait, exitWait;
+    private EventWaitHandle? showSignal, exitSignal, enableSignal;
+    private RegisteredWaitHandle? showWait, exitWait, enableWait;
     internal static bool EnableMenuRequested { get; private set; }
     internal static bool BackgroundRequested { get; private set; }
     internal static bool IsUITest { get; private set; }
@@ -91,6 +91,7 @@ public partial class App : Application
             BackgroundRequested = e.Args.Contains("--background");
             showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\iStart-show-" + user);
             exitSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\iStart-exit-" + user);
+            enableSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\iStart-enable-" + user);
             instance = new Mutex(true, "Local\\iStart-" + user, out var first);
             if (!first)
             {
@@ -102,7 +103,11 @@ public partial class App : Application
                     try { if (instance.WaitOne(TimeSpan.FromSeconds(10))) instance.ReleaseMutex(); else exitCode = 2; }
                     catch (AbandonedMutexException) { instance.ReleaseMutex(); }
                 }
-                else { WinInput.AllowExistingInstanceForeground(); showSignal.Set(); }
+                else
+                {
+                    WinInput.AllowExistingInstanceForeground();
+                    if (EnableMenuRequested) enableSignal.Set(); else showSignal.Set();
+                }
                 instance.Dispose();
                 instance = null;
                 Shutdown(exitCode);
@@ -111,7 +116,7 @@ public partial class App : Application
             if (e.Args.Contains("--exit")) { Shutdown(); return; }
             var store = new LibraryStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "iStart", "library.json"));
             RuntimeLog.DirectoryPath = store.DirectoryPath;
-            RuntimeLog.Write($"startup version={typeof(App).Assembly.GetName().Version} custom={store.Library.CustomMenuEnabled}");
+            RuntimeLog.Write($"startup version={GitHubUpdater.CurrentVersion} custom={store.Library.CustomMenuEnabled} enableRequested={EnableMenuRequested}");
             using (var startup = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
             {
                 var configured = startup?.GetValue("iStart") is string command && command.StartsWith("\"" + Environment.ProcessPath + "\"", StringComparison.OrdinalIgnoreCase);
@@ -120,6 +125,7 @@ public partial class App : Application
             var window = new MainWindow(store) { ShowActivated = !BackgroundRequested };
             showWait = ThreadPool.RegisterWaitForSingleObject(showSignal, (_, _) => Dispatcher.BeginInvoke(() => window.ShowMenu(null)), null, Timeout.Infinite, false);
             exitWait = ThreadPool.RegisterWaitForSingleObject(exitSignal, (_, _) => Dispatcher.BeginInvoke(() => window.RequestExit("exit-signal")), null, Timeout.Infinite, false);
+            enableWait = ThreadPool.RegisterWaitForSingleObject(enableSignal, (_, _) => Dispatcher.BeginInvoke(async () => await window.RequestEnableMenu()), null, Timeout.Infinite, false);
             window.Show();
             if (BackgroundRequested) window.Hide();
         }
@@ -151,6 +157,9 @@ public partial class App : Application
         IsSessionEnding = true;
         RuntimeLog.Write("session-ending " + e.ReasonSessionEnding);
         base.OnSessionEnding(e);
+        IsSessionEnding = !e.Cancel;
+        // 系统可能在 Closed 之前结束进程，必须在此释放钩子并清理正常会话标记。
+        if (!e.Cancel && MainWindow is MainWindow window) window.PrepareForSessionEnd();
     }
     private async void RunInputTest(string output)
     {
@@ -179,8 +188,10 @@ public partial class App : Application
         showWait?.Unregister(null);
         childAdapter?.Dispose();
         exitWait?.Unregister(null);
+        enableWait?.Unregister(null);
         showSignal?.Dispose();
         exitSignal?.Dispose();
+        enableSignal?.Dispose();
         instance?.ReleaseMutex();
         instance?.Dispose();
         base.OnExit(e);

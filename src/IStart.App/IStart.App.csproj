@@ -8,7 +8,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/Brand/istart.ico</ApplicationIcon>
-    <Version>0.2.0-preview.23</Version>
+    <Version>0.2.0-preview.24</Version>
     <!-- 英文来自框架中性资源；仅附带当前支持的简体中文语言资源。 -->
     <SatelliteResourceLanguages>en;zh-Hans</SatelliteResourceLanguages>
     <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
@@ -17,5 +17,7 @@
   </PropertyGroup>
   <ItemGroup><Resource Include="Assets/Fluent/*.png" /></ItemGroup>
   <ItemGroup><Resource Include="Assets/Brand/*.png;Assets/Brand/*.ico" /></ItemGroup>
+  <ItemGroup><Resource Include="Assets/Icons/*.png" /></ItemGroup>
+  <ItemGroup><None Update="Assets/Icons/LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" TargetPath="ThirdParty/Lucide-LICENSE.txt" /></ItemGroup>
   <ItemGroup><EmbeddedResource Include="Strings.en.json" LogicalName="IStart.Strings.en.json" WithCulture="false" /></ItemGroup>
 </Project>

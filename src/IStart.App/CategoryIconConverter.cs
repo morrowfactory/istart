@@ -10,13 +10,13 @@ public sealed class CategoryIconConverter : IValueConverter
     public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is not MenuCategory category) return null;
-        var name = category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff") ? "apps"
-            : category.Id == new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee") ? "recent"
-            : category.Id == new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb") ? "computer"
-            : category.Id == new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc") ? "website" : "folder";
+        var name = category.Id == new Guid("ffffffff-ffff-ffff-ffff-ffffffffffff") ? "panels-top-left"
+            : category.Id == new Guid("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee") ? "history"
+            : category.Id == new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb") ? "monitor"
+            : category.Id == new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc") ? "globe-2" : "folder";
         if (!Icons.TryGetValue(name, out var icon))
         {
-            icon = new BitmapImage(new Uri("pack://application:,,,/IStart.App;component/Assets/Fluent/" + name + ".png"));
+            icon = new BitmapImage(new Uri("pack://application:,,,/IStart.App;component/Assets/Icons/" + name + ".png"));
             icon.Freeze();
             Icons.Add(name, icon);
         }

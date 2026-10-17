@@ -9,7 +9,7 @@
 - System is the default and uses the current Windows user's display language. Chinese maps to Simplified Chinese; English and unsupported languages use English. Date formatting and keyboard/IME settings do not determine the language.
 - Selecting Simplified Chinese or English applies and saves immediately without restarting. Selecting System restores automatic selection.
 - Older configurations need no schema migration. Missing, empty, or unknown Language values become System without changing items, history, theme, screenshot shortcut, startup, or integration preferences.
-- An open Settings window updates immediately while retaining unsaved checkboxes. The current page and search text remain. Language saves immediately; other settings still use the existing Save action.
+- An open Settings window updates immediately while retaining unsaved checkboxes. The current page and search text remain. Language, appearance, screenshot shortcut, and the development automatic-update preference save immediately; menu/privacy checkboxes use the existing Save action.
 - The menu, five navigation views, Settings, tray, context menus, account/power confirmation, screenshot tools, and updater are localized. Seven Control Panel titles use stable category IDs.
 - App/file/folder names, volume labels, URLs, and screenshot text are not translated. Shell-supplied names, native Windows dialogs, the existing Chinese installation wizard, and GitHub release notes retain their own language.
 - System language is read at startup. After changing the Windows display language while iStart runs, reselect System or restart iStart. Windows language is not modified, and no online translation is used.

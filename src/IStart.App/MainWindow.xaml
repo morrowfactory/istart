@@ -1,49 +1,89 @@
 <Window x:Class="IStart.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:IStart"
-        Title="{local:Tr 'iStart · 个人开始菜单'}" Icon="Assets/Brand/istart.ico" Width="740" Height="660" MinWidth="620" MinHeight="540" Background="{DynamicResource Surface}" Foreground="{DynamicResource TextPrimary}" FontFamily="{DynamicResource MenuFont}" FontSize="13" WindowStartupLocation="CenterScreen">
+        Title="{local:Tr 'iStart · 个人开始菜单'}" Icon="Assets/Brand/istart.ico" Width="740" Height="660" MinWidth="620" MinHeight="540" Background="{DynamicResource Surface}" Foreground="{DynamicResource TextPrimary}" FontFamily="{DynamicResource MenuFont}" FontSize="13" WindowStartupLocation="CenterScreen" UseLayoutRounding="True">
   <Window.Resources>
-    <local:ShellIconConverter x:Key="ShellIcon"/><local:CategoryIconConverter x:Key="CategoryIcon"/>
-    <ItemsPanelTemplate x:Key="IconPanel"><WrapPanel/></ItemsPanelTemplate>
-    <DataTemplate x:Key="EntryTile"><StackPanel Width="{DynamicResource TileWidth}" Height="{DynamicResource TileHeight}" ToolTip="{Binding Target}"><Image Source="{Binding Target, Converter={StaticResource ShellIcon}}" Width="28" Height="28" Margin="0,4,0,6"/><TextBlock Text="{Binding Title}" FontSize="{DynamicResource TileFontSize}" TextTrimming="CharacterEllipsis" TextAlignment="Center"/></StackPanel></DataTemplate>
-  </Window.Resources>
-  <Grid Margin="{DynamicResource WindowPadding}" Background="{DynamicResource Surface}">
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <Grid Margin="0,0,0,14">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="145"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-      <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Image Source="Assets/Brand/istart.png" Width="36" Height="36" Margin="-2,0,7,0" AutomationProperties.Name="iStart"/><TextBlock Text="iStart" FontSize="{DynamicResource BrandTitleSize}" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
-      <Grid Grid.Column="1" Margin="8,0"><TextBox x:Name="SearchBox" TextChanged="SearchChanged" ToolTip="{local:Tr '搜索软件、文件、文件夹或网站'}" AutomationProperties.Name="{local:Tr '搜索当前列表'}" Padding="{DynamicResource SearchPadding}" BorderThickness="{DynamicResource SearchBorder}"/><Path Data="M 12,3 A 9,9 0 1 1 11.99,3 M 19,19 L 26,26" Stroke="{DynamicResource TextSecondary}" StrokeThickness="2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Left" Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" Visibility="{DynamicResource GoogleBrandVisibility}"/><Image Source="Assets/Fluent/search.png" Width="18" Height="18" HorizontalAlignment="Left" Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" Visibility="{DynamicResource WindowsBrandVisibility}"/><TextBlock TextTrimming="CharacterEllipsis" Text="{local:Tr '搜索软件、文件、文件夹或网站'}" Foreground="{DynamicResource TextMuted}" Margin="36,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Grid>
-      <StackPanel Grid.Column="2" Orientation="Horizontal"><Button x:Name="ScreenshotButton" Content="{local:Tr '截屏'}" Click="StartScreenshot" ToolTip="{local:Tr '隐藏菜单后拖选范围，支持彩色标注'}" AutomationProperties.Name="{local:Tr '截屏'}"/><Button Content="{local:Tr '设置'}" Background="{DynamicResource SettingsSurface}" Click="OpenSettings" AutomationProperties.Name="{local:Tr '设置'}"/></StackPanel>
-    </Grid>
-    <Grid Grid.Row="1">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="145"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-      <DockPanel Margin="0,0,12,0">
-        <ListBox x:Name="CategoryList" BorderThickness="0" Background="Transparent" SelectionChanged="CategoryChanged" AutomationProperties.Name="{local:Tr '导航'}">
-          <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="Padding" Value="8,9"/></Style></ListBox.ItemContainerStyle><ListBox.ItemTemplate><DataTemplate><StackPanel Orientation="Horizontal"><Image Source="{Binding Converter={StaticResource CategoryIcon}}" Width="18" Height="18" Margin="0,0,9,0" Visibility="{DynamicResource WindowsBrandVisibility}"/><TextBlock Text="{Binding Name}" VerticalAlignment="Center"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
-
-        </ListBox>
-      </DockPanel>
-      <Border Grid.Column="1" Background="{DynamicResource ContentSurface}" CornerRadius="{DynamicResource CardRadius}" BorderBrush="{DynamicResource CardOutline}" BorderThickness="1" Padding="{DynamicResource ContentPadding}"><DockPanel>
-        <StackPanel DockPanel.Dock="Top">
-          <DockPanel><StackPanel Orientation="Horizontal" DockPanel.Dock="Right"><Button x:Name="ActivitySortButton" Content="{local:Tr '常用网站 · 切换最近'}" Visibility="Collapsed" Click="ToggleActivitySort"/><Button x:Name="ViewToggle" Content="{local:Tr '图标'}" Click="ToggleView"/><Button x:Name="AddFileButton" Content="{local:Tr '＋ 软件'}" Style="{StaticResource PrimaryButton}" Click="AddFile"/><Button x:Name="AddFolderButton" Content="{local:Tr '＋ 文件夹'}" Click="AddFolder"/></StackPanel><TextBlock x:Name="SectionTitle" TextTrimming="CharacterEllipsis" Text="{local:Tr '我的软件'}" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
-
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="MenuIcons.xaml"/></ResourceDictionary.MergedDictionaries>
+      <local:ShellIconConverter x:Key="ShellIcon"/><local:CategoryIconConverter x:Key="CategoryIcon"/>
+      <ItemsPanelTemplate x:Key="IconPanel"><UniformGrid Columns="{DynamicResource AppColumns}" VerticalAlignment="Top"/></ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="TopNavigation"><UniformGrid Rows="1" Columns="5"/></ItemsPanelTemplate>
+      <ItemsPanelTemplate x:Key="SideNavigation"><StackPanel/></ItemsPanelTemplate>
+      <DataTemplate x:Key="EntryTile">
+        <StackPanel Height="{DynamicResource TileHeight}" VerticalAlignment="Center">
+          <StackPanel.ToolTip><StackPanel><TextBlock Text="{Binding Title}" FontWeight="SemiBold"/><TextBlock Text="{Binding Target}"/></StackPanel></StackPanel.ToolTip>
+          <Image Source="{Binding Target, Converter={StaticResource ShellIcon}}" Width="30" Height="30" Margin="0,14,0,6"/>
+          <TextBlock Text="{Binding Title}" Width="76" FontSize="11" TextTrimming="CharacterEllipsis" TextAlignment="Center"/>
         </StackPanel>
-
-        <TextBlock x:Name="SearchStatus" DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"/><Grid><ListBox x:Name="EntryList" BorderThickness="0" Background="{DynamicResource ContentSurface}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="EntryDrop" DragOver="EntryDragOver" MouseDoubleClick="OpenSelected" KeyDown="EntryKeyDown" ContextMenuOpening="EntryContextMenu" AutomationProperties.Name="{local:Tr '收藏入口'}">
-
-          <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="5,7"/></Style></ListBox.ItemContainerStyle>
-          <ListBox.ItemTemplate>
-            <DataTemplate>
-              <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      </DataTemplate>
+    </ResourceDictionary>
+  </Window.Resources>
+  <Grid x:Name="MenuRoot" Margin="{DynamicResource WindowPadding}" Background="{DynamicResource Surface}">
+    <Grid.RowDefinitions><RowDefinition Height="{DynamicResource HeaderHeight}"/><RowDefinition x:Name="TopNavigationRow" Height="0"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="64"/></Grid.RowDefinitions>
+    <Grid.ColumnDefinitions><ColumnDefinition x:Name="NavigationColumn" Width="0"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <Grid Grid.ColumnSpan="2" Margin="{DynamicResource HeaderMargin}">
+      <Grid.ColumnDefinitions><ColumnDefinition x:Name="BrandColumn" Width="0"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Visibility="{DynamicResource GoogleBrandVisibility}"><Image Source="Assets/Brand/istart.png" Width="34" Height="34" Margin="-2,0,7,0" AutomationProperties.Name="iStart"/><TextBlock Text="iStart" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
+      <Grid Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
+        <TextBox x:Name="SearchBox" Height="{DynamicResource SearchHeight}" Background="{DynamicResource SearchSurface}" TextChanged="SearchChanged" ToolTip="{local:Tr '搜索软件、文件、文件夹或网站'}" AutomationProperties.Name="{local:Tr '搜索当前列表'}" Padding="36,6,12,6" BorderThickness="{DynamicResource SearchBorder}" VerticalContentAlignment="Center"/>
+        <Rectangle Width="18" Height="18" Fill="{DynamicResource TextSecondary}" HorizontalAlignment="Left" Margin="12,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"><Rectangle.OpacityMask><ImageBrush ImageSource="{StaticResource SearchIcon}"/></Rectangle.OpacityMask></Rectangle>
+        <TextBlock TextTrimming="CharacterEllipsis" Text="{local:Tr '搜索软件、文件、文件夹或网站'}" Foreground="{DynamicResource TextSecondary}" Margin="36,0,12,0" VerticalAlignment="Center" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+      </Grid>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+        <Button x:Name="ScreenshotButton" Style="{StaticResource IconButton}" Width="{DynamicResource HeaderActionSize}" Height="{DynamicResource HeaderActionSize}" Content="{StaticResource ScissorsIcon}" Click="StartScreenshot" ToolTip="{local:Tr '隐藏菜单后拖选范围，支持彩色标注'}" AutomationProperties.Name="{local:Tr '截屏'}"/>
+        <Button x:Name="SettingsButton" Style="{StaticResource IconButton}" Width="{DynamicResource HeaderActionSize}" Height="{DynamicResource HeaderActionSize}" ContentTemplate="{x:Null}" Click="OpenSettings" ToolTip="{local:Tr '设置'}" AutomationProperties.Name="{local:Tr '设置'}">
+          <Grid><Rectangle Width="20" Height="20" Fill="{DynamicResource TextSecondary}"><Rectangle.OpacityMask><ImageBrush ImageSource="{StaticResource SettingsIcon}"/></Rectangle.OpacityMask></Rectangle><Ellipse x:Name="SettingsUpdateBadge" Fill="#D92D20" Width="7" Height="7" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-3,-3,0" Visibility="Collapsed" IsHitTestVisible="False"/></Grid>
+        </Button>
+      </StackPanel>
+    </Grid>
+    <ListBox x:Name="CategoryList" Grid.Row="1" Grid.ColumnSpan="2" Margin="{DynamicResource NavigationMargin}" BorderThickness="0" Background="Transparent" SelectionChanged="CategoryChanged" ItemContainerStyle="{StaticResource NavigationItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{local:Tr '导航'}">
+      <ListBox.ItemTemplate><DataTemplate><Grid ToolTip="{Binding Name}"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Rectangle Width="18" Height="18" Margin="0,0,8,0" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"><Rectangle.OpacityMask><ImageBrush ImageSource="{Binding Converter={StaticResource CategoryIcon}}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle><TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/></Grid></DataTemplate></ListBox.ItemTemplate>
+    </ListBox>
+    <Border x:Name="ContentCard" Grid.Row="2" Grid.ColumnSpan="2" Margin="{DynamicResource ContentMargin}" Background="{DynamicResource ContentSurface}" CornerRadius="{DynamicResource CardRadius}" Padding="{DynamicResource ContentPadding}">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" Height="36" Margin="0,0,0,14"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="SectionTitle" Text="{local:Tr '我的软件'}" FontSize="16" FontWeight="SemiBold" ToolTip="{Binding Text, ElementName=SearchStatus}" VerticalAlignment="Center"/><TextBlock x:Name="EntryCount" Text="{Binding Items.Count, ElementName=EntryList}" FontSize="11" Foreground="{DynamicResource TextSecondary}" Margin="8,0,0,0" VerticalAlignment="Center"/></StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <Button x:Name="ActivitySortButton" Style="{StaticResource IconButton}" Content="{StaticResource HistoryIcon}" Visibility="Collapsed" Click="ToggleActivitySort"/>
+            <Button x:Name="ViewToggle" Style="{StaticResource IconButton}" Content="{StaticResource ListIcon}" Click="ToggleView"/>
+            <Button x:Name="AddFileButton" Style="{StaticResource AddIconButton}" Content="{StaticResource PlusIcon}" Click="AddFile" ToolTip="{local:Tr '添加常用软件'}"/>
+            <Button x:Name="AddFolderButton" Style="{StaticResource AddIconButton}" Content="{StaticResource PlusIcon}" Click="AddFolder" ToolTip="{local:Tr '添加文件夹入口'}"/>
+          </StackPanel>
+        </Grid>
+        <TextBlock x:Name="SearchStatus" DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,8"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding HasItems, ElementName=EntryList}" Value="False"/><Condition Binding="{Binding Visibility, ElementName=ComputerScroll}" Value="Collapsed"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+        <Grid>
+          <ListBox x:Name="EntryList" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AllowDrop="True" Drop="EntryDrop" DragOver="EntryDragOver" MouseDoubleClick="OpenSelected" KeyDown="EntryKeyDown" ContextMenuOpening="EntryContextMenu" AutomationProperties.Name="{local:Tr '收藏入口'}">
+            <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0"/></Style></ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate><DataTemplate>
+              <Grid Margin="6,8"><Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <Image Source="{Binding Target, Converter={StaticResource ShellIcon}}" Width="24" Height="24" Margin="0,0,6,0"/>
                 <StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Target}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/></StackPanel>
-                <Button Grid.Column="2" Content="{local:Tr '移除'}" Background="Transparent" Foreground="{DynamicResource TextSecondary}" FontSize="11" Padding="8,5" Tag="{Binding Id}" Click="RemoveEntry" ToolTip="{local:Tr '仅移除此处显示，不卸载软件或删除文件'}"/>
+                <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="{StaticResource RemoveIcon}" Width="28" Height="28" Tag="{Binding Id}" Click="RemoveEntry" ToolTip="{local:Tr '仅移除此处显示，不卸载软件或删除文件'}" AutomationProperties.Name="{local:Tr '移除'}"/>
               </Grid>
-            </DataTemplate>
-          </ListBox.ItemTemplate>
-        </ListBox>
-        <ScrollViewer x:Name="ComputerScroll" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="ComputerPanel"/></ScrollViewer></Grid>
-      </DockPanel></Border>
-    </Grid>
-    <Border Grid.Row="2" Background="{DynamicResource StatusSurface}" CornerRadius="{DynamicResource StatusRadius}" Padding="{DynamicResource StatusPadding}" Margin="0,10,0,6"><DockPanel><Button x:Name="UndoButton" Content="{local:Tr '撤销移除'}" Visibility="Collapsed" DockPanel.Dock="Right" Click="UndoRemove"/><TextBlock x:Name="StatusText" FontSize="{DynamicResource StatusFontSize}" Text="{local:Tr '拖入即可添加入口，原文件保持原位。双击或按 Enter 打开。'}" TextWrapping="Wrap" VerticalAlignment="Center"/></DockPanel></Border>
-    <Grid Grid.Row="3"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel Orientation="Horizontal"><Button Click="AccountMenu" MinWidth="{DynamicResource AccountMinWidth}"><StackPanel Orientation="Horizontal"><Image Source="Assets/Fluent/account.png" Width="22" Height="22" Margin="0,0,6,0" Visibility="{DynamicResource WindowsBrandVisibility}"/><TextBlock Text="{local:Tr '账户 ▾'}" VerticalAlignment="Center"/></StackPanel></Button><Button Content="{local:Tr 'Windows 原生菜单'}" Click="OpenNative"/></StackPanel><StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"><TextBlock x:Name="ModeStatus" Text="{local:Tr '原生菜单模式'}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/><Button x:Name="EnableMenuButton" Content="{local:Tr '启用接入'}" Click="EnableStartMenu" FontSize="11" Padding="6,4" ToolTip="{local:Tr '检测开始按钮，成功后使用 iStart；失败保留原生菜单'}"/></StackPanel><StackPanel Grid.Column="2" Orientation="Horizontal"><Button Content="{local:Tr '电源 ▾'}" Click="PowerMenu"/><Button Content="{local:Tr '退出'}" Click="Exit"/></StackPanel></Grid>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <ScrollViewer x:Name="ComputerScroll" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="ComputerPanel"/></ScrollViewer>
+        </Grid>
+      </DockPanel>
+    </Border>
+    <Border Grid.Row="3" Grid.ColumnSpan="2" Margin="{DynamicResource StatusMargin}" Background="{DynamicResource StatusSurface}" CornerRadius="4" Padding="6,3">
+      <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=StatusText}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
+      <DockPanel><Button x:Name="UndoButton" Content="{local:Tr '撤销移除'}" Visibility="Collapsed" DockPanel.Dock="Right" Click="UndoRemove"/><TextBlock x:Name="StatusText" FontSize="11" Text="" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" VerticalAlignment="Center"/></DockPanel>
+    </Border>
+    <Border Grid.Row="4" Grid.ColumnSpan="2" Background="{DynamicResource FooterSurface}" Padding="{DynamicResource FooterPadding}">
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Button x:Name="AccountButton" Style="{StaticResource IconButton}" Content="{StaticResource UserIcon}" Background="{DynamicResource AccountSurface}" Foreground="{DynamicResource AccountText}" Click="AccountMenu" ToolTip="{local:Tr '账户与锁定'}"><Button.Resources><CornerRadius x:Key="ActionRadius">20</CornerRadius></Button.Resources></Button>
+          <Button x:Name="NativeMenuButton" Style="{StaticResource IconButton}" Content="{StaticResource GridIcon}" Click="OpenNative" ToolTip="{local:Tr 'Windows 原生菜单'}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Image x:Name="IntegrationDot" Source="Assets/Icons/integration-status.png" Width="6" Height="6" Margin="0,0,6,0" Visibility="Collapsed"/>
+          <TextBlock x:Name="ModeStatus" Text="{local:Tr '原生菜单模式'}" FontSize="11" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+          <Button x:Name="EnableMenuButton" Style="{StaticResource IconButton}" Content="{StaticResource PlusIcon}" Click="EnableStartMenu" ToolTip="{local:Tr '检测开始按钮，成功后使用 iStart；失败保留原生菜单'}" AutomationProperties.Name="{local:Tr '启用接入'}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button x:Name="PowerButton" Style="{StaticResource IconButton}" Content="{StaticResource PowerIcon}" Click="PowerMenu" ToolTip="{local:Tr '电源选项'}"/>
+          <Button x:Name="ExitButton" Style="{StaticResource IconButton}" Content="{StaticResource ExitIcon}" Click="Exit" ToolTip="{local:Tr '退出 iStart，恢复系统开始菜单'}"/>
+        </StackPanel>
+      </Grid>
+    </Border>
   </Grid>
 </Window>

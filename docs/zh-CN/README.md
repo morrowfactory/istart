@@ -4,13 +4,15 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**当前版本：0.2.0-preview.23 预览版**
+**版本：0.2.0-preview.24 预览版**
 
-`0.2.0-preview.23` 优化离线安装包体积：精简未使用的框架语言资源、排除发布调试符号，并提高压缩等级；完整运行环境、中英文及既有功能保留。本地同环境样本由 53.6 MB 降至 50.9 MB，约减少 5%；公开包以发布页和校验清单中的实际大小为准。详见[安装包优化](PACKAGE_SIZE.md)。
+本版增加两套独立紧凑界面、带中英文悬停说明的图标操作、明确的开始接入恢复，以及联网更新提醒和自动/手动升级。安装包保留离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
 
 界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.24/iStart-Setup-0.2.0-preview.24.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.24) · [所有版本](https://github.com/morrowfactory/istart/releases)
+
+**preview.24 新功能：**增加联网升级、两套独立紧凑界面和明确的开始接入恢复。Windows 使用顶部导航和平面六列网格；Google 使用左侧胶囊导航和圆角五列卡片。次要操作改为图标，提供中英文悬停说明与无障碍名称，账户和电源选项保留文字。详见[双风格](THEME_VALIDATION.md)、[升级说明](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)。
 
 ## 当前功能
 
@@ -50,7 +52,7 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 4. 在“设置 → 外观风格”选择 Windows 或 Google。网站与文件夹页面的按钮可切换常用/最近，选择会保存。
 5. 在“设置 → 界面语言”选择跟随系统、简体中文或 English，无需重启；旧配置升级后默认跟随系统。
 
-设置底部显示当前版本；点击“检查更新 / 升级”打开升级页，查看版本说明、下载进度和校验结果，再点击安装进入升级向导。更新仅连接 `morrowfactory/istart` 的 GitHub Releases，预览版跟随更高预览版或正式版，正式版只跟随正式版；不会自动静默安装。下载失败或关闭升级窗口时当前程序继续可用。开发和验收运行不能启动覆盖安装。
+从 preview.24 开始，安装版在启动联网时及后续定时检查 GitHub 新版，在“设置”和升级按钮显示红点。“版本与升级”位于设置顶部，升级页显示当前版本、目标版本、更新说明及下载进度。**默认勾选自动升级**，旧配置也采用此默认值：后台下载并校验，菜单已收起、没有设置或截图窗口、当前 Windows 会话空闲一分钟后安装。取消勾选则只提醒，手动下载与安装；选择立即保存。安装显示进度，保留个人入口和设置，不重启 Windows、不强制关闭其他软件。仅接受 `morrowfactory/istart` Releases；预览版可跟随更高预览或正式版，正式版只接收正式版。开发和测试运行不启动后台升级或执行安装器。详见[升级与验证](UPDATES.md)。
 
 安装包目前未签名。升级保留原有入口、记录和有效设置；旧分类数据保留，但不再显示分类编辑界面。隐藏入口不会卸载软件、移动原文件或删除浏览器历史。
 
@@ -59,7 +61,7 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 - 底部“Windows 原生菜单”：临时打开系统菜单。
 - 托盘“切回 Windows 原生菜单”：停用自定义接入，恢复默认原生模式。
 - 右上角“×”：收起到托盘；菜单或托盘的“退出”才结束程序并释放接入。
-- 上次异常退出时，下次启动恢复原生模式；卸载默认保留个人配置。
+- 上次异常退出时，普通启动恢复原生模式；明确的 --enable-menu 请求可重新启用，包括已有后台实例。正常注销/关机时先释放接入、清理标记并保留偏好。卸载默认保留个人配置。
 
 账户与电源操作遵循系统能力和策略，注销、关机等需要确认；登录认证、Windows Hello 和安全桌面仍由 Windows 管理。
 
@@ -82,7 +84,7 @@ Explorer 重启、多屏缩放、自动隐藏任务栏、长期稳定性，以�
 ## 本地数据与隐私
 
 - 配置位于 `%LOCALAPPDATA%\iStart\library.json`，保留一份 `.bak`。卸载不主动删除个人入口和记录。
-- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。检查更新与下载是用户主动触发的 GitHub 网络请求。
+- 活动整理在本机进行，不上传软件列表、文件路径或浏览历史，不扫描全盘。升级器自动检查固定公开 GitHub 仓库，可在设置关闭自动下载。这些请求不发送本机活动数据。
 - 软件排序参考 Windows 累计应用切换与 iStart 打开记录；目录排序参考打开次数及近期文件活动，均不是完整系统频率或精确月统计。
 - 网站只读取 Chrome/Edge 保留的有限历史，不读取 Cookie、密码、网页内容或无痕会话；同域名合并后打开网站根地址。
 - 设置可关闭外部文件/文件夹活动或浏览器历史读取。“清除 iStart 记录”不会清除外部历史。
@@ -100,7 +102,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.23.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.24.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。

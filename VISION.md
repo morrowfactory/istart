@@ -18,14 +18,14 @@ Provide lightweight local screenshots: hide the menu, select a region, annotate 
 
 Respect the user's Windows display language by default while allowing an explicit preference. Start with Simplified Chinese and English and add languages when there is demonstrated demand. Changing the interface language must not rename apps, files, or websites or change Start integration. Documentation follows the same accessibility goal: English defaults and separate, clearly linked Chinese pages rather than two languages mixed into one document.
 
-The first-use experience should be straightforward: a friendly Chinese installation wizard explains what is being installed, shows real progress, and makes completion clear. Cancellation or failure should have understandable outcomes and recovery paths. Settings shows the version and supports user-initiated update checks and downloads with visible progress. Upgrades retain personal items and settings. My Computer groups disks, Recycle Bin, Network, and Control Panel, while Windows continues to handle system management.
+The first-use experience should be straightforward: a friendly Chinese installation wizard explains what is being installed, shows real progress, and makes completion clear. Cancellation or failure should have understandable outcomes and recovery paths. Settings makes updates transparent: automatically detect newer versions, clearly identify the current and target versions and what changed, and show progress. Automatic upgrades are enabled by default and wait for idle use; a persistent manual option lets users decide when to download and install. Upgrades retain personal items and settings without forced computer restarts. My Computer groups disks, Recycle Bin, Network, and Control Panel, while Windows continues to handle system management.
 
 Do not introduce a separate installed-app recommendation panel. My Apps shows at most 30 apps with activity evidence or explicit user additions, ordered by usage. Missing history must be acknowledged instead of filling the menu with every installed app. Browser history stays local, with frequent and recent website views and no browsing-activity upload.
 
 ## Product principles
 
 1. **User control:** allow adding, hiding, and choosing frequent/recent order. Retain existing data; automatic suggestions never move source files.
-2. **Compact and clear:** reduce empty space and decoration, allow sensible density adjustments, and preserve legibility, keyboard access, and clear feedback.
+2. **Compact and clear:** give Windows and Google recognizable layouts; use icons for secondary actions with translated hover descriptions and accessible names, while retaining readable navigation and system-action choices. Reduce empty space and decoration without weakening keyboard access or feedback.
 3. **Recover native Start:** make temporary access and default-mode switching easy to find. A failure must not leave Start unusable.
 4. **References first:** store access points. Removing an item does not delete its source; dropping a file does not move it.
 5. **Local and restrained:** do not upload paths or activity by default or scan the entire disk for recommendations. Make history scope transparent and clearable.

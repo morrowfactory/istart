@@ -2,9 +2,15 @@
 
 # iStart implementation and execution plan
 
-The current release is **0.2.0-preview.23**, which reduces installer size while retaining offline operation and both interface languages. Five views, activity ordering, system resources, in-app updates, screenshots, and the Chinese installer are implemented. Interface language can follow Windows or be set to Simplified Chinese/English. GitHub Actions builds and publishes installers. Safe build/core checks continue on the development machine; Windows 10/other builds, Explorer restarts, and the complete abnormal-installation matrix still require isolated system testing. Implemented code is not the same as completed acceptance. See [P0 validation](docs/P0_VALIDATION.md).
+Version **0.2.0-preview.24** adds compact theme layouts, Start re-enable recovery, and automatic/manual upgrades while retaining offline operation and both interface languages. Five views, activity ordering, system resources, in-app updates, screenshots, and the Chinese installer are implemented. Interface language can follow Windows or be set to Simplified Chinese/English. GitHub Actions builds and publishes installers. Safe build/core checks continue on the development machine; Windows 10/other builds, Explorer restarts, and the complete abnormal-installation matrix still require isolated system testing. Implemented code is not the same as completed acceptance. See [P0 validation](docs/P0_VALIDATION.md).
+
+## preview.24
+
+Implement online update checks, red dots on both entry points, current/target versions and release notes, and default-on automatic upgrades with a persistent manual option. Keep download verification, idle gating, visible installation progress, native recovery, and personal data. Local fixtures and localized render checks are covered by [Updates](docs/UPDATES.md); public cross-version upgrades, production relaunch, and abnormal-installation cases remain pending. Publication still requires the exact-main GitHub release workflow.
 
 ## Adopted approach
+
+preview.24 also implements the approved distinct themes: Windows top navigation/six columns and Google sidebar/five columns, with local action icons, translated tooltips, and accessible names. A focused Win11 check covers stale-marker re-enable and session cleanup; real reboot, Windows 10, and hook-timeout recovery remain pending. See [Theme checks](docs/THEME_VALIDATION.md) and [Recovery checks](docs/RESIDENT_VALIDATION.md).
 
 C# + WPF/.NET 10 in one ordinary-user desktop process; atomic JSON storage with one backup; process-owned low-level hooks and UIAutomation; an Inno Setup 7.1.0 Chinese per-user self-contained installer. There is no copied Open-Shell code, service, driver, cloud service, or whole-disk index. Appropriate Inno commercial licensing is required before commercial distribution.
 

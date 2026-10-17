@@ -40,15 +40,7 @@ public partial class MainWindow
             trayIcon = (System.Drawing.Icon)icon.Clone();
         tray = new Forms.NotifyIcon { Icon = trayIcon, Text = L.T("iStart · 个人开始菜单"), ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += (_, _) => ShowMenu(null);
-        Loaded += async (_, _) =>
-        {
-            if (File.Exists(SessionMarker))
-            {
-                SetNativeMode();
-                StatusText.Text = L.T("上次未正常退出，此次已恢复原生模式；可在设置中重新启用。");
-            }
-            else if (store.Library.CustomMenuEnabled || App.EnableMenuRequested) await SetCustomMode();
-        };
+        Loaded += async (_, _) => await InitializeStartMenu(App.EnableMenuRequested);
         Deactivated += (_, _) =>
         {
             if (!presentingMenu && !activatingMenu && OwnedWindows.Count == 0 && !IsMouseCaptureWithin) Hide();
@@ -71,8 +63,37 @@ public partial class MainWindow
             tray.Dispose();
             trayIcon.Dispose();
             undoTimer?.Stop();
-            try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            ClearSessionMarker();
         };
+    }
+    internal async Task InitializeStartMenu(bool enableRequested)
+    {
+        // 明确的用户启用请求优先于异常退出恢复；普通启动仍安全退回原生模式。
+        if (File.Exists(SessionMarker) && !enableRequested)
+        {
+            SetNativeMode();
+            StatusText.Text = L.T("上次未正常退出，此次已恢复原生模式；可在设置中重新启用。");
+        }
+        else if (store.Library.CustomMenuEnabled || enableRequested) await SetCustomMode();
+    }
+    internal async Task RequestEnableMenu()
+    {
+        if (exitRequested || App.IsSessionEnding) return;
+        RuntimeLog.Write("enable-request existing-instance");
+        await SetCustomMode();
+        if (!exitRequested && !App.IsSessionEnding) ShowMenu(null);
+    }
+    internal void PrepareForSessionEnd()
+    {
+        adapter?.Disable();
+        ClearSessionMarker();
+        RuntimeLog.Write("session-integration-released");
+    }
+    private void ClearSessionMarker()
+    {
+        try { if (File.Exists(SessionMarker)) File.Delete(SessionMarker); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { RuntimeLog.Write("session-marker-cleanup-failed " + ex.GetType().Name); }
     }
     private nint ShellMessage(nint window, int message, nint wParam, nint lParam, ref bool handled)
     {
@@ -88,7 +109,7 @@ public partial class MainWindow
     }
     private async Task<bool> SetCustomMode()
     {
-        if (adapter is null) return false;
+        if (adapter is null || exitRequested || App.IsSessionEnding) return false;
         try
         {
             Directory.CreateDirectory(store.DirectoryPath);
@@ -96,14 +117,17 @@ public partial class MainWindow
             await adapter.Enable();
             RuntimeLog.Write("adapter-enabled");
             store.Change(s => s.CustomMenuEnabled = true);
-            ModeStatus.Text = L.T("自定义菜单 · 试用");
+            ModeStatus.Text = L.T("已接入");
+            IntegrationDot.Visibility = Visibility.Visible;
             EnableMenuButton.Visibility = Visibility.Collapsed;
-            StatusText.Text = L.T("开始按钮和 Win 键已接入。原生菜单和托盘恢复入口随时可用。");
+            StatusText.Text = "";
             return true;
         }
+        catch (ObjectDisposedException) when (exitRequested || App.IsSessionEnding) { return false; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or System.ComponentModel.Win32Exception)
         {
             RuntimeLog.Write($"adapter-enable-failed {ex.GetType().Name} 0x{ex.HResult:X8}");
+            if (exitRequested || App.IsSessionEnding) return false;
             SetNativeMode();
             StatusText.Text = ex is NotSupportedException ? ex.Message : L.T("入口启用失败，已恢复 Windows 原生菜单。");
             return false;
@@ -114,6 +138,7 @@ public partial class MainWindow
         RuntimeLog.Write("native-mode");
         adapter?.Disable();
         ModeStatus.Text = L.T("原生菜单模式");
+        IntegrationDot.Visibility = Visibility.Collapsed;
         EnableMenuButton.Visibility = Visibility.Visible;
         try
         {
@@ -237,7 +262,7 @@ public partial class MainWindow
         panel.Children.Add(language);
         panel.Children.Add(new TextBlock { Text = L.T("中文系统显示简体中文；其他系统语言显示英文。可随时手动切换。"), TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 8, 0, 18) });
         panel.Children.Add(new TextBlock { Text = L.T("外观风格"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) });
-        var theme = new ComboBox { ItemsSource = new[] { new ComboBoxItem { Content = L.T("Windows 风格") }, new ComboBoxItem { Content = L.T("Google 风格") } }, SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(10, 7, 10, 7) };
+        var theme = new ComboBox { Name = "ThemeChoice", ItemsSource = new[] { new ComboBoxItem { Content = L.T("Windows 风格") }, new ComboBoxItem { Content = L.T("Google 风格") } }, SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(10, 7, 10, 7) };
         System.Windows.Automation.AutomationProperties.SetName(theme, L.T("外观风格"));
         panel.Children.Add(theme);
         panel.Children.Add(new TextBlock { Text = L.T("截屏快捷键"), Margin = new Thickness(0, 10, 0, 6) });
@@ -270,10 +295,10 @@ public partial class MainWindow
             theme.SelectedIndex = store.Library.Theme == "Windows" ? 0 : 1;
         };
         panel.Children.Add(new TextBlock { Text = L.T("菜单与隐私"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 14) });
-        CheckBox Option(string label, bool selected)
+        CheckBox Option(string label, bool selected, StackPanel? container = null)
         {
             var box = new CheckBox { Content = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap }, IsChecked = selected, Margin = new Thickness(0, 7, 0, 7) };
-            panel.Children.Add(box);
+            (container ?? panel).Children.Add(box);
             return box;
         }
         var custom = Option(L.T("使用自定义开始菜单（试用）"), adapter?.Enabled == true);
@@ -336,13 +361,43 @@ public partial class MainWindow
             finally { save.IsEnabled = true; }
         };
         panel.Children.Add(save);
-        panel.Children.Add(new TextBlock { Text = L.T("版本与升级"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 18, 0, 8) });
+        var updatePanel = new StackPanel { Name = "UpdateSection", Margin = new Thickness(0, 0, 0, 18) };
+        panel.Children.Insert(0, updatePanel);
+        updatePanel.Children.Add(new TextBlock { Text = L.T("版本与升级"), FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 8) });
         var versionLabel = new TextBlock();
         L.Bind(versionLabel, TextBlock.TextProperty, "当前版本 {0}", GitHubUpdater.CurrentVersion);
-        panel.Children.Add(versionLabel);
-        var update = new Button { Content = L.T("检查更新 / 升级"), Margin = new Thickness(0, 8, 0, 0) };
-        update.Click += (_, _) => new UpdateWindow(window, store.Library.StartWithWindows).ShowDialog();
-        panel.Children.Add(update);
+        updatePanel.Children.Add(versionLabel);
+        var update = new Button { Margin = new Thickness(0, 8, 0, 0) };
+        var updateContent = new StackPanel { Orientation = Orientation.Horizontal };
+        var updateText = new TextBlock();
+        L.Bind(updateText, TextBlock.TextProperty, "检查更新 / 升级");
+        var updateBadge = new System.Windows.Shapes.Ellipse { Name = "UpgradeUpdateBadge", Width = 7, Height = 7, Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(217, 45, 32)), Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Top };
+        updateContent.Children.Add(updateText); updateContent.Children.Add(updateBadge); update.Content = updateContent;
+        var updateStatus = new TextBlock { Name = "UpdateStatus", TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 7, 0, 0) };
+        void RefreshUpdate()
+        {
+            if (!window.Dispatcher.CheckAccess()) { if (!window.Dispatcher.HasShutdownStarted) window.Dispatcher.BeginInvoke(RefreshUpdate); return; }
+            updateBadge.Visibility = Updates.HasUpdate ? Visibility.Visible : Visibility.Collapsed;
+            updateStatus.Text = Updates.Release is { } release ? L.F("发现新版 {0}", release.Version) : L.T("联网后会自动检查新版本。");
+            System.Windows.Automation.AutomationProperties.SetName(update, L.T("检查更新 / 升级"));
+            System.Windows.Automation.AutomationProperties.SetHelpText(update, updateStatus.Text);
+        }
+        Updates.Changed += RefreshUpdate;
+        L.Current.PropertyChanged += LanguageChanged;
+        void LanguageChanged(object? source, System.ComponentModel.PropertyChangedEventArgs args) => RefreshUpdate();
+        window.Closed += (_, _) => { Updates.Changed -= RefreshUpdate; L.Current.PropertyChanged -= LanguageChanged; };
+        RefreshUpdate();
+        update.Click += (_, _) => new UpdateWindow(window, Updates).ShowDialog();
+        updatePanel.Children.Add(update);
+        updatePanel.Children.Add(updateStatus);
+        var automatic = Option(L.T("自动升级（推荐）"), store.Library.AutomaticUpdates, updatePanel);
+        automatic.Name = "AutomaticUpdatesChoice";
+        automatic.Click += (_, _) =>
+        {
+            Perform(() => { store.Change(s => s.AutomaticUpdates = automatic.IsChecked == true); Updates.PreferenceChanged(); }, "更新方式已保存。");
+            automatic.IsChecked = store.Library.AutomaticUpdates;
+        };
+        updatePanel.Children.Add(new TextBlock { Text = L.T("勾选：后台下载并校验，菜单收起且空闲 1 分钟后自动安装；取消：仅提醒，手动升级。选择立即保存，不重启电脑。"), TextWrapping = TextWrapping.Wrap, FontSize = 11, Margin = new Thickness(0, 0, 0, 8) });
         window.MaxHeight = SystemParameters.WorkArea.Height - 40;
         window.Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         L.BindSettings(window);
@@ -355,8 +410,9 @@ public partial class MainWindow
         RefreshCategories();
         RefreshEntries();
         SectionTitle.Text = SearchBox.Text.Trim().Length > 0 ? recentView ? L.T("最近记录搜索结果") : L.T("搜索结果") : ((MenuCategory)CategoryList.SelectedItem).Name;
-        ModeStatus.Text = adapter?.Enabled == true ? L.T("自定义菜单 · 试用") : L.T("原生菜单模式");
+        ModeStatus.Text = adapter?.Enabled == true ? L.T("已接入") : L.T("原生菜单模式");
         ScreenshotButton.ToolTip = screenshotHotkey?.Status ?? L.T("隐藏菜单后拖选范围，支持彩色标注");
+        RefreshUpdateIndicators();
         if (tray is not null)
         {
             tray.Text = L.T("iStart · 个人开始菜单");
@@ -370,6 +426,20 @@ public partial class MainWindow
     {
         store.Change(s => s.Theme = theme);
         Appearance.Apply(theme);
+        ApplyThemeLayout();
+        RefreshEntries();
+    }
+    private void ApplyThemeLayout()
+    {
+        var windows = store.Library.Theme == "Windows";
+        TopNavigationRow.Height = new GridLength(windows ? 44 : 0);
+        NavigationColumn.Width = new GridLength(windows ? 0 : 160);
+        BrandColumn.Width = new GridLength(windows ? 0 : 140);
+        Grid.SetRow(CategoryList, windows ? 1 : 2);
+        Grid.SetColumnSpan(CategoryList, windows ? 2 : 1);
+        Grid.SetColumn(ContentCard, windows ? 0 : 1);
+        Grid.SetColumnSpan(ContentCard, windows ? 2 : 1);
+        CategoryList.ItemsPanel = (ItemsPanelTemplate)FindResource(windows ? "TopNavigation" : "SideNavigation");
     }
     private void AccountMenu(object sender, RoutedEventArgs e) => ShowSystemMenu((Button)sender, [(L.T("锁定"), SystemAction.Lock), (L.T("注销"), SystemAction.SignOut), (L.T("切换用户"), SystemAction.SwitchUser)]);
     private void PowerMenu(object sender, RoutedEventArgs e) => ShowSystemMenu((Button)sender, [(L.T("睡眠"), SystemAction.Sleep), (L.T("休眠"), SystemAction.Hibernate), (L.T("重启"), SystemAction.Restart), (L.T("关机"), SystemAction.ShutDown)]);

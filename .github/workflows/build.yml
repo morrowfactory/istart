@@ -41,7 +41,11 @@ jobs:
             artifacts/smoke-*/menu-computer.png
             artifacts/smoke-*/language-result.txt
             artifacts/smoke-*/menu-en-*.png
+            artifacts/smoke-*/theme-*.png
+            artifacts/smoke-*/theme-result.txt
             artifacts/smoke-*/settings-en.png
+            artifacts/smoke-*/update-*.png
+            artifacts/smoke-*/update-result.txt
             artifacts/smoke-*/screenshot-*.png
             artifacts/smoke-*/shell-probe.txt
           retention-days: 7
@@ -65,7 +69,7 @@ jobs:
           $compiler = Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 7\ISCC.exe'
           ./scripts/Build-Installer.ps1 -Compiler $compiler -SkipPublish
           ./scripts/Build-Installer.ps1 -Compiler $compiler -SkipPublish -TestInstall
-          ./scripts/Test-Installer.ps1 -Package (Resolve-Path 'artifacts/setup/iStart-QA-Setup-0.2.0-preview.23.exe') -Output (Join-Path $PWD 'artifacts/install-ci')
+          ./scripts/Test-Installer.ps1 -Package (Resolve-Path 'artifacts/setup/iStart-QA-Setup-0.2.0-preview.24.exe') -Output (Join-Path $PWD 'artifacts/install-ci')
       - name: 保存安装包和校验值
         uses: actions/upload-artifact@v4
         with:

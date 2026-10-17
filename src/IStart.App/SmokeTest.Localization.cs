@@ -57,7 +57,7 @@ internal static partial class SmokeTest
         Check(options[1].IsChecked == true && store.Library.StartWithWindows == false, "语言切换保留未保存选项，不修改开机启动");
         Check(navigation.Items.OfType<MenuCategory>().Select(c => c.Name).SequenceEqual(new[] { "My Apps", "Recent Files", "Folders", "My Websites", "My Computer" }), "五个英文导航");
         Check(((MenuCategory)navigation.SelectedItem).Id == selected && search.Text == "example", "语言切换保留当前页面和搜索词");
-        Check(window.Title == "iStart · Personal Start Menu" && ((Button)window.FindName("ScreenshotButton")).Content.ToString() == "Capture", "主窗口 XAML 文字即时切换");
+        Check(window.Title == "iStart · Personal Start Menu" && System.Windows.Automation.AutomationProperties.GetName((Button)window.FindName("ScreenshotButton")) == "Capture", "主窗口图标操作的无障碍名称即时切换");
         Check(ComputerItems.CategoryName(ComputerItems.ControlPanel + "\\5") == "System and Security", "系统分类按 ID 显示英文");
         var shortcut = panel.Children.OfType<ComboBox>().Single(c => c.Items.OfType<ComboBoxItem>().Any(i => Equals(i.Tag, "Alt+Shift+A")));
         Check(shortcut.SelectedValue!.ToString() == "关闭" && ((ComboBoxItem)shortcut.SelectedItem).Content.ToString() == "Off", "关闭快捷键只翻译显示文字");

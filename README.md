@@ -4,13 +4,15 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Current release: 0.2.0-preview.23**
+**Version: 0.2.0-preview.24**
 
-This release reduces the offline installer size by excluding unused framework language resources and debug symbols and increasing compression. The complete runtime, both interface languages, and existing features are retained. A local comparison decreased from 53.6 MB to 50.9 MB, approximately 5%; the published package size is recorded on the release page and in its manifest. See [Package size](docs/PACKAGE_SIZE.md).
+This version adds distinct compact Windows and Google layouts, icon actions with translated tooltips, explicit Start-integration recovery, and online update notifications with automatic/manual upgrades. The installer retains the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, tray, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.23/iStart-Setup-0.2.0-preview.23.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.23) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.24/iStart-Setup-0.2.0-preview.24.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.24) · [All releases](https://github.com/morrowfactory/istart/releases)
+
+**New in preview.24:** online updates, two distinct compact themes, and explicit Start-integration recovery. Windows uses top navigation and a flat six-column grid; Google uses a capsule sidebar and a rounded five-column card. Secondary actions use icons with translated tooltips and accessible names; account/power choices retain text. See [Themes](docs/THEME_VALIDATION.md), [Updates](docs/UPDATES.md), and [Integration recovery](docs/RESIDENT_VALIDATION.md).
 
 ## Features
 
@@ -58,7 +60,7 @@ Screenshots are not automatically saved or uploaded. Scrolling capture, OCR, and
 4. Choose Windows style or Google style under Settings → Appearance. Folder and website views save their frequent/recent ordering choices.
 5. Choose System, Simplified Chinese, or English under Settings → Interface language. No restart is needed; older configurations default to System after upgrading.
 
-Settings displays the current version. Check for updates / Upgrade opens an update page with release notes, download progress, and verification results. After downloading, click Install to open the upgrade wizard. Updates come only from `morrowfactory/istart` GitHub Releases. Preview installations can follow newer previews or stable releases; stable installations only follow stable releases. Installation is not automatic or silent. A failed download or closed update window leaves the current program usable. Development and acceptance-test runs cannot launch an upgrade over a real installation.
+Starting with preview.24, installed copies check GitHub at startup while online and periodically thereafter. New versions add red dots to Settings and the upgrade button. The upgrade section is at the top of Settings; its page shows the current version, target version, release notes, and download progress. **Automatic updates is on by default**, including for older configurations: download and verify in the background, then install when the menu is hidden, no Settings or screenshot window is open, and the current Windows session has been idle for a minute. Uncheck it for notification-only manual upgrades; the preference saves immediately. Installation shows progress, preserves personal items/settings, and does not reboot Windows or force other apps closed. Only the fixed `morrowfactory/istart` Releases are accepted. Preview copies can follow newer previews/stable versions; stable copies follow stable releases. Development/test runs cannot start background upgrades or execute an installer. See [Updates and validation](docs/UPDATES.md).
 
 The installer is currently unsigned. Upgrades retain items, history, and valid settings. Legacy category data remains stored, although category editing is no longer shown. Hiding an item does not uninstall an app, move a file, or delete browser history.
 
@@ -67,7 +69,7 @@ The installer is currently unsigned. Upgrades retain items, history, and valid s
 - Windows Start menu at the bottom temporarily opens the system menu.
 - Switch to Windows Start menu in the tray disables integration and restores native mode as the default.
 - The window's × button hides iStart to the tray. Exit in the menu or tray ends the process and releases integration.
-- After an abnormal exit, the next launch restores native mode. Uninstallation keeps personal configuration by default.
+- After an abnormal exit, an ordinary launch restores native mode. An explicit `--enable-menu` request can re-enable integration, including in an existing background instance. Normal session ending releases integration and clears its marker while retaining the preference. Uninstallation keeps personal configuration by default.
 
 Account and power actions follow system capabilities and policies. Sign-out and shutdown require confirmation. Windows continues to manage authentication, Windows Hello, and the secure desktop.
 
@@ -88,7 +90,7 @@ Explorer restarts, multi-monitor scaling, taskbar auto-hide, long-running stabil
 ## Local data and privacy
 
 - Configuration is stored in `%LOCALAPPDATA%\iStart\library.json`, with one `.bak` backup. Uninstallation does not delete personal items or records.
-- Activity is processed locally. App lists, paths, and browsing history are not uploaded, and the entire disk is not scanned. Update checks and downloads are user-initiated GitHub requests.
+- Activity is processed locally. App lists, paths, and browsing history are not uploaded, and the entire disk is not scanned. The updater checks the fixed public GitHub repository automatically; automatic downloads can be disabled in Settings. These requests do not send local activity.
 - App ordering uses cumulative Windows app-switch counts and iStart launches. Folder ordering uses opens and recent-file activity. These are neither complete system frequency records nor exact monthly statistics.
 - Website history is bounded to records Chrome and Edge retain. Cookies, passwords, page contents, and private sessions are not read. A combined domain opens its site root.
 - Settings can disable external file/folder activity or browser-history reading. Clear iStart history does not clear other applications' history.
@@ -106,7 +108,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.23.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.24.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 Installers and SHA256 files are written to `artifacts/setup/`. The QA installer uses a separate identity. Its output directory must be inside `artifacts/` and must not already exist.

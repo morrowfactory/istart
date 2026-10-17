@@ -19,6 +19,7 @@ The guides describe current behavior. Historical records retain their original v
 | [WINDOWS_COMPATIBILITY.md](WINDOWS_COMPATIBILITY.md) | Compatibility policy and evidence |
 | [WINDOWS_TEST_LAB.md](WINDOWS_TEST_LAB.md) | VM testing and dated setup snapshot |
 | [GITHUB_RELEASE.md](GITHUB_RELEASE.md) | GitHub publication and rollback |
+| [UPDATES.md](UPDATES.md) | Online notifications, automatic/manual upgrades, and validation |
 | [PACKAGE_SIZE.md](PACKAGE_SIZE.md) | Installer size and packaging |
 | [BRAND_ICON.md](BRAND_ICON.md) | Brand icon sources and maintenance |
 
