@@ -14,7 +14,7 @@ internal static partial class SmokeTest
             var second = window.DiscoverSoftware();
             await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(8));
             await window.DiscoverSoftware().WaitAsync(TimeSpan.FromSeconds(8));
-            File.AppendAllText(Path.Combine(output, "result.txt"), "\nPASS：失效活动不挤占软件名额、来源失败隔离、文件夹搜索与重复项；重复软件刷新可取消并再次运行。\n");
+            File.AppendAllText(Path.Combine(output, "result.txt"), "\nPASS：失效活动不挤占软件名额、来源失败隔离、文件夹搜索与重复项；重复软件刷新合并并复用近期结果。\n");
         }
         finally { window.Close(); }
     }

@@ -2,6 +2,18 @@
 
 # Foreground and background presentation: 0.2.0-preview.6
 
+## Current reliability investigation — 2026-10-29
+
+The preview.25 installed copy again showed intermittent opening/focus failures. Logs recorded foreground success with native/WPF search focus false, including after a restart in native-menu mode. The user also reported unintended text deletion, which stopped after iStart exited. The cause is unconfirmed; this is not evidence of a particular Delete-key sender or a completed fix. Earlier manual acceptance below does not establish current long-running reliability.
+
+Unreleased source changes move Shell icons to two bounded background workers, share software scans and reuse success for 30 seconds, cache shortcut classification between searches, protect restored dimensions, use actual foreground ownership for toggling, and remove Alt/Ctrl injection from focus retries. Bounded direct retries and content-rendered focusing remain. Standalone Win cancellation and explicit native-menu access still use synthetic input and need isolated integration acceptance.
+
+Local checks passed with no input injection: blocked/failing/duplicate icons, bounded queue, real async image assignment, discovery reuse, minimum sizes at 100/125/150/200%, and taskbar snapshot recovery. On a separate inactive desktop, 100 Windows/Google show/hide cycles including ten minimized restores passed; display dispatch/layout measured median 3.9 ms, p95 8.2 ms, and maximum 287.0 ms in that run. Core data, localization, themes, screenshots, and updater-fixture regressions passed there too. These timings exclude Start-key interception and do not measure perceived live-desktop latency.
+
+Run `--reliability-test <directory>` for checks without shown windows; use `scripts/Test-MenuWindow.ps1` for the inactive-desktop check. The normal installed copy remains exited. The local development build has not replaced it or been published. Actual Win/Start opening, direct input under other applications, long-running operation, and unintended-text-deletion cause remain unresolved. Do not run `--input-test` or `--presentation-test` on a working desktop during this investigation.
+
+The Alt/Ctrl focus fallback described in the historical records below was removed in this development change. Historical standalone Win tests still apply only to their named versions and systems.
+
 Date: 2026-10-13; Windows 11 26200.9457. The user's capture showed iStart appearing only on the taskbar after Start was clicked, behind another maximized window. The process was still running and integration was enabled; this evidence did not establish a startup failure or crash.
 
 ## Changes

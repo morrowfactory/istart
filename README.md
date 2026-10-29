@@ -36,6 +36,8 @@ Activity records are bounded local evidence, not complete system-wide statistics
 
 ### Start integration and foreground behavior
 
+**Current reliability work (not released):** repeated opening/focus failures were reported on the current Windows 11 PC, including in native-menu mode. The development fix moves Shell icon reads off the UI thread, coalesces software scans with a 30-second successful-result cache, protects restored menu dimensions, and removes simulated modifier keys from focus retries. Isolated checks do not establish live Win-key acceptance or the cause of the reported unintended text deletion. Keep the affected installed copy exited while investigating. See [current investigation and checks](docs/FOREGROUND_VALIDATION.md#current-reliability-investigation--2026-10-29).
+
 Since preview.21, input hooks run on a dedicated message thread to reduce failures caused by a busy UI. On Windows 10, native Start-button clicks revalidate the button bounds and HWND. Taskbar recreation and display or system-setting changes invalidate cached locations. A native-window fallback handles automation timeouts, and startup uses bounded retries. If the UI is unresponsive for about two seconds, subsequent native input is allowed through. These changes target known Windows 10/11 builds; they do not establish Windows 10 hardware acceptance.
 
 Opening iStart from its icon also uses a temporary topmost window and bounded focus retries, even in native-menu mode. Switching to another window hides it. Reopening the shortcut hands foreground permission to the existing instance. Use Enable integration at the bottom of the menu to opt in; otherwise, the system Start button continues to open Windows Start.

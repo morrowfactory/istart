@@ -29,7 +29,7 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | Localization / Strings.en.json | 集中管理产品文字与英文翻译；读取当前用户 Windows 显示语言，WPF 绑定即时更新固定文字，导航与快捷键使用稳定标识 |
 | SoftwareDiscovery / ShellShortcut | 异步发现用户与公共开始菜单 `.lnk`；IShellLinkW/IPersistFile Unicode 解析；有效 exe 目标去重，过滤安装维护与失效入口 |
 | FreeCadDocuments | 有界只读 FreeCAD 最近文件配置；仅纳入本机有效文件，经 RecentDocuments 合并并沿用外部历史开关 |
-| ShellIconConverter | Shell 图标提取与有界缓存；UNC 使用通用图标，避免远程图标读取 |
+| ShellIcon / IconReader / ShellIconConverter | 立即显示嵌入占位图，两个后台 STA 线程、有界队列/缓存、冻结 Shell 图像及界面线程更新；UNC 使用通用图标 |
 | StartMenuAdapter / ShellCompatibility / WinInput | 版本策略、UIAutomation/原生 Start 子窗口定位；低级键盘/鼠标钩子处理单独 Win 和开始按钮；组合键保留，原生注入使用自有标记避免递归 |
 | NativeMenu | SendInput 发送带标记的 Ctrl+Esc 请求临时原生菜单 |
 | UpdateService / GitHubUpdater / UpdateWindow | 共用更新状态、联网检查与调度、校验下载/安装、红点、更新说明及升级偏好 |
@@ -37,7 +37,13 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | App | 当前 SID 命名互斥锁与显示/退出事件；已有实例正常退出等待；后台启动与诊断模式；ui-test 使用独立配置并禁用真实开机启动修改 |
 | installer / scripts / CI | 中文向导与真实文件安装进度、升级前正常退出、卸载与校验值；QA 安装使用独立 AppId，无生产部署 |
 
-preview.25 活动链路修复：RecentDocuments 共用有界来源收集器，隔离可恢复的快捷方式、跳转列表和应用历史错误；目录读取失败不丢弃已完成的文件结果。MainWindow 仅在内存记录部分失败数量，并显示翻译后的提示；取消和 5 秒等待不变。返回“我的软件”时重新发现并刷新，替代的取消源正常释放，旧取消不覆盖当前状态。FrequentFolders 先搜索再限额，在内存合并固定目录的重复写法。不新增配置版本或外部历史写入。
+preview.25 活动链路修复：RecentDocuments 共用有界来源收集器，隔离可恢复的快捷方式、跳转列表和应用历史错误；目录读取失败不丢弃已完成的文件结果。MainWindow 仅在内存记录部分失败数量，并显示翻译后的提示；取消和 5 秒等待不变。开发修正将重复软件刷新合并为同一任务，成功结果复用 30 秒；等待超时后保留尚未结束的原生读取，避免累积并行任务。软件分类在搜索之间缓存，发现完成后失效重建。FrequentFolders 先搜索再限额，在内存合并固定目录的重复写法。不新增配置版本或外部历史写入。
+
+当前开发修正取消焦点重试的模拟 Alt/Ctrl；搜索框未获焦时也进行有界重试，内容呈现后补一次聚焦。Windows 仍可拒绝前台权限，不修改前台锁定策略、不连接其他线程输入队列。切换菜单依据原生前台窗口归属，不再依赖 Topmost 标志。弹出尺寸使用逻辑窗口尺寸、最小尺寸与 DPI，并按物理工作区限制，不沿用可能最小化的原生矩形。日志增加显示调用耗时和尺寸，不记录输入文字。单独 Win 松开取消和主动打开原生菜单仍使用带标记的 SendInput，并非移除了所有模拟输入。
+
+ShellIcon 附加属性先显示嵌入占位图；两个后台 STA 线程调用 ShellIconConverter，待处理请求与任务缓存最多 256 项。相同路径共用读取，失败保留占位图；冻结图像通过所属 Dispatcher 返回，更新前检查目标，避免复用控件显示旧项目图标。缓慢 Shell 扩展仍可能占用后台线程，但不阻塞界面布局，也不无限创建线程；“我的电脑”共用此链路。
+
+`--reliability-test <directory>` 不显示窗口、不安装钩子，检查慢图标、界面调度、队列限额、异步图像赋值、发现任务合并、定位与快照恢复。`scripts/Test-MenuWindow.ps1` 在新建的非活动桌面运行窗口循环与核心回归，不调用 SwitchDesktop，子进程结束后关闭测试桌面；子进程拒绝在用户输入桌面运行。该检查不验收真实开始接入或实际搜索焦点。`--probe-menu <directory>` 只读取本会话 iStart 的窗口元数据，不读取标题/内容、不激活窗口或发送输入。
 
 preview.25 活动读取修复：MainWindow 先读取 AppSwitched，同一快照用于软件发现与排序。SoftwareDiscovery 检查最多 2048 条正数活动记录，补充最多 128 个有效本机 EXE，排除网络路径、安装维护及常见辅助进程，按目标去重；已有快捷方式及其参数、工作目录优先保留，不枚举整个硬盘。FreeCadDocuments 共享只读 `%APPDATA%/FreeCAD/user.cfg` 及最多 8 个直接 `v*` 版本目录配置，单配置最多 4 MiB，禁用 DTD/外部解析，逐配置隔离失败。仅取 `Root/BaseApp/Preferences/RecentFiles` 中最多 100 个数字 `MRU` 文本项，保留 MRU 顺序；配置修改时间只是跨来源合并的近似依据，不代表每个文件的精确打开时间。沿用最多 100 个文件、有效本机文件过滤和 ShowWindowsRecentDocuments 开关；Windows Recent 目录缺失时仍读取其他软件历史。源历史不变，外部结果仅留在内存。
 

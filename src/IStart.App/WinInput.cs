@@ -36,7 +36,8 @@ internal static class WinInput
         }
     }
     [DllImport("user32.dll")] internal static extern nint GetFocus();
-    [DllImport("user32.dll")] internal static extern nint SetFocus(nint window);
+    [DllImport("user32.dll", SetLastError = true)] internal static extern nint SetFocus(nint window);
+    [DllImport("user32.dll")] internal static extern bool IsWindowEnabled(nint window);
     [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window, out uint process);
     [DllImport("user32.dll")] internal static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")] internal static extern bool SetCursorPos(int x, int y);
@@ -55,8 +56,7 @@ internal static class WinInput
     {
         if (GetForegroundWindow() == window) return true;
         if (ModifiersHeld || (GetAsyncKeyState(0x5B) & 0x8000) != 0 || (GetAsyncKeyState(0x5C) & 0x8000) != 0) return false;
-        // 仅响应用户打开菜单后的失败焦点请求；带标记且平衡释放，Ctrl 取消 Alt 菜单激活。
-        if (!Keys((0x12, false), (0x11, false), (0x11, true), (0x12, true))) return false;
+        // Never synthesize modifier keys to force focus into another application.
         SetForegroundWindow(window);
         return GetForegroundWindow() == window;
     }

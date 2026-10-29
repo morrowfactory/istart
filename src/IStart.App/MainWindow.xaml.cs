@@ -15,8 +15,12 @@ public partial class MainWindow : Window
     private bool ready;
     internal List<SoftwareCandidate> candidates = [];
     internal Dictionary<string, int> softwareUsage = new(StringComparer.OrdinalIgnoreCase);
+    private EntryGroups applicationGroups = new();
     private bool softwareView => !recentView && !folderView && !websiteView && !computerView;
     private CancellationTokenSource? discovery;
+    private Task? discoveryTask;
+    private Task<(List<SoftwareCandidate> Apps, Dictionary<string, int> Usage)>? softwareRead;
+    private long softwareRefreshedAt;
     private bool recentView;
     private bool folderView;
     private List<LaunchRecord> windowsRecent = [];
@@ -58,23 +62,33 @@ public partial class MainWindow : Window
         System.Windows.Automation.AutomationProperties.SetHelpText(SettingsButton, SettingsButton.ToolTip.ToString());
     }
 
-    internal async Task DiscoverSoftware()
+    internal Task DiscoverSoftware()
     {
-        discovery?.Cancel();
+        if (discoveryTask is { IsCompleted: false }) return discoveryTask;
+        if (softwareRefreshedAt != 0 && Environment.TickCount64 - softwareRefreshedAt < 30000) return Task.CompletedTask;
+        return discoveryTask = ReadSoftware();
+    }
+    private async Task ReadSoftware()
+    {
+        var started = System.Diagnostics.Stopwatch.StartNew();
         var current = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         discovery = current;
         var token = current.Token;
         try
         {
-            var result = await Task.Run(() =>
+            softwareRead ??= Task.Run(() =>
             {
                 var usage = MySoftware.ReadUsage(token);
                 return (Apps: SoftwareDiscovery.Read(token, usage: usage), Usage: usage);
-            }, token).WaitAsync(token);
+            }, token);
+            var result = await softwareRead.WaitAsync(token);
             if (discovery != current) return;
             candidates = result.Apps;
             softwareUsage = result.Usage;
-            RefreshEntries();
+            applicationGroups = new();
+            softwareRefreshedAt = Environment.TickCount64;
+            RuntimeLog.Write($"software-refresh count={candidates.Count} elapsedMs={started.ElapsedMilliseconds}");
+            if (softwareView) RefreshEntries();
         }
         catch (OperationCanceledException)
         {
@@ -82,7 +96,12 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
         { if (discovery == current) StatusText.Text = L.T("暂时无法读取软件使用记录，已添加的软件仍可使用。"); }
-        finally { if (discovery == current) discovery = null; current.Dispose(); }
+        finally
+        {
+            if (softwareRead?.IsCompleted == true) softwareRead = null;
+            if (discovery == current) discovery = null;
+            current.Dispose();
+        }
     }
     private void RefreshCategories()
     {
@@ -98,7 +117,7 @@ public partial class MainWindow : Window
         IEnumerable<MenuEntry> source = recentView ? RecentDocuments.Files(store.Library.Launches,
             store.Library.ShowWindowsRecentDocuments ? windowsRecent : []).Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
         if (softwareView) source = MySoftware.Build(store.Library.Entries, candidates, store.Library.Launches, softwareUsage,
-            store.Library.HiddenSoftware.ToHashSet(StringComparer.OrdinalIgnoreCase), keyword);
+            store.Library.HiddenSoftware.ToHashSet(StringComparer.OrdinalIgnoreCase), keyword, applicationGroups);
         if (websiteView) source = WebsiteHistory.Build(store.Library.ShowBrowserHistory ? websiteHistory.Visits : [],
             store.Library.Launches, store.Library.WebsitesRecentFirst, keyword, hiddenWebsites);
         if (folderView)

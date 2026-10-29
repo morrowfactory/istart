@@ -35,6 +35,8 @@ jobs:
           name: prototype-validation
           path: |
             artifacts/smoke-*/result.txt
+            artifacts/smoke-*/reliability-result.txt
+            artifacts/smoke-*/reliability-failure.txt
             artifacts/smoke-*/failure.txt
             artifacts/smoke-*/menu.png
             artifacts/smoke-*/menu-icons.png

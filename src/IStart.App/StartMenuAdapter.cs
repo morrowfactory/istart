@@ -238,10 +238,13 @@ internal sealed class StartMenuAdapter : IDisposable
     private void QueueToggle(WinInput.Point? point)
     {
         if (Interlocked.Exchange(ref queuedToggle, 1) != 0) return;
+        var queuedAt = Environment.TickCount64;
         var requestedGeneration = Volatile.Read(ref generation);
         dispatcher.BeginInvoke(() =>
         {
             Interlocked.Exchange(ref queuedToggle, 0);
+            var delay = Environment.TickCount64 - queuedAt;
+            if (delay > 100) RuntimeLog.Write($"menu-dispatch-delay elapsedMs={delay}");
             if (Enabled && requestedGeneration == generation) toggle(point);
         });
     }

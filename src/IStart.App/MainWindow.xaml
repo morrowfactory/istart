@@ -3,14 +3,14 @@
   <Window.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="MenuIcons.xaml"/></ResourceDictionary.MergedDictionaries>
-      <local:ShellIconConverter x:Key="ShellIcon"/><local:CategoryIconConverter x:Key="CategoryIcon"/>
+      <local:CategoryIconConverter x:Key="CategoryIcon"/>
       <ItemsPanelTemplate x:Key="IconPanel"><UniformGrid Columns="{DynamicResource AppColumns}" VerticalAlignment="Top"/></ItemsPanelTemplate>
       <ItemsPanelTemplate x:Key="TopNavigation"><UniformGrid Rows="1" Columns="5"/></ItemsPanelTemplate>
       <ItemsPanelTemplate x:Key="SideNavigation"><StackPanel/></ItemsPanelTemplate>
       <DataTemplate x:Key="EntryTile">
         <StackPanel Height="{DynamicResource TileHeight}" VerticalAlignment="Center">
           <StackPanel.ToolTip><StackPanel><TextBlock Text="{Binding Title}" FontWeight="SemiBold"/><TextBlock Text="{Binding Target}"/></StackPanel></StackPanel.ToolTip>
-          <Image Source="{Binding Target, Converter={StaticResource ShellIcon}}" Width="30" Height="30" Margin="0,14,0,6"/>
+          <Image local:ShellIcon.Target="{Binding Target}" Width="30" Height="30" Margin="0,14,0,6"/>
           <TextBlock Text="{Binding Title}" Width="76" FontSize="11" TextTrimming="CharacterEllipsis" TextAlignment="Center"/>
         </StackPanel>
       </DataTemplate>
@@ -54,7 +54,7 @@
             <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0"/></Style></ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate><DataTemplate>
               <Grid Margin="6,8"><Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <Image Source="{Binding Target, Converter={StaticResource ShellIcon}}" Width="24" Height="24" Margin="0,0,6,0"/>
+                <Image local:ShellIcon.Target="{Binding Target}" Width="24" Height="24" Margin="0,0,6,0"/>
                 <StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Target}" FontSize="10" Foreground="{DynamicResource TextMuted}" TextTrimming="CharacterEllipsis"/></StackPanel>
                 <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="{StaticResource RemoveIcon}" Width="28" Height="28" Tag="{Binding Id}" Click="RemoveEntry" ToolTip="{local:Tr '仅移除此处显示，不卸载软件或删除文件'}" AutomationProperties.Name="{local:Tr '移除'}"/>
               </Grid>
