@@ -8,6 +8,12 @@ iStart is a single C#/.NET 10 WPF desktop project with no additional NuGet depen
 
 The target is Windows 10/11 x64. Known Windows 10 builds 19041–19045 and Windows 11 builds 22000/22621/22631/26100/26200 may opt into capability-checked trials; other builds retain native Start. Only build 26200 has basic hardware integration evidence. See [P0 validation](docs/P0_VALIDATION.md).
 
+## Development workspace
+
+The local checkout and development output are consolidated under `E:\workspace\istart`: `.istart-tools/` contains the SDK/compiler, `.istart-testlab/` contains VM disks, images and private test materials, and `artifacts/design-previews/` contains interactive design previews. These directories are Git-ignored and never enter public release assets. Compatibility junctions preserve old registered-tool/VM paths and preview links; they do not duplicate storage. This layout does not relocate the installed application or its user configuration.
+
+Local release retention is independent of application data and remote releases: keep five published installer/checksum/manifest sets in `artifacts/releases/<version>/`; remove obsolete or duplicate generated packages only after verification. Developer tools, VM baselines, configuration backups and required diagnostic evidence remain protected.
+
 ## Module boundaries
 
 | Module | Responsibilities and boundaries |
@@ -16,6 +22,7 @@ The target is Windows 10/11 x64. Known Windows 10 builds 19041–19045 and Windo
 | LibraryStore | Items, legacy categories, preferences, and recent records; copy before mutation, write a temporary file, atomically replace, retain one backup; a failed save does not replace in-memory state |
 | Localization / Strings.en.json | Central product text and English translations; current-user Windows display language; immediate WPF binding updates; stable navigation and shortcut identifiers |
 | SoftwareDiscovery / ShellShortcut | Asynchronous discovery of user/common Start-menu `.lnk` files; Unicode IShellLinkW/IPersistFile parsing; deduplicated valid EXE targets; installer, maintenance, and invalid-entry filtering |
+| FreeCadDocuments | Bounded, read-only FreeCAD recent-file configuration reader; local files only, merged through RecentDocuments and the existing external-history preference |
 | ShellIconConverter | Shell icon extraction and a bounded cache; generic UNC icons avoid remote icon reads |
 | StartMenuAdapter / ShellCompatibility / WinInput | Build policy, UIAutomation/native Start-child discovery, standalone Win and Start-button low-level hooks, combination passthrough, and marked native injection to prevent recursion |
 | NativeMenu | Marked SendInput Ctrl+Esc requests for temporary native Start |
@@ -26,7 +33,11 @@ The target is Windows 10/11 x64. Known Windows 10 builds 19041–19045 and Windo
 
 The process does not inject into Explorer, modify system binaries, replace authentication, install a service, or install a driver. Temporary native Start access and switching the default to native mode are separate operations.
 
+Activity reads in preview.25: MainWindow reads AppSwitched before discovery and supplies that same snapshot to ranking. SoftwareDiscovery supplements shortcuts/packages from at most 2,048 positive usage records, adding at most 128 valid new local EXEs, excludes network paths, installers and common helper processes, and deduplicates by target. Existing shortcut arguments and working directories take precedence. It does not enumerate whole drives. FreeCadDocuments reads `%APPDATA%/FreeCAD/user.cfg` and up to eight immediate `v*` profiles (at most 4 MiB per config), with shared read access, DTD/external resolution disabled, and independent config failure handling. Only `Root/BaseApp/Preferences/RecentFiles` numeric `MRU` text entries are used, at most 100 per config. MRU order is preserved; config modification time is approximate merge evidence, not a precise per-file opening time. The existing 100-file merge, local-file filters, and ShowWindowsRecentDocuments setting apply. A missing Windows Recent folder no longer prevents application-private reads. Source histories remain unchanged and external results remain in memory.
+
 ### Presentation and focus
+
+The preview.25 activity audit adds a shared bounded reader collector in RecentDocuments: recoverable link/Jump List/application errors are isolated, and a folder-reader failure does not discard completed document reads. MainWindow retains a partial-failure count in memory and displays a translated warning. Cancellation and the five-second wait remain unchanged. Software discovery refreshes when returning to My Apps and disposes superseded cancellation sources; stale cancellations do not replace the current status. FrequentFolders filters search before taking the result limit and canonicalizes duplicate pinned-folder spellings in memory. No configuration schema or external-history writes were added.
 
 ShowMenu no longer depends on `adapter.Enabled` for topmost/focus behavior: desktop icons, tray actions, and repeated launches use the same path. Hiding clears Topmost; deactivation hides the menu. Focus retries are bounded to four attempts, 60 ms apart, with a presentation generation preventing a delayed retry from reopening an old window. Search focus uses Input priority so background loading does not delay it.
 

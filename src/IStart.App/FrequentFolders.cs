@@ -29,9 +29,10 @@ internal static class FrequentFolders
     }
 
     internal static List<MenuEntry> Build(IEnumerable<MenuEntry> pinned, IEnumerable<LaunchRecord> own,
-        IEnumerable<LaunchRecord> external, int capacity, Guid category, ISet<string> hidden, bool recent = false)
+        IEnumerable<LaunchRecord> external, int capacity, Guid category, ISet<string> hidden, bool recent = false, string query = "")
     {
-        var result = pinned.Where(e => IsLocalFolder(e.Target)).ToList();
+        var result = pinned.Where(e => IsLocalFolder(e.Target))
+            .DistinctBy(e => Path.TrimEndingDirectorySeparator(e.Target), StringComparer.OrdinalIgnoreCase).ToList();
         var known = result.ToDictionary(e => Path.TrimEndingDirectorySeparator(e.Target), StringComparer.OrdinalIgnoreCase);
         var ownRecords = own.ToList();
         var ownCounts = ownRecords.ToDictionary(r => r.Target, r => r.Count, StringComparer.OrdinalIgnoreCase);
@@ -51,7 +52,10 @@ internal static class FrequentFolders
         result.Clear();
         var sorted = recent ? ranked.OrderByDescending(p => p.Value.Latest).ThenByDescending(p => p.Value.Count)
             : ranked.OrderByDescending(p => p.Value.Count).ThenByDescending(p => p.Value.Latest);
-        foreach (var item in sorted.ThenBy(p => p.Key, StringComparer.OrdinalIgnoreCase).Take(Math.Max(capacity, known.Count)))
+        foreach (var item in sorted.ThenBy(p => p.Key, StringComparer.OrdinalIgnoreCase)
+            .Where(p => p.Key.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || known.GetValueOrDefault(p.Key)?.Title.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
+            .Take(Math.Max(capacity, known.Count)))
         {
             var title = Path.GetFileName(item.Key.TrimEnd('\\'));
             result.Add(known.GetValueOrDefault(item.Key) ?? new(Guid.NewGuid(), item.Key, title.Length == 0 ? item.Key : title, category));

@@ -4,22 +4,22 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.24**
+**Version: 0.2.0-preview.25**
 
-This version adds distinct compact Windows and Google layouts, icon actions with translated tooltips, explicit Start-integration recovery, and online update notifications with automatic/manual upgrades. The installer retains the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
+This version fixes missing activity-backed apps and recent files, including portable FreeCAD and STP/STEP models. It improves history-source isolation, folder search, and activity refresh while retaining the compact Windows/Google layouts and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, tray, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.24/iStart-Setup-0.2.0-preview.24.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.24) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.25/iStart-Setup-0.2.0-preview.25.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.25) · [All releases](https://github.com/morrowfactory/istart/releases)
 
-**New in preview.24:** online updates, two distinct compact themes, and explicit Start-integration recovery. Windows uses top navigation and a flat six-column grid; Google uses a capsule sidebar and a rounded five-column card. Secondary actions use icons with translated tooltips and accessible names; account/power choices retain text. See [Themes](docs/THEME_VALIDATION.md), [Updates](docs/UPDATES.md), and [Integration recovery](docs/RESIDENT_VALIDATION.md).
+**Fixed in preview.25:** discover used apps without Start-menu shortcuts, include FreeCAD's saved recent documents, prevent stale paths from consuming valid discovery slots, isolate history-source errors, search folders before limiting results, and refresh activity when returning to My Apps. See [Activity views](docs/ACTIVITY_VIEWS.md). Existing [themes](docs/THEME_VALIDATION.md), [updates](docs/UPDATES.md), and [integration recovery](docs/RESIDENT_VALIDATION.md) remain available.
 
 ## Features
 
 | View | Contents | Ordering and limits |
 | --- | --- | --- |
-| My Apps | Installed apps with local activity evidence and apps you add | Most used first; at most 30 apps, including search results |
-| Recently Opened | Valid files recorded by iStart, Windows, WPS, LibreOffice, and other supported sources | Most recent first, deduplicated, at most 100 files; folders and programs are excluded |
+| My Apps | Installed or portable apps with local activity evidence and apps you add | Most used first; at most 30 apps, including search results |
+| Recently Opened | Valid files recorded by iStart, Windows, WPS, LibreOffice, FreeCAD, and other supported sources | Most recent first, deduplicated, at most 100 files; folders and programs are excluded |
 | Frequent Folders | Added folders and folders found in local activity | Frequent first by default; switch to recent folders on the same page; suggestions fill available space |
 | My Websites | Bounded Chrome and Edge history, combined by domain | Frequent first by default; switch to recent websites on the same page; at most 30 sites |
 | My Computer | Disk partitions, available space, Recycle Bin, Network, and seven expandable Control Panel categories, excluding Ease of Access | Open the corresponding Windows page; search within this view |
@@ -31,6 +31,8 @@ The interface follows the Windows display language by default. You can select Si
 - The separate app recommendation panel, Uncategorized view, category creation, and category-name field have been removed. Legacy item data remains compatible.
 
 Content comes from the current user's local system and activity records. Documentation screenshots use test data, including synthetic disk capacities. See [Activity views](docs/ACTIVITY_VIEWS.md) and the [documentation index](docs/INDEX.md).
+
+Activity records are bounded local evidence, not complete system-wide statistics. FreeCAD reads use its saved MRU list; missing or unsaved records cannot be reconstructed. See [source limits](docs/ACTIVITY_VIEWS.md).
 
 ### Start integration and foreground behavior
 
@@ -98,6 +100,14 @@ Explorer restarts, multi-monitor scaling, taskbar auto-hide, long-running stabil
 - Update downloads use `%LOCALAPPDATA%\iStart\Updates`. Cancellation or failure removes the current download. After success, known caches older than seven days are cleaned while retaining at least the latest two downloads; personal data is untouched.
 - `runtime.log` records lifecycle and recovery diagnostics, not keystrokes, URLs, or file contents. It rotates above 64 KiB and keeps one old log.
 
+## Local workspace
+
+The local project root is `E:\workspace\istart`. Keep development tools in `.istart-tools/`, virtual machines and private test materials in `.istart-testlab/`, and design previews in `artifacts/design-previews/`. All three are ignored by Git and excluded from release assets. Run development commands from the project root and write generated output under `artifacts/`.
+
+The former adjacent tool/test-lab paths and the original preview directory are compatibility junctions pointing into this project, with no duplicate data. Installed application files and `%LOCALAPPDATA%\iStart` remain in their normal locations.
+
+Local release storage retains the latest **five published versions**, one verified installer with its SHA256 and source manifest per version, under `artifacts/releases/<version>/`. Remove superseded local/QA installers and obsolete test runtimes after verifying the retained copies. Source/Git history, developer tools, VM baselines, personal recovery backups and necessary test evidence are separate from this limit. GitHub Releases retention is unchanged.
+
 ## Build and validate
 
 Requires Windows and the .NET 10 SDK. Installer builds also require Inno Setup 7.1.0.
@@ -108,7 +118,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.24.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.25.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 Installers and SHA256 files are written to `artifacts/setup/`. The QA installer uses a separate identity. Its output directory must be inside `artifacts/` and must not already exist.

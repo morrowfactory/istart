@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private List<LaunchRecord> recentFolders = [];
     private readonly HashSet<string> hiddenFolders = new(StringComparer.OrdinalIgnoreCase);
     private bool readingRecent;
+    private int recentReadFailures;
     private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
     private static readonly Guid RecentCategory = new("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     private static readonly Guid FoldersCategory = new("dddddddd-dddd-dddd-dddd-dddddddddddd");
@@ -57,14 +58,19 @@ public partial class MainWindow : Window
         System.Windows.Automation.AutomationProperties.SetHelpText(SettingsButton, SettingsButton.ToolTip.ToString());
     }
 
-    private async Task DiscoverSoftware()
+    internal async Task DiscoverSoftware()
     {
         discovery?.Cancel();
         var current = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         discovery = current;
+        var token = current.Token;
         try
         {
-            var result = await Task.Run(() => (Apps: SoftwareDiscovery.Read(current.Token), Usage: MySoftware.ReadUsage(current.Token)), current.Token).WaitAsync(current.Token);
+            var result = await Task.Run(() =>
+            {
+                var usage = MySoftware.ReadUsage(token);
+                return (Apps: SoftwareDiscovery.Read(token, usage: usage), Usage: usage);
+            }, token).WaitAsync(token);
             if (discovery != current) return;
             candidates = result.Apps;
             softwareUsage = result.Usage;
@@ -72,10 +78,11 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException)
         {
-            StatusText.Text = L.T("软件整理超时；已添加的软件仍可使用，重新打开菜单会重试。");
+            if (discovery == current) StatusText.Text = L.T("软件整理超时；已添加的软件仍可使用，重新打开菜单会重试。");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
-        { StatusText.Text = L.T("暂时无法读取软件使用记录，已添加的软件仍可使用。"); }
+        { if (discovery == current) StatusText.Text = L.T("暂时无法读取软件使用记录，已添加的软件仍可使用。"); }
+        finally { if (discovery == current) discovery = null; current.Dispose(); }
     }
     private void RefreshCategories()
     {
@@ -101,7 +108,7 @@ public partial class MainWindow : Window
             var capacity = keyword.Length > 0 ? 100 : Math.Clamp(columns * rows, 1, 48);
             source = FrequentFolders.Build(store.Library.Entries,
                 store.Library.Launches, store.Library.ShowWindowsRecentDocuments ? windowsRecent.Concat(recentFolders) : [],
-                capacity, Guid.Empty, hiddenFolders, store.Library.FoldersRecentFirst);
+                capacity, Guid.Empty, hiddenFolders, store.Library.FoldersRecentFirst, keyword);
         }
         var entries = source.Where(e => (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
         var view = new System.Windows.Data.ListCollectionView(entries);
@@ -117,6 +124,8 @@ public partial class MainWindow : Window
             : L.T("按文件夹打开次数和近期文件活动排序；无完整系统频率统计。")
             : L.T("按本机使用活动排序，最多 30 个软件。");
         if (softwareView && entries.Count == 0 && keyword.Length == 0) SearchStatus.Text = L.T("暂无可用软件活动记录；可以搜索或添加常用软件。");
+        if ((recentView || folderView) && store.Library.ShowWindowsRecentDocuments && recentReadFailures > 0)
+            SearchStatus.Text = L.T("部分文件或文件夹历史暂不可读；已显示其他可读取记录，可重新打开此页重试。");
     }
     private async Task RefreshRecentDocuments()
     {
@@ -125,10 +134,17 @@ public partial class MainWindow : Window
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
-            var records = await Task.Run(() => (Files: RecentDocuments.Read(timeout.Token), Folders: FrequentFolders.Read(timeout.Token)), timeout.Token).WaitAsync(timeout.Token);
+            var records = await Task.Run(() =>
+            {
+                var failures = 0;
+                var files = RecentDocuments.Read(timeout.Token, failed: () => failures++);
+                var folders = RecentDocuments.ReadSources(timeout.Token, [() => FrequentFolders.Read(timeout.Token)], () => failures++);
+                return (Files: files, Folders: folders, Failures: failures);
+            }, timeout.Token).WaitAsync(timeout.Token);
             if (!store.Library.ShowWindowsRecentDocuments) return;
             windowsRecent = records.Files;
             recentFolders = records.Folders;
+            recentReadFailures = records.Failures;
             if (recentView || folderView) RefreshEntries();
         }
         catch (OperationCanceledException) { if (recentView) SearchStatus.Text = L.T("Windows 最近文档读取超时；iStart 打开记录仍可使用。"); }
@@ -164,6 +180,7 @@ public partial class MainWindow : Window
         if (computerView) _ = RefreshComputer();
         if (recentView || folderView) _ = RefreshRecentDocuments();
         if (websiteView) _ = RefreshWebsiteHistory();
+        if (softwareView && IsLoaded) _ = DiscoverSoftware();
     }
     private void Perform(Action action, string success)
     {

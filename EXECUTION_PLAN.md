@@ -2,7 +2,11 @@
 
 # iStart implementation and execution plan
 
-Version **0.2.0-preview.24** adds compact theme layouts, Start re-enable recovery, and automatic/manual upgrades while retaining offline operation and both interface languages. Five views, activity ordering, system resources, in-app updates, screenshots, and the Chinese installer are implemented. Interface language can follow Windows or be set to Simplified Chinese/English. GitHub Actions builds and publishes installers. Safe build/core checks continue on the development machine; Windows 10/other builds, Explorer restarts, and the complete abnormal-installation matrix still require isolated system testing. Implemented code is not the same as completed acceptance. See [P0 validation](docs/P0_VALIDATION.md).
+Version **0.2.0-preview.25** fixes activity-backed app discovery, FreeCAD recent files, source isolation, folder search, and refresh while retaining offline operation and both interface languages. Five views, activity ordering, system resources, in-app updates, screenshots, and the Chinese installer are implemented. Interface language can follow Windows or be set to Simplified Chinese/English. GitHub Actions builds and publishes installers. Safe build/core checks continue on the development machine; Windows 10/other builds, Explorer restarts, and the complete abnormal-installation matrix still require isolated system testing. Implemented code is not the same as completed acceptance. See [P0 validation](docs/P0_VALIDATION.md).
+
+## preview.25
+
+Deliver the bounded portable-app/FreeCAD history fixes and the related discovery, reader-isolation, folder-search and refresh regressions. Current-system source counts and local application replacement passed; publish a new installer through the exact-main GitHub Actions path with core, self-contained and isolated installer verification. Retain five verified local public versions and the active rollback copy. This does not complete the outstanding Windows compatibility matrix.
 
 ## preview.24
 

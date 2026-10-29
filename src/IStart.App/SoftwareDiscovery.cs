@@ -1,4 +1,5 @@
 using System.IO;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace IStart;
@@ -7,7 +8,8 @@ internal sealed record SoftwareCandidate(string Title, string Shortcut, string? 
 
 internal static class SoftwareDiscovery
 {
-    public static List<SoftwareCandidate> Read(CancellationToken token, IEnumerable<string>? roots = null)
+    public static List<SoftwareCandidate> Read(CancellationToken token, IEnumerable<string>? roots = null,
+        IReadOnlyDictionary<string, int>? usage = null)
     {
         var includePackagedApps = roots is null;
         var found = new Dictionary<string, SoftwareCandidate>(StringComparer.OrdinalIgnoreCase);
@@ -33,7 +35,37 @@ internal static class SoftwareDiscovery
             }
         }
         if (includePackagedApps) ReadPackagedApps(found, token);
+        if (usage is not null) ReadUsedExecutables(found, usage, token);
         return found.Values.OrderBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+    private static void ReadUsedExecutables(Dictionary<string, SoftwareCandidate> found,
+        IReadOnlyDictionary<string, int> usage, CancellationToken token)
+    {
+        // Portable apps may have activity evidence without any Start-menu shortcut.
+        var added = 0;
+        foreach (var item in usage.Where(p => p.Value > 0).OrderByDescending(p => p.Value).Take(2048))
+        {
+            token.ThrowIfCancellationRequested();
+            var path = item.Key;
+            if (!Path.IsPathFullyQualified(path) || path.StartsWith("\\\\", StringComparison.Ordinal)
+                || !string.Equals(Path.GetExtension(path), ".exe", StringComparison.OrdinalIgnoreCase)) continue;
+            try
+            {
+                path = Path.GetFullPath(path);
+                if (found.ContainsKey(path) || new DriveInfo(Path.GetPathRoot(path)!).DriveType == DriveType.Network) continue;
+                var name = Path.GetFileNameWithoutExtension(path);
+                if (new[] { "setup", "install", "unins", "update", "crash", "卸载", "安装" }
+                    .Any(word => name.Contains(word, StringComparison.OrdinalIgnoreCase))
+                    || new[] { "rundll32", "dllhost", "conhost", "msiexec", "werfault", "applicationframehost" }
+                        .Contains(name, StringComparer.OrdinalIgnoreCase) || !File.Exists(path)) continue;
+                var version = FileVersionInfo.GetVersionInfo(path);
+                var title = !string.IsNullOrWhiteSpace(version.FileDescription) ? version.FileDescription.Trim()
+                    : !string.IsNullOrWhiteSpace(version.ProductName) ? version.ProductName.Trim() : name;
+                if (found.TryAdd(path, new(title, path, path)) && ++added == 128) break;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException
+                or System.Security.SecurityException) { }
+        }
     }
     private static string? ReadAppId(string shortcut)
     {

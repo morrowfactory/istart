@@ -4,15 +4,15 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**版本：0.2.0-preview.24 预览版**
+**版本：0.2.0-preview.25 预览版**
 
-本版增加两套独立紧凑界面、带中英文悬停说明的图标操作、明确的开始接入恢复，以及联网更新提醒和自动/手动升级。安装包保留离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
+本版修复有使用记录的软件及最近文件遗漏，包括便携版 FreeCAD 与 STP/STEP 模型；改进历史来源容错、文件夹搜索和活动刷新，保留紧凑 Windows/Google 界面及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
 
 界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.24/iStart-Setup-0.2.0-preview.24.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.24) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.25/iStart-Setup-0.2.0-preview.25.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.25) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
-**preview.24 新功能：**增加联网升级、两套独立紧凑界面和明确的开始接入恢复。Windows 使用顶部导航和平面六列网格；Google 使用左侧胶囊导航和圆角五列卡片。次要操作改为图标，提供中英文悬停说明与无障碍名称，账户和电源选项保留文字。详见[双风格](THEME_VALIDATION.md)、[升级说明](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)。
+**preview.25 修复：**补充无开始菜单快捷方式的已使用软件，读取 FreeCAD 保存的最近文档，避免失效旧路径占据有效发现名额，隔离历史来源错误，文件夹先搜索后限额，并在返回“我的软件”时刷新活动。详见[活动视图](ACTIVITY_VIEWS.md)。既有[双风格](THEME_VALIDATION.md)、[升级](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)继续保留。
 
 ## 当前功能
 
@@ -29,10 +29,12 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 | 入口 | 显示内容 | 排序与限制 |
 | --- | --- | --- |
 | 我的软件 | 有本机活动依据或手动添加的软件 | 使用多的在前，最多 30 个；搜索也最多 30 个 |
-| 最近打开 | iStart、Windows、WPS、LibreOffice 等留下记录的有效文件 | 最近优先、去重，最多 100 项；不显示文件夹和程序 |
+| 最近打开 | iStart、Windows、WPS、LibreOffice、FreeCAD 等留下记录的有效文件 | 最近优先、去重，最多 100 项；不显示文件夹和程序 |
 | 常用文件夹 | 已添加目录及本机活动中的目录 | 默认常用优先，同页按钮切换最近打开；按窗口空位补充 |
 | 我的网站 | Chrome 和 Edge 的有限本机浏览历史，按域名合并 | 默认常用优先，同页按钮切换最近网址清单，最多 30 个 |
 | 我的电脑 | 硬盘分区、可用容量、回收站、网络、可展开的 7 个控制面板大类（不含轻松使用） | 点击系统项目打开 Windows 原生页面；支持当前页搜索 |
+
+活动记录是有限的本机依据，不是全系统完整统计；FreeCAD 来源使用保存的 MRU 列表，不能凭空恢复缺失或尚未保存的记录。详见[读取范围](ACTIVITY_VIEWS.md)。
 
 - Windows 11 Fluent / Google 两种风格，在设置中即时切换并保存。
 - 桌面、任务栏、窗口、托盘、安装器和菜单使用统一 iStart 图标。
@@ -92,6 +94,14 @@ Explorer 重启、多屏缩放、自动隐藏任务栏、长期稳定性，以�
 - 升级下载缓存在 `%LOCALAPPDATA%\iStart\Updates`；取消或失败清理本次下载。成功后清理超过 7 天的旧更新缓存，至少保留最近两次下载，不清理个人数据。
 - `runtime.log` 记录运行与恢复诊断，不记录按键、网址或文件内容；超过 64 KiB 轮转，只保留一份旧日志。
 
+## 本地开发目录
+
+本机项目主目录为 `E:\workspace\istart`。开发工具放在 `.istart-tools/`，虚拟机与私有测试资料放在 `.istart-testlab/`，设计预览放在 `artifacts/design-previews/`；三者均被 Git 忽略，不进入发布资产。开发命令从项目根目录执行，生成文件写入 `artifacts/`。
+
+原来位于工作区旁的工具、测试目录与原设计预览目录保留兼容目录联接，实际文件均在项目内，不占用两份空间。已安装程序和 `%LOCALAPPDATA%\iStart` 仍使用原有位置。
+
+本机发布文件只保留最新 **5 个已发布版本**，每版在 `artifacts/releases/<version>/` 保存一套经过校验的正式安装包、SHA256 和来源清单。确认保留副本有效后，清理过期或重复的本地/QA 安装包及旧测试运行库。源码/Git 历史、开发工具、虚拟机基线、个人恢复备份和必要验收记录不受这个版本数量限制；GitHub 公开 Release 的保留策略不变。
+
 ## 构建与验证
 
 需要 Windows、.NET 10 SDK；构建安装包另需 Inno Setup 7.1.0。
@@ -102,7 +112,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.24.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.25.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。

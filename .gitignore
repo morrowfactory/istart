@@ -1,6 +1,8 @@
 **/bin/
 **/obj/
 artifacts/
+.istart-tools/
+.istart-testlab/
 .vs/
 *.user
 *.tmp
