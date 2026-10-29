@@ -2,6 +2,12 @@
 
 # iStart 架构说明
 
+## 本地开发目录
+
+本机源码与开发输出统一放在 `E:\workspace\istart`：`.istart-tools/` 保存 SDK/编译器，`.istart-testlab/` 保存虚拟机磁盘、镜像与私有测试资料，`artifacts/design-previews/` 保存交互设计预览。三者均被 Git 忽略，不进入公开发布资产。旧工具/虚拟机注册路径与预览链接通过目录联接兼容，不保存重复数据；已安装程序与用户配置仍使用原有位置。
+
+本机发布保留策略独立于应用数据和远程 Release：`artifacts/releases/<version>/` 保留最新五套已发布的安装包、校验文件与来源清单，核验后清理过期或重复的生成产物。开发工具、虚拟机基线、配置备份和必要诊断证据继续保护。
+
 ## 状态与约束
 
 当前使用 .NET 10、C# + WPF，单一桌面项目，无额外 NuGet 依赖；Windows Forms 仅提供托盘和显示器/睡眠能力。Inno Setup 7.1.0 构建当前用户的中文自包含安装包。目标是 Win10/11 x64，开发版的开始入口允许 Win10 19041–19045 及 Win11 22000/22621/22631/26100/26200 能力检测试用，其他版本保持原生模式；只有 26200 做过基本实机接入验证。实际证据见 [验证记录](P0_VALIDATION.md)。
@@ -22,6 +28,7 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | LibraryStore | 收藏、分类、偏好、最近记录；复制后修改，临时写入与原子替换，保留一份上一版本；失败不替换内存 |
 | Localization / Strings.en.json | 集中管理产品文字与英文翻译；读取当前用户 Windows 显示语言，WPF 绑定即时更新固定文字，导航与快捷键使用稳定标识 |
 | SoftwareDiscovery / ShellShortcut | 异步发现用户与公共开始菜单 `.lnk`；IShellLinkW/IPersistFile Unicode 解析；有效 exe 目标去重，过滤安装维护与失效入口 |
+| FreeCadDocuments | 有界只读 FreeCAD 最近文件配置；仅纳入本机有效文件，经 RecentDocuments 合并并沿用外部历史开关 |
 | ShellIconConverter | Shell 图标提取与有界缓存；UNC 使用通用图标，避免远程图标读取 |
 | StartMenuAdapter / ShellCompatibility / WinInput | 版本策略、UIAutomation/原生 Start 子窗口定位；低级键盘/鼠标钩子处理单独 Win 和开始按钮；组合键保留，原生注入使用自有标记避免递归 |
 | NativeMenu | SendInput 发送带标记的 Ctrl+Esc 请求临时原生菜单 |
@@ -29,6 +36,10 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | SystemActions | 系统策略/能力判断，锁定、注销、切换用户、睡眠、休眠、关机和重启；固定参数，不使用 /f |
 | App | 当前 SID 命名互斥锁与显示/退出事件；已有实例正常退出等待；后台启动与诊断模式；ui-test 使用独立配置并禁用真实开机启动修改 |
 | installer / scripts / CI | 中文向导与真实文件安装进度、升级前正常退出、卸载与校验值；QA 安装使用独立 AppId，无生产部署 |
+
+preview.25 活动链路修复：RecentDocuments 共用有界来源收集器，隔离可恢复的快捷方式、跳转列表和应用历史错误；目录读取失败不丢弃已完成的文件结果。MainWindow 仅在内存记录部分失败数量，并显示翻译后的提示；取消和 5 秒等待不变。返回“我的软件”时重新发现并刷新，替代的取消源正常释放，旧取消不覆盖当前状态。FrequentFolders 先搜索再限额，在内存合并固定目录的重复写法。不新增配置版本或外部历史写入。
+
+preview.25 活动读取修复：MainWindow 先读取 AppSwitched，同一快照用于软件发现与排序。SoftwareDiscovery 检查最多 2048 条正数活动记录，补充最多 128 个有效本机 EXE，排除网络路径、安装维护及常见辅助进程，按目标去重；已有快捷方式及其参数、工作目录优先保留，不枚举整个硬盘。FreeCadDocuments 共享只读 `%APPDATA%/FreeCAD/user.cfg` 及最多 8 个直接 `v*` 版本目录配置，单配置最多 4 MiB，禁用 DTD/外部解析，逐配置隔离失败。仅取 `Root/BaseApp/Preferences/RecentFiles` 中最多 100 个数字 `MRU` 文本项，保留 MRU 顺序；配置修改时间只是跨来源合并的近似依据，不代表每个文件的精确打开时间。沿用最多 100 个文件、有效本机文件过滤和 ShowWindowsRecentDocuments 开关；Windows Recent 目录缺失时仍读取其他软件历史。源历史不变，外部结果仅留在内存。
 
 进程不注入 Explorer、不修改系统二进制、不替换登录认证、不添加服务或驱动。临时原生打开与默认原生切换是独立操作。
 

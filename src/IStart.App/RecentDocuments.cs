@@ -5,13 +5,32 @@ namespace IStart;
 
 internal static class RecentDocuments
 {
-    internal static List<LaunchRecord> Read(CancellationToken token, string? folder = null)
+    internal static List<LaunchRecord> Read(CancellationToken token, string? folder = null, Action? failed = null)
     {
         var includeApplicationHistory = folder is null;
         folder ??= Environment.GetFolderPath(Environment.SpecialFolder.Recent);
-        if (!Directory.Exists(folder)) return [];
+        var sources = new List<Func<List<LaunchRecord>>> { () => ReadLinks(folder, token), () => JumpListDocuments.Read(folder, token) };
+        if (includeApplicationHistory)
+            sources.AddRange([() => LibreOfficeDocuments.Read(token), () => WpsDocuments.Read(token), () => FreeCadDocuments.Read(token)]);
+        return Merge([], ReadSources(token, sources, failed)).ToList();
+    }
+    internal static List<LaunchRecord> ReadSources(CancellationToken token, IEnumerable<Func<List<LaunchRecord>>> sources, Action? failed = null)
+    {
+        var records = new List<LaunchRecord>();
+        foreach (var source in sources)
+        {
+            token.ThrowIfCancellationRequested();
+            try { records.AddRange(source()); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException
+                or System.Xml.XmlException or System.Security.SecurityException or ArgumentException)
+            { failed?.Invoke(); }
+        }
+        return records;
+    }
+    private static List<LaunchRecord> ReadLinks(string folder, CancellationToken token)
+    {
         var found = new Dictionary<string, LaunchRecord>(StringComparer.OrdinalIgnoreCase);
-        foreach (var link in new DirectoryInfo(folder).EnumerateFiles("*.lnk")
+        foreach (var link in (Directory.Exists(folder) ? new DirectoryInfo(folder).EnumerateFiles("*.lnk") : [])
             .OrderByDescending(f => f.LastWriteTimeUtc).Take(200))
         {
             token.ThrowIfCancellationRequested();
@@ -24,13 +43,7 @@ internal static class RecentDocuments
             }
             catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException or ArgumentException) { }
         }
-        if (!includeApplicationHistory) return found.Values.Take(100).ToList();
-        var applicationHistory = JumpListDocuments.Read(folder, token);
-        try { applicationHistory.AddRange(LibreOfficeDocuments.Read(token)); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Xml.XmlException) { }
-        try { applicationHistory.AddRange(WpsDocuments.Read(token)); }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException) { }
-        return Merge(found.Values, applicationHistory).ToList();
+        return found.Values.ToList();
     }
     internal static bool IsDocument(string target) => !string.IsNullOrWhiteSpace(target)
         && !target.StartsWith("\\\\", StringComparison.Ordinal) && Path.IsPathFullyQualified(target)

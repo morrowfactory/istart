@@ -269,5 +269,6 @@
   "已接入": "Connected",
   "账户与锁定": "Account and lock",
   "电源选项": "Power options",
-  "退出 iStart，恢复系统开始菜单": "Exit iStart and restore Windows Start"
+  "退出 iStart，恢复系统开始菜单": "Exit iStart and restore Windows Start",
+  "部分文件或文件夹历史暂不可读；已显示其他可读取记录，可重新打开此页重试。": "Some file or folder history is unavailable. Other readable records are shown; reopen this view to retry."
 }

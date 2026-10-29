@@ -141,6 +141,7 @@ public partial class App : Application
         try
         {
             SmokeTest.Run(output);
+            await SmokeTest.VerifyActivityRefresh(output);
             await AdapterRecoveryTest.Run();
             File.AppendAllText(Path.Combine(output, "result.txt"), "\nPASS：关闭收起/显式退出；任务栏空结果、扫描异常和重新定位恢复（未安装钩子、未注入按键）。\n");
             Shutdown(0);

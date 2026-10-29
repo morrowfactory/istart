@@ -10,6 +10,26 @@ At most 30 entries. Only installed apps with activity evidence or explicit addit
 
 Search can find installed apps without prior activity, still capped at 30. Added apps can appear here. Hide only adds the target to local HiddenSoftware; it does not uninstall software. Settings can reset hidden entries. Paths, app lists, and activity are not uploaded.
 
+The preview.25 activity fix checks at most 2,048 positive records from the same Windows snapshot and adds at most 128 valid local EXE candidates. Missing old paths, already-discovered apps, and filtered entries do not consume these supplement slots. Existing local portable apps can appear without a Start-menu shortcut. Missing/relative/network paths, installers, and common helper processes are excluded; existing shortcut targets keep their original launch arguments. Returning to My Apps refreshes discovery/activity; replaced refreshes are cancelled without overwriting the newer scan's status. This does not scan drives or change the 30-app cap.
+
+## Recently Opened: FreeCAD source (preview.25)
+
+FreeCAD does not always publish its file opens to Windows Recent. iStart reads the current user's saved `FreeCAD/user.cfg` and up to eight immediate `FreeCAD/v*/user.cfg` configurations under `%APPDATA%`, at most 4 MiB each. Only `Root/BaseApp/Preferences/RecentFiles/FCText` entries named `MRU` plus a number are considered, in numeric order, up to 100 per config. STP, STEP, FCStd, and other valid local document targets are supported; folders, missing files, executables, relative paths, and network locations are excluded. Other `Recent` groups (such as material identifiers) are ignored.
+
+MRU0 is the newest saved entry. `RecentFiles` is a display-capacity preference, not a visit counter. FreeCAD supplies no per-file opening timestamp here; profile modification time is only an approximate merge key. Unsaved session changes or a custom `--user-cfg` location are not monitored. The existing external-file-history switch controls these reads; no file contents are read, configurations are not changed, and results are not persisted or uploaded. Missing Windows Recent folders do not suppress these application records.
+
+The 2026-10-29 local check found four valid FreeCAD records, including one STP, and a used FreeCAD EXE without a current Start-menu shortcut. Fixtures verify numeric order, legacy/version-profile merging, source preservation, filtering, cancellation, malformed/oversized XML, and DTD rejection. Existing regressions passed. This is a source fix, not a claim that every application's history is available.
+
+Source: [FreeCAD recent-file read/write implementation](https://github.com/FreeCAD/FreeCAD/blob/main/src/Gui/Action.cpp).
+
+## Read resilience and folder searches (preview.25)
+
+Windows Recent links, automatic Jump Lists, LibreOffice, WPS, and FreeCAD are collected as separate readers. A recoverable read failure does not discard successful sources. Folder-history failure also leaves completed file reads available. The view reports a partial-read warning in either interface language; cancellation still propagates and the existing five-second UI budget remains in place. This does not guarantee partial results when the shared operation times out.
+
+Folder searches apply the name/path filter before the result limit in both frequent and recent modes. Manually named folders are searchable. Case and trailing-separator duplicates in pinned folders are combined without rewriting stored entries or source directories.
+
+The 2026-10-29 audit found 145 software candidates, compared with 114 before the stale-path quota fix; My Apps still displays at most 30. Source counts were 17 LibreOffice, 33 WPS, 50 automatic Jump List, and four FreeCAD records, with no reader failures in that check. These source counts overlap and exceed the final 100-file cap. Regressions cover invalid-path crowding, failed/locked sources, cancellation, folder search beyond the visible limit, duplicate spellings, and repeated software refreshes. Counts do not claim complete activity coverage for unsupported applications or unsaved histories.
+
 ## Frequent Folders
 
 The default orders by iStart directory opens and recent-file directory activity, breaking ties by recent time and filling available space. The same-page switch selects recent ordering using records directly targeting folders from iStart/Windows, rather than treating a file's parent as a direct folder open. External times may be approximate; these are not complete Explorer visit counts. Pinned directories remain candidates without rewriting stored order. Pinned items with no direct opening record do not enter recent mode.

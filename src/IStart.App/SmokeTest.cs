@@ -46,6 +46,8 @@ internal static partial class SmokeTest
         catch (IOException) { Check(failed.Library.Entries.Count == 0, "保存失败回退内存状态"); }
 
         VerifySoftwareDiscovery(fixture);
+        VerifyFreeCadDocuments(fixture);
+        VerifyActivityResilience(fixture);
         VerifyWebsiteHistory(fixture);
         VerifyUpdater(fixture);
         VerifyAutomaticUpdates(output, fixture);
@@ -69,7 +71,7 @@ internal static partial class SmokeTest
         {
             var systemRecent = RecentDocuments.Read(recentTimeout.Token);
             File.WriteAllText(Path.Combine(output, "recent-sources.txt"), $"跨软件有效最近文件：{systemRecent.Count}；图片：{systemRecent.Count(r => new[] { ".png", ".jpg", ".jpeg", ".webp", ".bmp" }.Contains(Path.GetExtension(r.Target), StringComparer.OrdinalIgnoreCase))}；办公文档：{systemRecent.Count(r => new[] { ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp" }.Contains(Path.GetExtension(r.Target), StringComparer.OrdinalIgnoreCase))}");
-            File.AppendAllText(Path.Combine(output, "recent-sources.txt"), $"；LibreOffice 有效条目：{LibreOfficeDocuments.Read(recentTimeout.Token).Count}；WPS 有效条目：{WpsDocuments.Read(recentTimeout.Token).Count}");
+            File.AppendAllText(Path.Combine(output, "recent-sources.txt"), $"；LibreOffice 有效条目：{LibreOfficeDocuments.Read(recentTimeout.Token).Count}；WPS 有效条目：{WpsDocuments.Read(recentTimeout.Token).Count}；FreeCAD 有效条目：{FreeCadDocuments.Read(recentTimeout.Token).Count}");
         }
         var ownRecent = new LaunchRecord(file, "自定义名称", DateTimeOffset.UtcNow.AddMinutes(1), 2);
         Check(RecentDocuments.Merge([ownRecent], recentFiles).Single() == ownRecent, "合并最近记录保留最新且去重");
@@ -226,7 +228,7 @@ internal static partial class SmokeTest
         window.candidates = [];
         using (var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
         {
-            var actual = SoftwareDiscovery.Read(timeout.Token);
+            var actual = SoftwareDiscovery.Read(timeout.Token, usage: MySoftware.ReadUsage(timeout.Token));
             File.WriteAllText(Path.Combine(output, "software-discovery.txt"), $"实际本机软件入口数量：{actual.Count}；Codex 标识匹配数量：{actual.Count(c => c.Shortcut.Contains("OpenAI.Codex", StringComparison.OrdinalIgnoreCase))}");
             var codex = actual.FirstOrDefault(c => c.Shortcut.Contains("OpenAI.Codex", StringComparison.OrdinalIgnoreCase));
             if (codex is not null)
@@ -331,5 +333,23 @@ internal static partial class SmokeTest
         var shortcutIcon = new ShellIconConverter().Convert(shortcut, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
         Check(shortcutIcon is ImageSource && ShellShortcut.ReadTarget(shortcut) == targetBefore,
             "快捷方式读取原始图标且不改变启动目标");
+        var portable = Path.Combine(fixture, "PortableCad.exe");
+        var installer = Path.Combine(fixture, "Cad-installer.exe");
+        File.Copy(Environment.ProcessPath!, portable);
+        File.Copy(Environment.ProcessPath!, installer);
+        var evidence = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            [portable] = 121, [targetBefore] = 12, [installer] = 10,
+            [Path.Combine(fixture, "missing.exe")] = 20, [@"\\invalid-host\share\Cad.exe"] = 200,
+            ["relative.exe"] = 50, [Path.Combine(fixture, "中文 文档.txt")] = 50
+        };
+        var used = SoftwareDiscovery.Read(CancellationToken.None, [folder], evidence);
+        Check(used.Count == 2 && used.Single(c => c.Executable == portable).Shortcut == portable
+            && used.Single(c => c.Executable == targetBefore).Shortcut.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase),
+            "无快捷方式的已使用程序补充、已有快捷方式保留，排除安装器、网络、无效与非程序入口");
+        var ranked = MySoftware.Build([], used, [], evidence, new HashSet<string>());
+        Check(ranked.Count == 2 && ranked[0].Target == portable, "补充程序按真实活动排序并可由精确 exe 路径启动");
+        Check(SoftwareDiscovery.Read(CancellationToken.None, [folder], new Dictionary<string, int> { [portable] = 0 }).Count == 1,
+            "无活动程序不自动补充");
     }
 }

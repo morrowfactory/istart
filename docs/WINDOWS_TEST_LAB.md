@@ -2,6 +2,8 @@
 
 # Windows VM compatibility testing
 
+Since 2026-10-28, local test-lab files are stored in `E:\workspace\istart\.istart-testlab`; the former workspace-adjacent path is a compatibility junction. The VM, disks, images, private credentials, setup state and reports remain local and Git-ignored. Relocating the lab does not establish new compatibility-test results.
+
 Preparation snapshot: 2026-10-16. Windows 10 was installed and reached its desktop, but application acceptance had not run. This does not establish compatibility. The fixed test baseline is `0.2.0-preview.21`, source `cb445edcdf758debc5a139b75b9d8632414e827a`; this is not a claim about the latest public release.
 
 VirtualBox 7.2.20 was installed and a basic VM booted without rebooting the host. The dedicated VM had 4 vCPUs, 8 GiB RAM, and an 80 GiB dynamic disk. The official Chinese evaluation image passed Microsoft's SHA256 check. Windows 10 installation reached the dedicated test account's desktop, and Guest Additions driver logs identified build 19045. Remote execution was still being checked; app acceptance had not started. The verified package was placed on a read-only ISO. Windows PowerShell 5.1 read-only preflight confirmed that the interactive-test guard rejects the Windows 11 host.
