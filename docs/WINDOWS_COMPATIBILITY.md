@@ -2,11 +2,11 @@
 
 # Windows compatibility trials and validation
 
-## Build 26300 development correction — 2026-10-30
+## Build 26300 correction in preview.29 — 2026-10-30
 
 The reported slow/unavailable click was on the system Start button. Public preview.28 rejects the current PC's build 26300 before integration, so that click and the Windows key can continue to invoke Windows Start; the resident-menu cache does not participate in this path. Menu display-call timings do not measure this native path or end-to-end input latency.
 
-Development code admits build 26300 to the existing explicit, capability-checked trial, without changing hook gestures, foreground policy, or recovery. Unknown builds such as 26400 remain rejected. Both Windows 10 and 11 prefer a valid native Start child when one exists, otherwise use UI Automation. Read-only discovery on the current 26300 PC found one UI Automation button at 0,1032,55,48; this does not establish live Win-key/button acceptance. Isolated tests cover cancellation before hooks, missing-button rejection on 26300, and unknown-build rejection. No hooks or input were installed/sent on the working desktop for this check.
+Preview.29 admits build 26300 to the existing explicit, capability-checked trial, without changing hook gestures, foreground policy, or recovery. Unknown builds such as 26400 remain rejected. Both Windows 10 and 11 prefer a valid native Start child when one exists, otherwise use UI Automation. Read-only discovery on the current 26300 PC found one UI Automation button at 0,1032,55,48; this does not establish live Win-key/button acceptance. Isolated tests cover cancellation before hooks, missing-button rejection on 26300, and unknown-build rejection. No hooks or input were installed/sent on the working desktop for this check.
 
 preview.21 combined foreground and integration fixes: opening from the app icon in native mode retains a temporary topmost layer and retries focus; a second launch grants foreground permission to the existing instance; the footer provides Enable Integration. On the current Windows 11 PC, three opens over a maximized background reached the foreground with search focus, switching away dismissed the menu, and minimized state restored. After using the actual enable button, the Windows key and system Start button opened the real iStart window. Isolated test configuration/windows were closed and the previous preview.20 was restored. Second-launch permission handoff was code-reviewed, not validated on Windows 10. These results do not establish a Windows 10 fix.
 
@@ -23,7 +23,7 @@ The version-policy baseline below originated in preview.18 on 2026-10-15. Public
 | Windows 10 19041–19045 | Explicit opt-in; integrate after successful button detection | Version-policy and native Start-structure fixtures passed; no real Windows 10 application run accepted. |
 | Windows 11 22000 / 22621 / 22631 / 26100 | Same opt-in policy | Version branches passed; no real run on these builds accepted. |
 | Previously checked Windows 11 26200 | Same opt-in policy | One UI Automation button discovered in the historical run; input/recovery checks passed. |
-| Current Windows 11 26300 (development code) | Same opt-in and valid-button requirements; preview.28 retains native behavior | One UI Automation button discovered read-only; live input/recovery acceptance pending. |
+| Current Windows 11 26300 (preview.29) | Same opt-in and valid-button requirements; preview.28 retains native behavior | One UI Automation button discovered read-only; live input/recovery acceptance pending. |
 | Older/unknown builds, including tested Server build 20348 | Retain native Start | Rejection-policy tests passed. |
 
 The runtime's official support and this app's trial-integration policy are separate questions. This table is not a complete compatibility claim.
