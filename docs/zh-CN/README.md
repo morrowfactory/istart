@@ -12,11 +12,13 @@
 
 [下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.28/iStart-Setup-0.2.0-preview.28.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.28) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
+**开发中的兼容修正：** 公开 preview.28 将 Windows 26300 排除在开始接管范围之外，这个版本的系统开始按钮没有进入 iStart 的缓存流程。开发代码补充 26300 的主动能力检测试用；仍须先发现有效按钮才能安装钩子，其他未知版本继续原生模式。可取得原生 Start 子窗口时优先使用，未取得时再用 UIAutomation。本机 26300 只读发现 1 个 UIAutomation 按钮，真实输入验收仍待完成。详见[Windows 兼容说明](WINDOWS_COMPATIBILITY.md)。
+
 **preview.25 修复：**补充无开始菜单快捷方式的已使用软件，读取 FreeCAD 保存的最近文档，避免失效旧路径占据有效发现名额，隔离历史来源错误，文件夹先搜索后限额，并在返回“我的软件”时刷新活动。详见[活动视图](ACTIVITY_VIEWS.md)。既有[双风格](THEME_VALIDATION.md)、[升级](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)继续保留。
 
 ## 当前功能
 
-**preview.26 稳定性改进：** 当前 Win11 电脑报告反复打开、焦点失败，原生菜单模式也出现过。本版将 Shell 图标移到后台、合并软件扫描并复用 30 秒内的成功结果，保护恢复后的菜单尺寸，取消焦点重试的模拟修饰键。隔离检查不能替代真实 Win 键验收，也未查明误删文字原因；排查期间保持受影响安装版退出，安装完成不等于交互验收通过。内部版本 26300 不在既有接管试用名单内，保持原生菜单模式。详见[当前排查与检查](FOREGROUND_VALIDATION.md#当前稳定性排查2026-10-29)。
+**preview.26 稳定性改进：** 当前 Win11 电脑报告反复打开、焦点失败，原生菜单模式也出现过。本版将 Shell 图标移到后台、合并软件扫描并复用 30 秒内的成功结果，保护恢复后的菜单尺寸，取消焦点重试的模拟修饰键。隔离检查不能替代真实 Win 键验收，也未查明误删文字原因；排查期间保持受影响安装版退出，安装完成不等于交互验收通过。公开 preview.26–28 将 26300 保持为原生模式；上方开发修正属于单独的兼容试用，尚未完成真实输入验收。详见[当前排查与检查](FOREGROUND_VALIDATION.md#当前稳定性排查2026-10-29)。
 
 preview.21 加固 Win10/11 开始入口：输入钩子使用专用消息线程，减少主界面卡顿导致的失效；Win10 原生 Start 按钮点击时重新验证位置和 HWND。任务栏重建、显示与系统设置变化会丢弃旧定位，自动化检测超时可使用原生窗口后备；启动时短暂重试。界面超过约 2 秒不响应时放行后续原生输入。目标仍是已知 Win10/11 版本，尚不代表 Win10 实机通过。
 

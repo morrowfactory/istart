@@ -6,7 +6,7 @@
 
 iStart is a single C#/.NET 10 WPF desktop project with no additional NuGet dependencies. Windows Forms supplies the tray, monitor information, and suspend capability. Inno Setup 7.1.0 produces a Chinese, per-user, self-contained installer.
 
-The target is Windows 10/11 x64. Known Windows 10 builds 19041–19045 and Windows 11 builds 22000/22621/22631/26100/26200 may opt into capability-checked trials; other builds retain native Start. Only build 26200 has basic hardware integration evidence. See [P0 validation](docs/P0_VALIDATION.md).
+The target is Windows 10/11 x64. Known Windows 10 builds 19041–19045 and Windows 11 builds 22000/22621/22631/26100/26200/26300 may opt into capability-checked trials; other builds retain native Start. Only build 26200 has basic hardware integration evidence. Build 26300 has read-only button discovery and fixture evidence, not live input acceptance. See [P0 validation](docs/P0_VALIDATION.md).
 
 ## Development workspace
 
@@ -67,7 +67,7 @@ If the UI heartbeat is older than two seconds, keyboard input passes through and
 
 TaskbarCreated, WM_DISPLAYCHANGE, and WM_SETTINGCHANGE clear snapshots. Snapshot generations reject discovery results from before the change. A COM timeout tries native-window enumeration without accumulating blocked automation tasks. Enable requests share one pending task; bounded retries that still fail leave native Start available.
 
-AdapterRecoveryTest supplies a fixed known OS version for cancellation/coalescing fixtures so a host OS update cannot short-circuit the test before its intended wait. A separate build-26300 fixture verifies rejection before scanning or hook installation. Production callers always use the actual OS version; the trial allowlist is unchanged.
+AdapterRecoveryTest supplies fixed builds 26200 and 26300 for cancellation/coalescing fixtures so a host OS update cannot short-circuit the intended wait. A build-26300 fixture with no buttons verifies detection failure without installing hooks; a build-26400 fixture verifies unknown-version rejection before scanning. Production callers always use the actual OS version. Startup diagnostics include the build alongside the stored preference, helping distinguish version rejection from a slow menu request.
 
 ### Screenshots
 
@@ -136,9 +136,9 @@ SmokeTest.Updater and SmokeTest.AutomaticUpdates use isolated HTTP/state fixture
 
 ## Compatibility trials
 
-ShellCompatibility separates permission to try from hardware acceptance. Known Windows 10 19041–19045 and Windows 11 22000/22621/22631/26100/26200 require explicit opt-in. Unknown builds are rejected. Even an allowed build must discover a valid button before installing keyboard/mouse hooks.
+ShellCompatibility separates permission to try from hardware acceptance. Known Windows 10 19041–19045 and Windows 11 22000/22621/22631/26100/26200/26300 require explicit opt-in. Unknown builds are rejected. Even an allowed build must discover a valid button before installing keyboard/mouse hooks.
 
-Windows 10 prefers visible native Start children belonging to the taskbar root, with a UIAutomation StartButton/Button fallback. Windows 11 prefers UIAutomation and falls back to the same native enumeration. Taskbars fail independently. All candidates require finite coordinates, valid sizes, and taskbar bounds; detection does not depend on a localized Start name or guessed screen corners. Mouse callbacks validate the current root handle, window rectangle, and 1.5-second freshness. Combination passthrough, native access, and abnormal-exit recovery remain unchanged.
+Windows 10 and 11 prefer visible native Start children belonging to the taskbar root, with a UIAutomation StartButton/Button fallback when no valid native child exists. Native candidates are revalidated at click time; UI Automation candidates retain a 1.5-second freshness limit. Taskbars fail independently. All candidates require finite coordinates, valid sizes, and taskbar bounds; detection does not depend on a localized Start name or guessed screen corners. Combination passthrough, native access, and abnormal-exit recovery remain unchanged. The current build-26300 read-only probe still uses UI Automation because no qualifying native Start child was found.
 
 ShellProbe shares one asynchronous scan with a three-second wait. A timeout does not accumulate blocked scans. Settings can save a read-only report with app/OS versions, trial policy, monitor/button counts, methods, and geometry. It excludes usernames, file/browsing history, and full logs and is not uploaded. `--probe-shell` uses the same reader.
 

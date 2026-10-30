@@ -46,26 +46,36 @@ internal static class AdapterRecoveryTest
         if (delayed.Targets.Count != 0) throw new InvalidOperationException("任务栏变化前启动的扫描不能覆盖失效状态");
         await delayed.RefreshTargets();
         if (delayed.Targets.Single() != first) throw new InvalidOperationException("任务栏变化后新扫描应恢复");
-        var starting = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var continueScan = new TaskCompletionSource<StartTarget[]>(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var cancelled = new StartMenuAdapter(Application.Current.Dispatcher, _ => { }, () =>
+        foreach (var build in new[] { 26200, 26300 })
         {
-            starting.TrySetResult();
-            return continueScan.Task.GetAwaiter().GetResult();
-        }, new Version(10, 0, 26200));
-        var enable = cancelled.Enable();
-        if (!ReferenceEquals(enable, cancelled.Enable())) throw new InvalidOperationException("并发启用必须共享同一个任务");
-        await starting.Task;
-        cancelled.Disable();
-        continueScan.TrySetResult([first]);
-        try { await enable; throw new InvalidOperationException("停用后不能继续安装钩子"); }
-        catch (NotSupportedException) { }
-        if (cancelled.Enabled) throw new InvalidOperationException("取消启用后必须保持原生入口");
+            var starting = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var continueScan = new TaskCompletionSource<StartTarget[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var cancelled = new StartMenuAdapter(Application.Current.Dispatcher, _ => { }, () =>
+            {
+                starting.TrySetResult();
+                return continueScan.Task.GetAwaiter().GetResult();
+            }, new Version(10, 0, build));
+            var enable = cancelled.Enable();
+            if (!ReferenceEquals(enable, cancelled.Enable())) throw new InvalidOperationException("并发启用必须共享同一个任务");
+            await starting.Task;
+            cancelled.Disable();
+            continueScan.TrySetResult([first]);
+            try { await enable; throw new InvalidOperationException("停用后不能继续安装钩子"); }
+            catch (NotSupportedException) { }
+            if (cancelled.Enabled) throw new InvalidOperationException("取消启用后必须保持原生入口");
+        }
         var unsupportedScan = false;
         using var unsupported = new StartMenuAdapter(Application.Current.Dispatcher, _ => { },
-            () => { unsupportedScan = true; return [first]; }, new Version(10, 0, 26300));
+            () => { unsupportedScan = true; return [first]; }, new Version(10, 0, 26400));
         try { await unsupported.Enable(); throw new InvalidOperationException("未知系统版本不能进入接管"); }
         catch (NotSupportedException) { }
         if (unsupportedScan || unsupported.Enabled) throw new InvalidOperationException("未知系统版本必须在扫描和安装钩子前保留原生入口");
+
+        var scans = 0;
+        using var missing = new StartMenuAdapter(Application.Current.Dispatcher, _ => { },
+            () => { scans++; return []; }, new Version(10, 0, 26300));
+        try { await missing.Enable(); throw new InvalidOperationException("26300 无有效开始按钮时不能接管"); }
+        catch (NotSupportedException) { }
+        if (scans == 0 || missing.Enabled) throw new InvalidOperationException("26300 必须通过开始按钮能力检查，失败时保留原生入口");
     }
 }

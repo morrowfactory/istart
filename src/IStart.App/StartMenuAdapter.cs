@@ -161,8 +161,8 @@ internal sealed class StartMenuAdapter : IDisposable
             if (!WinInput.IsWindowVisible(bar) || !WinInput.GetWindowRect(bar, out var windowRect)) continue;
             var barBounds = new Rect(windowRect.Left, windowRect.Top, Math.Max(0, windowRect.Right - windowRect.Left), Math.Max(0, windowRect.Bottom - windowRect.Top));
             var before = result.Count;
-            // Win10 传统任务栏可直接提供 Start 子窗口，无需依赖自动化标识或显示语言。
-            if (nativeOnly || Environment.OSVersion.Version.Build <= 19045) FindNativeStart(bar, barBounds, result);
+            // Prefer a real Start HWND on both Win10 and Win11; revalidate its bounds on each click.
+            FindNativeStart(bar, barBounds, result);
             if (nativeOnly || result.Count > before) continue;
             try
             {

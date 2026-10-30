@@ -2,6 +2,12 @@
 
 # Windows compatibility trials and validation
 
+## Build 26300 development correction — 2026-10-30
+
+The reported slow/unavailable click was on the system Start button. Public preview.28 rejects the current PC's build 26300 before integration, so that click and the Windows key can continue to invoke Windows Start; the resident-menu cache does not participate in this path. Menu display-call timings do not measure this native path or end-to-end input latency.
+
+Development code admits build 26300 to the existing explicit, capability-checked trial, without changing hook gestures, foreground policy, or recovery. Unknown builds such as 26400 remain rejected. Both Windows 10 and 11 prefer a valid native Start child when one exists, otherwise use UI Automation. Read-only discovery on the current 26300 PC found one UI Automation button at 0,1032,55,48; this does not establish live Win-key/button acceptance. Isolated tests cover cancellation before hooks, missing-button rejection on 26300, and unknown-build rejection. No hooks or input were installed/sent on the working desktop for this check.
+
 preview.21 combined foreground and integration fixes: opening from the app icon in native mode retains a temporary topmost layer and retries focus; a second launch grants foreground permission to the existing instance; the footer provides Enable Integration. On the current Windows 11 PC, three opens over a maximized background reached the foreground with search focus, switching away dismissed the menu, and minimized state restored. After using the actual enable button, the Windows key and system Start button opened the real iStart window. Isolated test configuration/windows were closed and the previous preview.20 was restored. Second-launch permission handoff was code-reviewed, not validated on Windows 10. These results do not establish a Windows 10 fix.
 
 Hardening on 2026-10-16 moved low-level keyboard/mouse hooks to a dedicated message thread, validated native Windows 10 Start clicks at event time, invalidated snapshots on taskbar/display changes, used native fallback on UI Automation timeout, and bounded startup retries. Window fixtures covered moved/destroyed buttons, rejection of stale detection results, and recovery. Current Windows 11 input validation included a 1,300 ms UI-blocking probe. There was no real Windows 10 acceptance evidence for the user's intermittent opening problem.
@@ -16,7 +22,8 @@ The version-policy baseline below originated in preview.18 on 2026-10-15. Public
 | --- | --- | --- |
 | Windows 10 19041–19045 | Explicit opt-in; integrate after successful button detection | Version-policy and native Start-structure fixtures passed; no real Windows 10 application run accepted. |
 | Windows 11 22000 / 22621 / 22631 / 26100 | Same opt-in policy | Version branches passed; no real run on these builds accepted. |
-| Current Windows 11 26200 | Same policy; UI Automation remains preferred | One Start button discovered read-only locally; input/recovery checks passed. |
+| Previously checked Windows 11 26200 | Same opt-in policy | One UI Automation button discovered in the historical run; input/recovery checks passed. |
+| Current Windows 11 26300 (development code) | Same opt-in and valid-button requirements; preview.28 retains native behavior | One UI Automation button discovered read-only; live input/recovery acceptance pending. |
 | Older/unknown builds, including tested Server build 20348 | Retain native Start | Rejection-policy tests passed. |
 
 The runtime's official support and this app's trial-integration policy are separate questions. This table is not a complete compatibility claim.

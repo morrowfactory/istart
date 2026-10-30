@@ -140,7 +140,7 @@ public partial class App : Application
             if (e.Args.Contains("--exit")) { Shutdown(); return; }
             var store = new LibraryStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "iStart", "library.json"));
             RuntimeLog.DirectoryPath = store.DirectoryPath;
-            RuntimeLog.Write($"startup version={GitHubUpdater.CurrentVersion} custom={store.Library.CustomMenuEnabled} enableRequested={EnableMenuRequested}");
+            RuntimeLog.Write($"startup version={GitHubUpdater.CurrentVersion} build={Environment.OSVersion.Version.Build} custom={store.Library.CustomMenuEnabled} enableRequested={EnableMenuRequested}");
             using (var startup = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
             {
                 var configured = startup?.GetValue("iStart") is string command && command.StartsWith("\"" + Environment.ProcessPath + "\"", StringComparison.OrdinalIgnoreCase);
