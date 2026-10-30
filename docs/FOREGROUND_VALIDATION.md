@@ -2,9 +2,9 @@
 
 # Foreground and background presentation: 0.2.0-preview.6
 
-## Cached opening — 2026-10-30, development branch
+## Cached opening — 2026-10-30, preview.28
 
-ShowMenu now retains the existing visual tree and schedules activity work after a 200 ms idle delay. Loaded and opening folder layout do not start scans or rebuild lists. Refresh ranking and target checks run on a worker; unchanged rows/cards are reused, hidden/stale results are rejected, and failed refreshes retain usable content. The cache is in process memory, not a new on-disk activity store. This has not been installed or released by this change alone.
+ShowMenu now retains the existing visual tree and schedules activity work after a 200 ms idle delay. Loaded and opening folder layout do not start scans or rebuild lists. Refresh ranking and target checks run on a worker; unchanged rows/cards are reused, hidden/stale results are rejected, and failed refreshes retain usable content. The cache is in process memory, not a new on-disk activity store. Publication and local installation are separate acceptance gates in the release record.
 
 Release build completed with zero warnings/errors. On the separate inactive desktop, the existing 100 bottom-left cycles and core regressions passed, together with 20 cached reopens across both themes while a fixture activity read was blocked. Checks covered dispatcher input progress, cancelled pending refresh on hide, coalesced reads, retained query/page/selection/scroll, later fresh results, unchanged suggestion/card reuse, failed-refresh retention, real IDs after folder pinning, and stale-query rejection. The 20 cached ShowMenu calls had a 5.1 ms median and 7.7 ms maximum in this run. These are call durations after initialization, not live Win-key latency or a cold-start guarantee. No daily installation, personal configuration, input hooks, or synthesized input were used. The build workflow also runs this inactive-desktop suite and retains its result/failure reports for seven days.
 
