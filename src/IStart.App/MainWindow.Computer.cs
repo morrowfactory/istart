@@ -11,10 +11,13 @@ public partial class MainWindow
     private bool readingComputer;
     private Task<ComputerSnapshot>? computerRead;
     internal ComputerSnapshot? computer;
+    private ComputerSnapshot? renderedComputer;
+    private string? computerQuery, computerLanguage;
 
-    private async Task RefreshComputer()
+    private async Task<bool> RefreshComputer()
     {
-        if (readingComputer || computerRead is { IsCompleted: false } || !readWebsiteSources) return;
+        if (readingComputer || computerRead is { IsCompleted: false }) return false;
+        if (!readWebsiteSources) return true;
         readingComputer = true;
         var language = L.Current.Language;
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -22,9 +25,9 @@ public partial class MainWindow
         {
             computerRead = Task.Run(() => ComputerItems.Read(timeout.Token), timeout.Token);
             var result = await computerRead.WaitAsync(timeout.Token);
-            if (language != L.Current.Language) return;
+            if (language != L.Current.Language) return false;
             computer = result;
-            if (computerView) RenderComputer();
+            return true;
         }
         catch (OperationCanceledException) { if (computerView) SearchStatus.Text = L.T("设备读取超时；已显示的入口仍可用，重新打开此页重试。"); }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
@@ -32,14 +35,23 @@ public partial class MainWindow
         finally
         {
             readingComputer = false;
-            if (computerView && language != L.Current.Language) _ = RefreshComputer();
+            if (computerView && language != L.Current.Language) QueueMenuRefresh(true);
         }
+        return false;
     }
 
     private void RenderComputer()
     {
-        ComputerPanel.Children.Clear();
         var query = SearchBox.Text.Trim();
+        if (computerQuery == query && computerLanguage == L.Current.Language
+            && (ReferenceEquals(computer, renderedComputer) || computer is not null && renderedComputer is not null
+                && computer.PanelUnavailable == renderedComputer.PanelUnavailable
+                && computer.Drives.SequenceEqual(renderedComputer.Drives)
+                && computer.ControlPanel.SequenceEqual(renderedComputer.ControlPanel))) return;
+        renderedComputer = computer;
+        computerQuery = query;
+        computerLanguage = L.Current.Language;
+        ComputerPanel.Children.Clear();
         bool Match(ComputerItem item) => item.Title.Contains(query, StringComparison.CurrentCultureIgnoreCase)
             || item.Target.Contains(query, StringComparison.OrdinalIgnoreCase);
         void Heading(string title) => ComputerPanel.Children.Add(new TextBlock { Text = title, FontSize = 13, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 5, 0, 4) });

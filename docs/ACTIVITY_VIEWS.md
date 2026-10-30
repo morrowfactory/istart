@@ -10,7 +10,7 @@ At most 30 entries. Only installed apps with activity evidence or explicit addit
 
 Search can find installed apps without prior activity, still capped at 30. Added apps can appear here. Hide only adds the target to local HiddenSoftware; it does not uninstall software. Settings can reset hidden entries. Paths, app lists, and activity are not uploaded.
 
-The preview.25 activity fix checks at most 2,048 positive records from the same Windows snapshot and adds at most 128 valid local EXE candidates. Missing old paths, already-discovered apps, and filtered entries do not consume these supplement slots. Existing local portable apps can appear without a Start-menu shortcut. Missing/relative/network paths, installers, and common helper processes are excluded; existing shortcut targets keep their original launch arguments. Returning to My Apps refreshes discovery/activity; replaced refreshes are cancelled without overwriting the newer scan's status. This does not scan drives or change the 30-app cap.
+The preview.25 activity fix checks at most 2,048 positive records from the same Windows snapshot and adds at most 128 valid local EXE candidates. Missing old paths, already-discovered apps, and filtered entries do not consume these supplement slots. Existing local portable apps can appear without a Start-menu shortcut. Missing/relative/network paths, installers, and common helper processes are excluded; existing shortcut targets keep their original launch arguments. Returning to My Apps schedules discovery/activity after the cached menu is shown; in-flight reads are shared and successful software snapshots are reused for 30 seconds. This does not scan drives or change the 30-app cap.
 
 ## Recently Opened: FreeCAD source (preview.25)
 
