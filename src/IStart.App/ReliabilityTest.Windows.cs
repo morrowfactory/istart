@@ -96,6 +96,7 @@ internal static partial class ReliabilityTest
             File.AppendAllText(Path.Combine(output, "window-result.txt"), "PASS: background startup remains hidden without topmost or activation.\n");
         }
         finally { background.Close(); }
+        await VerifyCachedOpening(output);
         SmokeTest.Run(Path.Combine(output, "core"));
     }
 }

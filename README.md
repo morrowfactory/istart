@@ -29,6 +29,7 @@ The interface follows the Windows display language by default. You can select Si
 - Drag apps and folders into the menu; switch between icons and a list, search, and hide items.
 - Windows Start menu recovery, account actions, power options, and the tray remain available.
 - The separate app recommendation panel, Uncategorized view, category creation, and category-name field have been removed. Legacy item data remains compatible.
+- While iStart remains running, reopening shows the retained page, rows, search, selection, and scroll position first. Activity refresh starts after a 200 ms idle delay; file checks and ranking for that refresh run in the background. Unchanged rows are reused, and a failed refresh keeps the previous content. This memory cache does not survive exiting the application.
 
 Content comes from the current user's local system and activity records. Documentation screenshots use test data, including synthetic disk capacities. See [Activity views](docs/ACTIVITY_VIEWS.md) and the [documentation index](docs/INDEX.md).
 

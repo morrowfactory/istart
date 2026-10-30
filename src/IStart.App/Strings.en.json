@@ -1,4 +1,5 @@
 {
+  "内容刷新暂未完成，继续显示上次内容。": "Refresh is not complete. Your previous items remain available.",
   "\n当前接入：{0}": "\nStart integration enabled: {0}",
   "Chrome 与 Edge 合并，按最后打开时间排序；同域名显示一项。": "Chrome and Edge combined. Most recent first, one entry per site.",
   "Chrome 与 Edge 合并，按累计访问次数排序；同域名显示一项。": "Chrome and Edge combined. Most visited first, one entry per site.",

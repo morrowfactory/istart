@@ -18,7 +18,7 @@ public partial class MainWindow : Window
     private EntryGroups applicationGroups = new();
     private bool softwareView => !recentView && !folderView && !websiteView && !computerView;
     private CancellationTokenSource? discovery;
-    private Task? discoveryTask;
+    private Task<bool>? discoveryTask;
     private Task<(List<SoftwareCandidate> Apps, Dictionary<string, int> Usage)>? softwareRead;
     private long softwareRefreshedAt;
     private bool recentView;
@@ -27,14 +27,17 @@ public partial class MainWindow : Window
     private List<LaunchRecord> recentFolders = [];
     private readonly HashSet<string> hiddenFolders = new(StringComparer.OrdinalIgnoreCase);
     private bool readingRecent;
+    private Task<(List<LaunchRecord> Files, List<LaunchRecord> Folders, int Failures)>? recentRead;
     private int recentReadFailures;
     private static readonly Guid AllCategory = new("ffffffff-ffff-ffff-ffff-ffffffffffff");
     private static readonly Guid RecentCategory = new("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     private static readonly Guid FoldersCategory = new("dddddddd-dddd-dddd-dddd-dddddddddddd");
     public MainWindow(LibraryStore store, bool enableShell = true) : this(store, enableShell, null) { }
-    internal MainWindow(LibraryStore store, bool enableShell, Func<CancellationToken, Task<AppRelease?>>? checkUpdates)
+    internal MainWindow(LibraryStore store, bool enableShell, Func<CancellationToken, Task<AppRelease?>>? checkUpdates,
+        Func<Task>? refreshActivity = null)
     {
         this.store = store;
+        this.refreshActivity = refreshActivity;
         Updates = new UpdateService(store, () => UpdateInstallation.IsInstalled && !App.IsSessionEnding && !exitRequested
             && !capturing && !IsVisible && OwnedWindows.Count == 0 && UpdateInstallation.IsIdle(), checkUpdates);
         readWebsiteSources = enableShell;
@@ -46,10 +49,11 @@ public partial class MainWindow : Window
         ready = true;
         ApplyView();
         RefreshCategories();
-        EntryList.SizeChanged += (_, _) => { if (folderView) RefreshEntries(); };
+        refreshTimer.Tick += async (_, _) => await RefreshVisibleContent();
+        EntryList.SizeChanged += (_, _) => { if (folderView) QueueMenuRefresh(false); };
+        IsVisibleChanged += (_, _) => { if (!IsVisible) PauseMenuRefresh(); };
         if (store.Recovered) StatusText.Text = L.T("主配置损坏，已读取上一份配置。请核对收藏后再修改。");
-        Loaded += async (_, _) => await DiscoverSoftware();
-        Closed += (_, _) => { discovery?.Cancel(); Updates.Dispose(); };
+        Closed += (_, _) => { menuClosed = true; PauseMenuRefresh(); discovery?.Cancel(); Updates.Dispose(); };
         if (enableShell) Loaded += (_, _) => { if (UpdateInstallation.IsInstalled) Updates.Start(); };
         if (enableShell) InitializeShell();
     }
@@ -62,13 +66,13 @@ public partial class MainWindow : Window
         System.Windows.Automation.AutomationProperties.SetHelpText(SettingsButton, SettingsButton.ToolTip.ToString());
     }
 
-    internal Task DiscoverSoftware()
+    internal Task<bool> DiscoverSoftware()
     {
         if (discoveryTask is { IsCompleted: false }) return discoveryTask;
-        if (softwareRefreshedAt != 0 && Environment.TickCount64 - softwareRefreshedAt < 30000) return Task.CompletedTask;
+        if (softwareRefreshedAt != 0 && Environment.TickCount64 - softwareRefreshedAt < 30000) return Task.FromResult(true);
         return discoveryTask = ReadSoftware();
     }
-    private async Task ReadSoftware()
+    private async Task<bool> ReadSoftware()
     {
         var started = System.Diagnostics.Stopwatch.StartNew();
         var current = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -82,13 +86,13 @@ public partial class MainWindow : Window
                 return (Apps: SoftwareDiscovery.Read(token, usage: usage), Usage: usage);
             }, token);
             var result = await softwareRead.WaitAsync(token);
-            if (discovery != current) return;
+            if (discovery != current) return false;
             candidates = result.Apps;
             softwareUsage = result.Usage;
             applicationGroups = new();
             softwareRefreshedAt = Environment.TickCount64;
             RuntimeLog.Write($"software-refresh count={candidates.Count} elapsedMs={started.ElapsedMilliseconds}");
-            if (softwareView) RefreshEntries();
+            return true;
         }
         catch (OperationCanceledException)
         {
@@ -102,6 +106,7 @@ public partial class MainWindow : Window
             if (discovery == current) discovery = null;
             current.Dispose();
         }
+        return false;
     }
     private void RefreshCategories()
     {
@@ -112,26 +117,28 @@ public partial class MainWindow : Window
     private void RefreshEntries()
     {
         if (!ready) return;
+        entriesRevision++;
         if (computerView) { RenderComputer(); return; }
+        ApplyEntries(CaptureEntryReader(false)());
+    }
+    private void ApplyEntries(List<MenuEntry> entries)
+    {
         var keyword = SearchBox.Text.Trim();
-        IEnumerable<MenuEntry> source = recentView ? RecentDocuments.Files(store.Library.Launches,
-            store.Library.ShowWindowsRecentDocuments ? windowsRecent : []).Select(l => new MenuEntry(Guid.NewGuid(), l.Target, l.Title, Guid.Empty)) : store.Library.Entries;
-        if (softwareView) source = MySoftware.Build(store.Library.Entries, candidates, store.Library.Launches, softwareUsage,
-            store.Library.HiddenSoftware.ToHashSet(StringComparer.OrdinalIgnoreCase), keyword, applicationGroups);
-        if (websiteView) source = WebsiteHistory.Build(store.Library.ShowBrowserHistory ? websiteHistory.Visits : [],
-            store.Library.Launches, store.Library.WebsitesRecentFirst, keyword, hiddenWebsites);
-        if (folderView)
+        // Suggestions receive fresh IDs when ranked. Keep existing controls when only those IDs changed.
+        var previous = EntryList.Items.OfType<MenuEntry>().ToArray();
+        var pinned = store.Library.Entries.Select(e => e.Id).ToHashSet();
+        if (previous.Length != entries.Count || previous.Where((old, index) =>
+            !old.Target.Equals(entries[index].Target, StringComparison.OrdinalIgnoreCase)
+            || old.Title != entries[index].Title || old.CategoryId != entries[index].CategoryId
+            || pinned.Contains(entries[index].Id) && old.Id != entries[index].Id).Any())
         {
-            var columns = (int)FindResource("AppColumns");
-            var rows = Math.Max(1, (int)(EntryList.ActualHeight / (double)FindResource("TileHeight")));
-            var capacity = keyword.Length > 0 ? 100 : Math.Clamp(columns * rows, 1, 48);
-            source = FrequentFolders.Build(store.Library.Entries,
-                store.Library.Launches, store.Library.ShowWindowsRecentDocuments ? windowsRecent.Concat(recentFolders) : [],
-                capacity, Guid.Empty, hiddenFolders, store.Library.FoldersRecentFirst, keyword);
+            var selected = (EntryList.SelectedItem as MenuEntry)?.Target;
+            var scroll = FindEntryScroll(EntryList);
+            var offset = scroll?.VerticalOffset ?? 0;
+            EntryList.ItemsSource = new System.Windows.Data.ListCollectionView(entries);
+            EntryList.SelectedItem = entries.FirstOrDefault(e => e.Target.Equals(selected, StringComparison.OrdinalIgnoreCase));
+            scroll?.ScrollToVerticalOffset(offset);
         }
-        var entries = source.Where(e => (e.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase) || e.Target.Contains(keyword, StringComparison.OrdinalIgnoreCase))).ToList();
-        var view = new System.Windows.Data.ListCollectionView(entries);
-        EntryList.ItemsSource = view;
         ApplyView();
         ActivitySortButton.ToolTip = folderView ? store.Library.FoldersRecentFirst ? L.T("最近打开 · 切换常用") : L.T("常用文件夹 · 切换最近")
             : store.Library.WebsitesRecentFirst ? L.T("最近打开 · 切换常用") : L.T("常用网站 · 切换最近");
@@ -146,29 +153,33 @@ public partial class MainWindow : Window
         if ((recentView || folderView) && store.Library.ShowWindowsRecentDocuments && recentReadFailures > 0)
             SearchStatus.Text = L.T("部分文件或文件夹历史暂不可读；已显示其他可读取记录，可重新打开此页重试。");
     }
-    private async Task RefreshRecentDocuments()
+    private async Task<bool> RefreshRecentDocuments()
     {
-        if (readingRecent || !store.Library.ShowWindowsRecentDocuments) return;
+        if (readingRecent) return false;
+        if (!store.Library.ShowWindowsRecentDocuments) return true;
         readingRecent = true;
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var token = timeout.Token;
         try
         {
-            var records = await Task.Run(() =>
+            recentRead ??= Task.Run(() =>
             {
                 var failures = 0;
-                var files = RecentDocuments.Read(timeout.Token, failed: () => failures++);
-                var folders = RecentDocuments.ReadSources(timeout.Token, [() => FrequentFolders.Read(timeout.Token)], () => failures++);
+                var files = RecentDocuments.Read(token, failed: () => failures++);
+                var folders = RecentDocuments.ReadSources(token, [() => FrequentFolders.Read(token)], () => failures++);
                 return (Files: files, Folders: folders, Failures: failures);
-            }, timeout.Token).WaitAsync(timeout.Token);
-            if (!store.Library.ShowWindowsRecentDocuments) return;
+            }, token);
+            var records = await recentRead.WaitAsync(token);
+            if (!store.Library.ShowWindowsRecentDocuments) return false;
             windowsRecent = records.Files;
             recentFolders = records.Folders;
             recentReadFailures = records.Failures;
-            if (recentView || folderView) RefreshEntries();
+            return true;
         }
         catch (OperationCanceledException) { if (recentView) SearchStatus.Text = L.T("Windows 最近文档读取超时；iStart 打开记录仍可使用。"); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { if (recentView) SearchStatus.Text = L.T("暂时无法读取 Windows 最近文档；iStart 打开记录仍可使用。"); }
-        finally { readingRecent = false; }
+        finally { readingRecent = false; if (recentRead?.IsCompleted == true) recentRead = null; }
+        return false;
     }
     private void SearchChanged(object sender, TextChangedEventArgs e)
     {
@@ -196,10 +207,7 @@ public partial class MainWindow : Window
         EntryCount.Visibility = computerView ? Visibility.Collapsed : Visibility.Visible;
         RefreshEntries();
         ApplyView();
-        if (computerView) _ = RefreshComputer();
-        if (recentView || folderView) _ = RefreshRecentDocuments();
-        if (websiteView) _ = RefreshWebsiteHistory();
-        if (softwareView && IsLoaded) _ = DiscoverSoftware();
+        QueueMenuRefresh(true);
     }
     private void Perform(Action action, string success)
     {

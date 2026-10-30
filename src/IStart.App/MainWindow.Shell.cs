@@ -180,6 +180,7 @@ public partial class MainWindow
     internal void ShowMenu(WinInput.Point? point)
     {
         if (capturing) return;
+        PauseMenuRefresh();
         // Select the monitor before Show/Activate changes the foreground window.
         var screen = point is WinInput.Point click
             ? Forms.Screen.FromPoint(new System.Drawing.Point(click.X, click.Y))
@@ -199,10 +200,6 @@ public partial class MainWindow
             Show();
             // Moving across displays can change the window DPI during the first placement.
             PlaceMenu(screen, windowHandle);
-            if (recentView || folderView) _ = RefreshRecentDocuments();
-            if (websiteView) _ = RefreshWebsiteHistory();
-            if (computerView) _ = RefreshComputer();
-            if (softwareView) _ = DiscoverSoftware();
             WinInput.SetForegroundWindow(windowHandle);
             Activate();
             QueueSearchFocus();
@@ -211,6 +208,7 @@ public partial class MainWindow
             _ = RetryMenuFocus(windowHandle, request);
         }
         finally { presentingMenu = false; }
+        QueueMenuRefresh(true);
     }
     private async Task RetryMenuFocus(nint handle, int request)
     {
@@ -422,7 +420,7 @@ public partial class MainWindow
             for (var i = 0; i < labels.Length; i++) tray.ContextMenuStrip!.Items[i].Text = L.T(labels[i]);
         }
         computer = null;
-        if (computerView) { RenderComputer(); _ = RefreshComputer(); }
+        if (computerView) { RenderComputer(); QueueMenuRefresh(true); }
     }
     internal void SetTheme(string theme)
     {
