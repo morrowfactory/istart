@@ -5,7 +5,7 @@ namespace IStart;
 internal static class ShellCompatibility
 {
     internal static bool CanTry(Version version) => version.Major == 10 && version.Minor == 0
-        && (version.Build is >= 19041 and <= 19045 or 22000 or 22621 or 22631 or 26100 or 26200);
+        && (version.Build is >= 19041 and <= 19045 or 22000 or 22621 or 22631 or 26100 or 26200 or 26300);
 
     internal static string Description(Version version) => !CanTry(version)
         ? L.T("此版本不在试用范围内，保持 Windows 原生菜单。")

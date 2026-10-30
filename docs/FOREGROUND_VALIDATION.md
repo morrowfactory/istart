@@ -2,6 +2,18 @@
 
 # Foreground and background presentation: 0.2.0-preview.6
 
+## iStart taskbar application icon — preview.29
+
+This is distinct from the system Start button and the notification-area tray icon. Windows manages the taskbar application's single click; the old second-instance path initialized WPF/resources before sending its show signal, and native restores did not explicitly use ShowMenu. The preview.29 entry point now signals a resident instance before WPF initialization and routes SC_RESTORE through the cached display path. First startup still loads the application once; tray/list bindings are unchanged.
+
+Local Release build passed without warnings. Isolated named-channel child processes verified one-request show/enable/exit and missing/unowned/abandoned receiver fallback, and rejected any WPF/WinForms assembly load in those children. The run measured a 211.0 ms median and 228.1 ms maximum including process start and exit, not physical taskbar latency. Inactive-desktop checks verified one restore command, stale-restore cancellation, and the existing cache/layout/core cases. No synthetic keys/clicks or working-desktop activation were used; real taskbar focus and click acceptance remain pending after installation.
+
+## System Start button investigation — 2026-10-30, preview.29
+
+The user clarified that the slow/unavailable click is on the Windows taskbar Start button. The installed preview.28 began in native mode, and the current build 26300 fails its integration version gate. Its native Start path does not invoke iStart's cached display. Existing menu-shown timings measure only the iStart display call, so they cannot establish system-button responsiveness or end-to-end latency.
+
+Preview.29 permits a capability-checked, explicit 26300 trial, still requiring a valid button before hooks. Native Start HWNDs are preferred on either Windows version when present, otherwise UI Automation remains available. The current read-only probe found one UI Automation button and did not install hooks or change the running copy. Tests cover 26200/26300 cancelled enable, 26300 missing-button rejection, and unknown 26400 rejection; live Win/Start, foreground focus, and long-running acceptance remain pending. No synthetic input, keyboard-gesture change, foreground-policy change, or personal configuration edit is part of this correction.
+
 ## Cached opening — 2026-10-30, preview.28
 
 ShowMenu now retains the existing visual tree and schedules activity work after a 200 ms idle delay. Loaded and opening folder layout do not start scans or rebuild lists. Refresh ranking and target checks run on a worker; unchanged rows/cards are reused, hidden/stale results are rejected, and failed refreshes retain usable content. The cache is in process memory, not a new on-disk activity store. Publication and local installation are separate acceptance gates in the release record.
@@ -26,7 +38,7 @@ Run `--reliability-test <directory>` for checks without shown windows; use `scri
 
 The Alt/Ctrl focus fallback described in the historical records below was removed in this development change. Historical standalone Win tests still apply only to their named versions and systems.
 
-Release preparation on 2026-10-30 found that the workstation now reports build 26300. The previous cancellation fixture stopped at the unsupported-version gate, so its in-flight-task assertion failed before reaching the simulated scan. It now supplies build 26200 explicitly and separately checks build 26300 rejection before scanning/hooks. The safe checks pass after that correction; production policy is unchanged and this PC retains native Start on build 26300.
+During preview.27 release preparation on 2026-10-30, the workstation reported build 26300. The previous cancellation fixture stopped at the unsupported-version gate before reaching its simulated scan. That release fixed the fixture at 26200 and checked 26300 rejection separately, retaining the then-current native policy. The later development correction above now tests 26300 capability failure and uses 26400 for unknown-version rejection.
 
 Date: 2026-10-13; Windows 11 26200.9457. The user's capture showed iStart appearing only on the taskbar after Start was clicked, behind another maximized window. The process was still running and integration was enabled; this evidence did not establish a startup failure or crash.
 

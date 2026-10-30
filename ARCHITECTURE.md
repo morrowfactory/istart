@@ -6,7 +6,7 @@
 
 iStart is a single C#/.NET 10 WPF desktop project with no additional NuGet dependencies. Windows Forms supplies the tray, monitor information, and suspend capability. Inno Setup 7.1.0 produces a Chinese, per-user, self-contained installer.
 
-The target is Windows 10/11 x64. Known Windows 10 builds 19041–19045 and Windows 11 builds 22000/22621/22631/26100/26200 may opt into capability-checked trials; other builds retain native Start. Only build 26200 has basic hardware integration evidence. See [P0 validation](docs/P0_VALIDATION.md).
+The target is Windows 10/11 x64. Known Windows 10 builds 19041–19045 and Windows 11 builds 22000/22621/22631/26100/26200/26300 may opt into capability-checked trials; other builds retain native Start. Only build 26200 has basic hardware integration evidence. Build 26300 has read-only button discovery and fixture evidence, not live input acceptance. See [P0 validation](docs/P0_VALIDATION.md).
 
 ## Development workspace
 
@@ -28,7 +28,7 @@ Local release retention is independent of application data and remote releases: 
 | NativeMenu | Marked SendInput Ctrl+Esc requests for temporary native Start |
 | UpdateService / GitHubUpdater / UpdateWindow | Shared update state, online checks and scheduling, verified downloads/install launch, badges, release notes, and user preferences |
 | SystemActions | Capability/policy checks for lock, sign-out, switch user, sleep, hibernate, shutdown, and restart; fixed arguments without `/f` |
-| App | Current-SID mutex and show/enable/exit signals; bounded graceful-exit waits; background/diagnostic modes; isolated UI-test configuration without real startup changes |
+| Program / InstanceChannel / App | Pre-WPF resident handoff, current-SID mutex ownership and show/enable/exit signals, bounded graceful-exit waits, full-startup race recovery, background/diagnostic modes, and isolated UI tests |
 | installer / scripts / CI | Chinese wizard and real file progress, graceful exit before upgrades, uninstall and checksums; separate QA AppId; no server deployment |
 
 The process does not inject into Explorer, modify system binaries, replace authentication, install a service, or install a driver. Temporary native Start access and switching the default to native mode are separate operations.
@@ -36,6 +36,10 @@ The process does not inject into Explorer, modify system binaries, replace authe
 Activity reads in preview.25: MainWindow reads AppSwitched before discovery and supplies that same snapshot to ranking. SoftwareDiscovery supplements shortcuts/packages from at most 2,048 positive usage records, adding at most 128 valid new local EXEs, excludes network paths, installers and common helper processes, and deduplicates by target. Existing shortcut arguments and working directories take precedence. It does not enumerate whole drives. FreeCadDocuments reads `%APPDATA%/FreeCAD/user.cfg` and up to eight immediate `v*` profiles (at most 4 MiB per config), with shared read access, DTD/external resolution disabled, and independent config failure handling. Only `Root/BaseApp/Preferences/RecentFiles` numeric `MRU` text entries are used, at most 100 per config. MRU order is preserved; config modification time is approximate merge evidence, not a precise per-file opening time. The existing 100-file merge, local-file filters, and ShowWindowsRecentDocuments setting apply. A missing Windows Recent folder no longer prevents application-private reads. Source histories remain unchanged and external results remain in memory.
 
 ### Presentation and focus
+
+Program is the entry point. It opens the existing current-SID channel before creating Application or loading resources; a successful show/enable/exit handoff never initializes WPF. Missing, unowned, or abandoned mutexes fall through to normal startup, preserving crash recovery. App acquires mutex ownership rather than treating an existing name as a live process, covering shutdown races. The foreground grant still targets the existing same-path, same-session app. Show signals coalesce into one pending Input-priority dispatcher request. Diagnostic arguments bypass this shortcut; the QA-only GUID namespace cannot signal the user's production channel and fails closed if the wrong entry point is selected.
+
+The local HwndSource hook handles SC_RESTORE from the taskbar through ShowMenu, restoring normal dimensions and bottom-left placement from retained data. Presentation generations cancel a restore queued before a later hide/show. These local window-message hooks and hide cleanup also apply when global Shell integration is disabled; tests can exercise restoration without a tray or input hooks. Closed/exiting windows ignore late show requests. Tray and entry-list double-click bindings are unchanged.
 
 Resident menu reopening retains the same visual tree, items source, query, selection, and scroll position. ShowMenu performs placement, visibility, and focus, then schedules a 200 ms ContextIdle timer; it does not invoke activity readers, target validation, or ranking. Loaded no longer starts software discovery, and folder-size changes schedule a deferred refresh instead of rebuilding during opening layout. Hiding cancels the timer and invalidates pending presentation results. The cache is process memory only; it does not persist external history or restore content across process exits.
 
@@ -67,7 +71,7 @@ If the UI heartbeat is older than two seconds, keyboard input passes through and
 
 TaskbarCreated, WM_DISPLAYCHANGE, and WM_SETTINGCHANGE clear snapshots. Snapshot generations reject discovery results from before the change. A COM timeout tries native-window enumeration without accumulating blocked automation tasks. Enable requests share one pending task; bounded retries that still fail leave native Start available.
 
-AdapterRecoveryTest supplies a fixed known OS version for cancellation/coalescing fixtures so a host OS update cannot short-circuit the test before its intended wait. A separate build-26300 fixture verifies rejection before scanning or hook installation. Production callers always use the actual OS version; the trial allowlist is unchanged.
+AdapterRecoveryTest supplies fixed builds 26200 and 26300 for cancellation/coalescing fixtures so a host OS update cannot short-circuit the intended wait. A build-26300 fixture with no buttons verifies detection failure without installing hooks; a build-26400 fixture verifies unknown-version rejection before scanning. Production callers always use the actual OS version. Startup diagnostics include the build alongside the stored preference, helping distinguish version rejection from a slow menu request.
 
 ### Screenshots
 
@@ -136,9 +140,9 @@ SmokeTest.Updater and SmokeTest.AutomaticUpdates use isolated HTTP/state fixture
 
 ## Compatibility trials
 
-ShellCompatibility separates permission to try from hardware acceptance. Known Windows 10 19041–19045 and Windows 11 22000/22621/22631/26100/26200 require explicit opt-in. Unknown builds are rejected. Even an allowed build must discover a valid button before installing keyboard/mouse hooks.
+ShellCompatibility separates permission to try from hardware acceptance. Known Windows 10 19041–19045 and Windows 11 22000/22621/22631/26100/26200/26300 require explicit opt-in. Unknown builds are rejected. Even an allowed build must discover a valid button before installing keyboard/mouse hooks.
 
-Windows 10 prefers visible native Start children belonging to the taskbar root, with a UIAutomation StartButton/Button fallback. Windows 11 prefers UIAutomation and falls back to the same native enumeration. Taskbars fail independently. All candidates require finite coordinates, valid sizes, and taskbar bounds; detection does not depend on a localized Start name or guessed screen corners. Mouse callbacks validate the current root handle, window rectangle, and 1.5-second freshness. Combination passthrough, native access, and abnormal-exit recovery remain unchanged.
+Windows 10 and 11 prefer visible native Start children belonging to the taskbar root, with a UIAutomation StartButton/Button fallback when no valid native child exists. Native candidates are revalidated at click time; UI Automation candidates retain a 1.5-second freshness limit. Taskbars fail independently. All candidates require finite coordinates, valid sizes, and taskbar bounds; detection does not depend on a localized Start name or guessed screen corners. Combination passthrough, native access, and abnormal-exit recovery remain unchanged. The current build-26300 read-only probe still uses UI Automation because no qualifying native Start child was found.
 
 ShellProbe shares one asynchronous scan with a three-second wait. A timeout does not accumulate blocked scans. Settings can save a read-only report with app/OS versions, trial policy, monitor/button counts, methods, and geometry. It excludes usernames, file/browsing history, and full logs and is not uploaded. `--probe-shell` uses the same reader.
 

@@ -15,6 +15,7 @@ internal static partial class ReliabilityTest
     [DllImport("user32.dll")] private static extern nint GetThreadDesktop(uint thread);
     [DllImport("user32.dll")] private static extern nint OpenInputDesktop(uint flags, bool inherit, uint access);
     [DllImport("user32.dll")] private static extern bool CloseDesktop(nint desktop);
+    [DllImport("user32.dll")] private static extern nint SendMessage(nint window, uint message, nuint first, nint second);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetUserObjectInformation(nint handle, int index, StringBuilder value, uint length, out uint needed);
     private static string DesktopName(nint desktop)
     {
@@ -96,7 +97,31 @@ internal static partial class ReliabilityTest
             File.AppendAllText(Path.Combine(output, "window-result.txt"), "PASS: background startup remains hidden without topmost or activation.\n");
         }
         finally { background.Close(); }
+        await VerifyTaskbarRestore(output);
         await VerifyCachedOpening(output);
         SmokeTest.Run(Path.Combine(output, "core"));
+    }
+
+    private static async Task VerifyTaskbarRestore(string output)
+    {
+        var store = new LibraryStore(Path.Combine(output, "restore", "library.json"));
+        store.Change(s => { s.CustomMenuEnabled = false; s.AutomaticUpdates = false; s.ScreenshotShortcut = "关闭"; });
+        var window = new MainWindow(store, false);
+        try
+        {
+            window.ShowMenu(null);
+            window.WindowState = WindowState.Minimized;
+            window.Hide();
+            SendMessage(new WindowInteropHelper(window).Handle, 0x0112, 0xF120, 0);
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            Check(window.IsVisible && window.WindowState == WindowState.Normal && window.Topmost,
+                "one taskbar restore command must show the cached menu without a second command");
+            SendMessage(new WindowInteropHelper(window).Handle, 0x0112, 0xF120, 0);
+            window.Hide();
+            await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+            Check(!window.IsVisible, "a stale restore request must not reopen a subsequently hidden menu");
+            File.AppendAllText(Path.Combine(output, "window-result.txt"), "通过：单次任务栏恢复命令显示缓存菜单；随后收起会取消过期恢复。仅向隔离桌面的本进程窗口发送系统命令，未发送键鼠输入。\n");
+        }
+        finally { window.Close(); }
     }
 }

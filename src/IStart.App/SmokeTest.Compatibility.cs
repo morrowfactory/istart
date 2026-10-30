@@ -25,7 +25,7 @@ internal static partial class SmokeTest
 
     private static void VerifyCompatibility()
     {
-        foreach (var build in new[] { 19041, 19042, 19043, 19044, 19045, 22000, 22621, 22631, 26100, 26200 })
+        foreach (var build in new[] { 19041, 19042, 19043, 19044, 19045, 22000, 22621, 22631, 26100, 26200, 26300 })
             Check(ShellCompatibility.CanTry(new Version(10, 0, build)), "已知 Win10/11 版本允许能力检测试用");
         foreach (var version in new[] { new Version(6, 3, 9600), new Version(10, 0, 18363), new Version(10, 0, 20348), new Version(10, 0, 99999) })
             Check(!ShellCompatibility.CanTry(version), "旧系统、服务器和未知版本保留原生入口");
