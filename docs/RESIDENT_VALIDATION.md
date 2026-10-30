@@ -2,6 +2,8 @@
 
 # Integration recovery fix: 0.2.0-preview.4
 
+Current source removes the notification-area icon. The dated tray-based checks below describe earlier releases. Close still hides the menu in the background; reopen through a shortcut/taskbar launch or integrated Start entry point. Use Settings to disable integration, or Exit in the menu to stop the process and release hooks.
+
 ## Development preview.24: explicit re-enable and session cleanup
 
 Date: 2026-10-17; Windows 11 build 26200. A leftover session marker was present while native Win-key behavior was reported. Restarting with `--enable-menu` reproduced an incorrect fallback: the marker took priority over the explicit request. Existing-instance launches also discarded this flag and only sent Show. Missing lifecycle logs from the preceding process do not establish why it stopped working.
