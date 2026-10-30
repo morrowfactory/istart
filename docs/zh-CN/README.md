@@ -4,13 +4,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**版本：0.2.0-preview.29 预览版**
+**版本：0.2.0-preview.30 预览版**
 
-本版在加载 WPF 资源前通知常驻菜单，任务栏恢复也进入缓存显示流程，并增加 Windows 26300 的能力检测试用。重新弹出仍先显示保留内容，再后台刷新活动。继续保留左下角定位、后台图标、Windows/Google 风格及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
+本版移除右下角托盘图标，保留任务栏/快捷方式、已接入的开始入口、后台运行和原生菜单恢复。继续保留缓存优先显示、左下角定位、Windows/Google 风格及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
 
 界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.29/iStart-Setup-0.2.0-preview.29.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.29) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.30/iStart-Setup-0.2.0-preview.30.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.30) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 **preview.29 兼容修正：** preview.28 将 Windows 26300 排除在开始接管范围之外，这个版本的系统开始按钮没有进入 iStart 的缓存流程。preview.29 补充 26300 的主动能力检测试用；仍须先发现有效按钮才能安装钩子，其他未知版本继续原生模式。可取得原生 Start 子窗口时优先使用，未取得时再用 UIAutomation。本机 26300 只读发现 1 个 UIAutomation 按钮，真实输入验收仍待完成。详见[Windows 兼容说明](WINDOWS_COMPATIBILITY.md)。
 
@@ -18,7 +18,7 @@
 
 **preview.25 修复：**补充无开始菜单快捷方式的已使用软件，读取 FreeCAD 保存的最近文档，避免失效旧路径占据有效发现名额，隔离历史来源错误，文件夹先搜索后限额，并在返回“我的软件”时刷新活动。详见[活动视图](ACTIVITY_VIEWS.md)。既有[双风格](THEME_VALIDATION.md)、[升级](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)继续保留。
 
-**开发中的调整：** 当前源码不再创建右下角托盘图标。“×”只收起到后台，可通过快捷方式、任务栏图标或已接入的开始入口重新打开；设置中关闭接管，菜单的退出按钮结束程序。公开 preview.29 尚未包含此调整。
+**preview.30 调整：** 不再创建右下角托盘图标。“×”只收起到后台，可通过快捷方式、任务栏图标或已接入的开始入口重新打开；设置中关闭接管，菜单的退出按钮结束程序。
 
 ## 当前功能
 
@@ -124,7 +124,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.29.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.30.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。
