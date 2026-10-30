@@ -42,6 +42,8 @@ Since preview.21, input hooks run on a dedicated message thread to reduce failur
 
 Opening iStart from its icon also uses a temporary topmost window and bounded focus retries, even in native-menu mode. Switching to another window hides it. Reopening the shortcut hands foreground permission to the existing instance. Use Enable integration at the bottom of the menu to opt in; otherwise, the system Start button continues to open Windows Start.
 
+**Placement change pending release:** the first launch, app icon/repeated launch, tray, and integrated Start entry points open at the bottom left of the selected monitor's working area, with up to eight physical pixels of spacing. Placement also applies in native-menu mode and does not follow a centered Start button or a previously dragged window position. Start/tray clicks select their monitor; other opens capture the foreground monitor before activating iStart. Background startup remains hidden.
+
 ### Screenshots
 
 The default global shortcut is **Alt+Shift+A**, including while iStart runs in the background. Settings also offers Ctrl+Alt+A, Ctrl+Shift+S, or Off. Shortcut conflicts are reported instead of taking another app's shortcut.

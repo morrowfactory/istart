@@ -79,7 +79,7 @@ public partial class App : Application
             RuntimeLog.DirectoryPath = output;
             RuntimeLog.Write("startup ui-test");
             Directory.CreateDirectory(output);
-            new MainWindow(new LibraryStore(Path.Combine(output, "library.json"))) { Title = "iStart · 交互验收" }.Show();
+            new MainWindow(new LibraryStore(Path.Combine(output, "library.json"))) { Title = "iStart · 交互验收" }.ShowMenu(null);
             return;
         }
         if (e.Args.Length == 2 && e.Args[0] == "--hook-child")
@@ -146,12 +146,11 @@ public partial class App : Application
                 var configured = startup?.GetValue("iStart") is string command && command.StartsWith("\"" + Environment.ProcessPath + "\"", StringComparison.OrdinalIgnoreCase);
                 if (store.Library.StartWithWindows != configured) store.Change(s => s.StartWithWindows = configured);
             }
-            var window = new MainWindow(store) { ShowActivated = !BackgroundRequested };
+            var window = new MainWindow(store);
             showWait = ThreadPool.RegisterWaitForSingleObject(showSignal, (_, _) => Dispatcher.BeginInvoke(() => window.ShowMenu(null)), null, Timeout.Infinite, false);
             exitWait = ThreadPool.RegisterWaitForSingleObject(exitSignal, (_, _) => Dispatcher.BeginInvoke(() => window.RequestExit("exit-signal")), null, Timeout.Infinite, false);
             enableWait = ThreadPool.RegisterWaitForSingleObject(enableSignal, (_, _) => Dispatcher.BeginInvoke(async () => await window.RequestEnableMenu()), null, Timeout.Infinite, false);
-            window.Show();
-            if (BackgroundRequested) window.Hide();
+            if (BackgroundRequested) window.ShowInBackground(); else window.ShowMenu(null);
         }
         catch (Exception ex)
         {

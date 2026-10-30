@@ -31,15 +31,15 @@ public partial class MainWindow
         };
         adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add(L.T("打开 iStart"), null, (_, _) => ShowMenu(null));
+        menu.Items.Add(L.T("打开 iStart"), null, (_, _) => ShowFromTray());
         menu.Items.Add(L.T("切回 Windows 原生菜单"), null, (_, _) => { SetNativeMode(); OpenNative(this, new RoutedEventArgs()); });
-        menu.Items.Add(L.T("设置"), null, (_, _) => { ShowMenu(null); OpenSettings(this, new RoutedEventArgs()); });
+        menu.Items.Add(L.T("设置"), null, (_, _) => { ShowFromTray(); OpenSettings(this, new RoutedEventArgs()); });
         menu.Items.Add(L.T("退出 iStart"), null, (_, _) => RequestExit("tray"));
         using (var stream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Brand/istart.ico")).Stream)
         using (var icon = new System.Drawing.Icon(stream, 16, 16))
             trayIcon = (System.Drawing.Icon)icon.Clone();
         tray = new Forms.NotifyIcon { Icon = trayIcon, Text = L.T("iStart · 个人开始菜单"), ContextMenuStrip = menu, Visible = true };
-        tray.DoubleClick += (_, _) => ShowMenu(null);
+        tray.DoubleClick += (_, _) => ShowFromTray();
         Loaded += async (_, _) => await InitializeStartMenu(App.EnableMenuRequested);
         Deactivated += (_, _) =>
         {
@@ -161,9 +161,29 @@ public partial class MainWindow
         if (capturing) return;
         if (IsVisible && WinInput.GetForegroundWindow() == new WindowInteropHelper(this).Handle) Hide(); else ShowMenu(point);
     }
+    private void ShowFromTray() => ShowMenu(WinInput.GetCursorPos(out var point) ? point : null);
+    private void PlaceMenu(Forms.Screen screen, nint handle)
+    {
+        var area = screen.WorkingArea;
+        var position = MenuPlacement.Calculate(new Rect(area.X, area.Y, area.Width, area.Height),
+            MenuPlacement.OpeningSize(new Size(Width, Height), new Size(MinWidth, MinHeight), System.Windows.Media.VisualTreeHelper.GetDpi(this)));
+        WinInput.SetWindowPos(handle, 0, (int)position.X, (int)position.Y, (int)position.Width, (int)position.Height, 0x14);
+    }
+    internal void ShowInBackground()
+    {
+        var screen = Forms.Screen.FromHandle(WinInput.GetForegroundWindow());
+        ShowActivated = false;
+        PlaceMenu(screen, new WindowInteropHelper(this).EnsureHandle());
+        Show();
+        Hide();
+    }
     internal void ShowMenu(WinInput.Point? point)
     {
         if (capturing) return;
+        // Select the monitor before Show/Activate changes the foreground window.
+        var screen = point is WinInput.Point click
+            ? Forms.Screen.FromPoint(new System.Drawing.Point(click.X, click.Y))
+            : Forms.Screen.FromHandle(WinInput.GetForegroundWindow());
         var started = System.Diagnostics.Stopwatch.StartNew();
         var request = ++presentation;
         activatingMenu = false;
@@ -174,31 +194,15 @@ public partial class MainWindow
             ShowActivated = true;
             // 菜单显示期间使用浮层，收起时解除；不修改系统前台锁定策略。
             Topmost = true;
+            var windowHandle = new WindowInteropHelper(this).EnsureHandle();
+            PlaceMenu(screen, windowHandle);
             Show();
+            // Moving across displays can change the window DPI during the first placement.
+            PlaceMenu(screen, windowHandle);
             if (recentView || folderView) _ = RefreshRecentDocuments();
             if (websiteView) _ = RefreshWebsiteHistory();
             if (computerView) _ = RefreshComputer();
             if (softwareView) _ = DiscoverSoftware();
-            if (adapter?.Enabled == true)
-            {
-                var screen = point is WinInput.Point click
-                    ? Forms.Screen.FromPoint(new System.Drawing.Point(click.X, click.Y))
-                    : Forms.Screen.FromHandle(WinInput.GetForegroundWindow());
-                var target = adapter.Targets.FirstOrDefault(t => Forms.Screen.FromHandle(t.Taskbar).DeviceName == screen.DeviceName)
-                    ?? adapter.Targets.FirstOrDefault();
-                if (target is not null) screen = Forms.Screen.FromHandle(target.Taskbar);
-                var area = screen.WorkingArea;
-                var handle = new WindowInteropHelper(this).Handle;
-                var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
-                var anchor = target?.Bounds ?? new Rect(area.Left, area.Bottom, 0, 0);
-                if (target is { ButtonWindow: not 0 } && WinInput.GetWindowRect(target.ButtonWindow, out var button)
-                    && WinInput.GetAncestor(target.ButtonWindow, 2) == target.Taskbar)
-                    anchor = new Rect(button.Left, button.Top, Math.Max(0, button.Right - button.Left), Math.Max(0, button.Bottom - button.Top));
-                var position = MenuPlacement.Calculate(new Rect(area.X, area.Y, area.Width, area.Height),
-                    anchor, MenuPlacement.OpeningSize(new Size(Width, Height), new Size(MinWidth, MinHeight), dpi));
-                WinInput.SetWindowPos(handle, 0, (int)position.X, (int)position.Y, (int)position.Width, (int)position.Height, 0x4);
-            }
-            var windowHandle = new WindowInteropHelper(this).Handle;
             WinInput.SetForegroundWindow(windowHandle);
             Activate();
             QueueSearchFocus();

@@ -2,6 +2,12 @@
 
 # Foreground and background presentation: 0.2.0-preview.6
 
+## Bottom-left placement correction — 2026-10-30, pending release
+
+The installed preview.26 only positioned the window while Start integration was enabled, and its initial startup still used CenterScreen/Show. In native mode, including unsupported build 26300, opening the app could therefore retain a centered or manually dragged position. This correction uses Manual startup and routes initial visible startup through ShowMenu. A shared placement helper runs in both modes before showing and after any resulting DPI change, anchored to the selected work area's bottom left. The monitor is selected before activation. Tray actions supply a monitor point; other opens use the foreground monitor. Background startup uses the same helper and remains hidden without requesting activation. The integration allowlist is unchanged.
+
+On a separate inactive desktop, 100 Windows/Google show/hide cycles passed in native mode, including the first visible bounds, centered previous positions, explicit monitor points, and ten minimized restores. Background startup stayed hidden without topmost/activation. Core data, localization, themes, screenshots, and update-fixture regressions passed. Pure geometry checks cover work-area offsets, negative monitor coordinates, and DPI/clamping. No input was synthesized and no daily installation/configuration was replaced. Real Win interception, foreground search input, physical multiple monitors/mixed DPI, and the earlier text-deletion cause are outside this check.
+
 ## Current reliability investigation — 2026-10-29
 
 The preview.25 installed copy again showed intermittent opening/focus failures. Logs recorded foreground success with native/WPF search focus false, including after a restart in native-menu mode. The user also reported unintended text deletion, which stopped after iStart exited. The cause is unconfirmed; this is not evidence of a particular Delete-key sender or a completed fix. Earlier manual acceptance below does not establish current long-running reliability.
