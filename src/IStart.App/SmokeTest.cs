@@ -102,15 +102,16 @@ internal static partial class SmokeTest
         store.Change(s => s.ShowWindowsRecentDocuments = true);
         var work = new Rect(0, 0, 1920, 1032);
         var size = new Size(740, 660);
-        var bottom = MenuPlacement.Calculate(work, new Rect(12, 1032, 48, 48), size);
-        Check(bottom.Left == 12 && bottom.Bottom == 1024, "底部开始按钮定位，不跟随鼠标");
-        Check(MenuPlacement.Calculate(new Rect(0, 48, 1920, 1032), new Rect(12, 0, 48, 48), size).Top == 56,
-            "顶部任务栏定位");
-        Check(MenuPlacement.Calculate(new Rect(48, 0, 1872, 1080), new Rect(0, 12, 48, 48), size).Left == 56,
-            "左侧任务栏定位");
+        var bottom = MenuPlacement.Calculate(work, size);
+        Check(bottom.Left == 8 && bottom.Bottom == 1024, "菜单固定工作区左下角，不跟随居中开始按钮或鼠标");
+        Check(MenuPlacement.Calculate(new Rect(0, 48, 1920, 1032), size).Bottom == 1072,
+            "顶部任务栏时仍按工作区左下角定位");
+        Check(MenuPlacement.Calculate(new Rect(48, 0, 1872, 1080), size).Left == 56,
+            "左侧任务栏不遮挡菜单");
         var negative = new Rect(-1280, 0, 1280, 984);
-        Check(negative.Contains(MenuPlacement.Calculate(negative, new Rect(-20, 984, 20, 40), size)),
-            "负坐标屏幕边缘约束");
+        var negativeMenu = MenuPlacement.Calculate(negative, size);
+        Check(negative.Contains(negativeMenu) && negativeMenu.Left == -1272 && negativeMenu.Bottom == 976,
+            "负坐标屏幕固定左下角并约束边缘");
         store.Change(s => s.HiddenSoftware.Add("hidden-shortcut"));
         var preferences = new LibraryStore(config);
         Check(preferences.Library.HiddenSoftware.Contains("hidden-shortcut"), "软件隐藏项持久化");

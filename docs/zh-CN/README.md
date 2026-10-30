@@ -4,13 +4,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**版本：0.2.0-preview.26 预览版**
+**版本：0.2.0-preview.27 预览版**
 
-本版将 Shell 图标读取移到后台、合并重复软件扫描、保护恢复后的菜单尺寸，并取消焦点重试的模拟 Alt/Ctrl。保留便携版 FreeCAD 与 STP/STEP 最近模型等活动读取、紧凑 Windows/Google 界面及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
+本版让 iStart 从所选屏幕工作区左下角弹出，覆盖首次启动、图标、托盘、重复打开和原生菜单模式。保留后台图标读取、常用软件与文件活动、紧凑 Windows/Google 界面及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
 
 界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.26/iStart-Setup-0.2.0-preview.26.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.26) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.27/iStart-Setup-0.2.0-preview.27.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.27) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 **preview.25 修复：**补充无开始菜单快捷方式的已使用软件，读取 FreeCAD 保存的最近文档，避免失效旧路径占据有效发现名额，隔离历史来源错误，文件夹先搜索后限额，并在返回“我的软件”时刷新活动。详见[活动视图](ACTIVITY_VIEWS.md)。既有[双风格](THEME_VALIDATION.md)、[升级](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)继续保留。
 
@@ -21,6 +21,8 @@
 preview.21 加固 Win10/11 开始入口：输入钩子使用专用消息线程，减少主界面卡顿导致的失效；Win10 原生 Start 按钮点击时重新验证位置和 HWND。任务栏重建、显示与系统设置变化会丢弃旧定位，自动化检测超时可使用原生窗口后备；启动时短暂重试。界面超过约 2 秒不响应时放行后续原生输入。目标仍是已知 Win10/11 版本，尚不代表 Win10 实机通过。
 
 同版修复从 iStart 图标打开时被其他窗口遮挡：原生模式也使用临时浮层和有界焦点重试，切到其他窗口后收起。重复运行快捷方式会向已有实例转交前台权限。底部“启用接入”可主动接管系统开始按钮；未启用时系统开始按钮仍打开原生菜单。
+
+**preview.27 定位调整：** 首次启动、图标/重复运行、托盘和已接管的开始入口都从所选屏幕工作区的左下角弹出，保留最多 8 个物理像素间距。原生模式也会定位，不跟随居中的开始按钮或上次拖动的窗口位置。开始/托盘点击选择所在屏幕；其他入口在激活 iStart 前记录前台窗口屏幕。后台启动仍保持隐藏。
 
 preview.20 按企业微信截图习惯调整：默认全局快捷键 **Alt+Shift+A**，后台运行时也可触发；设置中可改用 Ctrl+Alt+A、Ctrl+Shift+S 或关闭。注册失败时明确显示冲突，不抢占其他软件快捷键。工具栏改为紧凑图标，双击选区或 Enter 完成复制，右键先重选、再次右键取消；Ctrl+Z 撤销、Ctrl+Y 重做、Ctrl+C 复制、Ctrl+S 保存、Esc 取消。全局快捷键截取鼠标所在显示器；菜单按钮仍截取菜单所在显示器。
 
@@ -114,7 +116,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.26.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.27.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。

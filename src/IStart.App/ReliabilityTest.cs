@@ -71,7 +71,7 @@ internal static partial class ReliabilityTest
             Check(size.Width == minimum.Width * dpi && size.Height == minimum.Height * dpi,
                 "restored menu must not reuse the minimized native rectangle");
             var work = new Rect(-1920, 0, 1920, 1032);
-            Check(work.Contains(MenuPlacement.Calculate(work, new Rect(-1910, 1032, 48, 48), size)),
+            Check(work.Contains(MenuPlacement.Calculate(work, size)),
                 "restored menu must fit the physical work area");
         }
         report.Add("PASS: minimum opening size at 100/125/150/200% DPI; negative monitor coordinates.");
