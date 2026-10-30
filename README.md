@@ -4,13 +4,13 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.26**
+**Version: 0.2.0-preview.27**
 
-This version moves Shell icon loading off the UI thread, shares repeated software scans, protects restored menu dimensions, and removes simulated Alt/Ctrl from focus retries. It retains activity-backed apps and recent files, including portable FreeCAD and STP/STEP models, the Windows/Google layouts, and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
+This version opens iStart at the bottom left of the selected monitor's working area, including the first launch, app icon, tray, repeated opens, and native-menu mode. It retains background icon loading, activity-backed apps and files, Windows/Google layouts, and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, tray, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.26/iStart-Setup-0.2.0-preview.26.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.26) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.27/iStart-Setup-0.2.0-preview.27.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.27) · [All releases](https://github.com/morrowfactory/istart/releases)
 
 **Fixed in preview.25:** discover used apps without Start-menu shortcuts, include FreeCAD's saved recent documents, prevent stale paths from consuming valid discovery slots, isolate history-source errors, search folders before limiting results, and refresh activity when returning to My Apps. See [Activity views](docs/ACTIVITY_VIEWS.md). Existing [themes](docs/THEME_VALIDATION.md), [updates](docs/UPDATES.md), and [integration recovery](docs/RESIDENT_VALIDATION.md) remain available.
 
@@ -42,7 +42,7 @@ Since preview.21, input hooks run on a dedicated message thread to reduce failur
 
 Opening iStart from its icon also uses a temporary topmost window and bounded focus retries, even in native-menu mode. Switching to another window hides it. Reopening the shortcut hands foreground permission to the existing instance. Use Enable integration at the bottom of the menu to opt in; otherwise, the system Start button continues to open Windows Start.
 
-**Placement change pending release:** the first launch, app icon/repeated launch, tray, and integrated Start entry points open at the bottom left of the selected monitor's working area, with up to eight physical pixels of spacing. Placement also applies in native-menu mode and does not follow a centered Start button or a previously dragged window position. Start/tray clicks select their monitor; other opens capture the foreground monitor before activating iStart. Background startup remains hidden.
+**Placement in preview.27:** the first launch, app icon/repeated launch, tray, and integrated Start entry points open at the bottom left of the selected monitor's working area, with up to eight physical pixels of spacing. Placement also applies in native-menu mode and does not follow a centered Start button or a previously dragged window position. Start/tray clicks select their monitor; other opens capture the foreground monitor before activating iStart. Background startup remains hidden.
 
 ### Screenshots
 
@@ -122,7 +122,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.26.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.27.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 Installers and SHA256 files are written to `artifacts/setup/`. The QA installer uses a separate identity. Its output directory must be inside `artifacts/` and must not already exist.

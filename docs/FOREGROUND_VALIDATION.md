@@ -2,7 +2,7 @@
 
 # Foreground and background presentation: 0.2.0-preview.6
 
-## Bottom-left placement correction — 2026-10-30, pending release
+## Bottom-left placement correction — 2026-10-30, preview.27
 
 The installed preview.26 only positioned the window while Start integration was enabled, and its initial startup still used CenterScreen/Show. In native mode, including unsupported build 26300, opening the app could therefore retain a centered or manually dragged position. This correction uses Manual startup and routes initial visible startup through ShowMenu. A shared placement helper runs in both modes before showing and after any resulting DPI change, anchored to the selected work area's bottom left. The monitor is selected before activation. Tray actions supply a monitor point; other opens use the foreground monitor. Background startup uses the same helper and remains hidden without requesting activation. The integration allowlist is unchanged.
 
