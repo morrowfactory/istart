@@ -39,6 +39,7 @@ internal sealed class StartMenuAdapter : IDisposable
     private readonly Dispatcher dispatcher;
     private readonly Func<StartTarget[]> scanTargets;
     private readonly bool nativeFallback;
+    private readonly Version systemVersion;
     private readonly Action<WinInput.Point?> toggle;
     private readonly InputHookThread.Callback keyboardCallback, mouseCallback;
     private readonly WinKeyGesture gesture = new();
@@ -54,12 +55,13 @@ internal sealed class StartMenuAdapter : IDisposable
     public bool Enabled => hookThread?.Running == true;
     public event Action<string>? StatusChanged;
     internal IReadOnlyList<StartTarget> Targets => targets;
-    public StartMenuAdapter(Dispatcher dispatcher, Action<WinInput.Point?> toggle, Func<StartTarget[]>? scanTargets = null)
+    public StartMenuAdapter(Dispatcher dispatcher, Action<WinInput.Point?> toggle, Func<StartTarget[]>? scanTargets = null, Version? systemVersion = null)
     {
         this.dispatcher = dispatcher;
         this.toggle = toggle;
         this.scanTargets = scanTargets ?? FindTargets;
         nativeFallback = scanTargets is null;
+        this.systemVersion = systemVersion ?? Environment.OSVersion.Version;
         keyboardCallback = KeyboardHook;
         mouseCallback = MouseHook;
         timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Background, async (_, _) => await RefreshTargets(), dispatcher);
@@ -71,7 +73,7 @@ internal sealed class StartMenuAdapter : IDisposable
         var requestedGeneration = generation;
         ObjectDisposedException.ThrowIf(disposed, this);
         if (Enabled) return;
-        if (!ShellCompatibility.CanTry(Environment.OSVersion.Version)) throw new NotSupportedException(ShellCompatibility.Description(Environment.OSVersion.Version));
+        if (!ShellCompatibility.CanTry(systemVersion)) throw new NotSupportedException(ShellCompatibility.Description(systemVersion));
         for (var attempt = 0; attempt < 4; attempt++)
         {
             await RefreshTargets();

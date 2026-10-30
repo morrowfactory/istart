@@ -52,7 +52,7 @@ internal static class AdapterRecoveryTest
         {
             starting.TrySetResult();
             return continueScan.Task.GetAwaiter().GetResult();
-        });
+        }, new Version(10, 0, 26200));
         var enable = cancelled.Enable();
         if (!ReferenceEquals(enable, cancelled.Enable())) throw new InvalidOperationException("并发启用必须共享同一个任务");
         await starting.Task;
@@ -61,5 +61,11 @@ internal static class AdapterRecoveryTest
         try { await enable; throw new InvalidOperationException("停用后不能继续安装钩子"); }
         catch (NotSupportedException) { }
         if (cancelled.Enabled) throw new InvalidOperationException("取消启用后必须保持原生入口");
+        var unsupportedScan = false;
+        using var unsupported = new StartMenuAdapter(Application.Current.Dispatcher, _ => { },
+            () => { unsupportedScan = true; return [first]; }, new Version(10, 0, 26300));
+        try { await unsupported.Enable(); throw new InvalidOperationException("未知系统版本不能进入接管"); }
+        catch (NotSupportedException) { }
+        if (unsupportedScan || unsupported.Enabled) throw new InvalidOperationException("未知系统版本必须在扫描和安装钩子前保留原生入口");
     }
 }
