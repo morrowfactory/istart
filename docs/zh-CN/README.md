@@ -4,19 +4,21 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**版本：0.2.0-preview.29 预览版**
+**版本：0.2.0-preview.30 预览版**
 
-本版在加载 WPF 资源前通知常驻菜单，任务栏恢复也进入缓存显示流程，并增加 Windows 26300 的能力检测试用。重新弹出仍先显示保留内容，再后台刷新活动。继续保留左下角定位、后台图标、Windows/Google 风格及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
+本版移除右下角托盘图标，保留任务栏/快捷方式、已接入的开始入口、后台运行和原生菜单恢复。继续保留缓存优先显示、左下角定位、Windows/Google 风格及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
 
-界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、托盘、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
+界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.29/iStart-Setup-0.2.0-preview.29.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.29) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.30/iStart-Setup-0.2.0-preview.30.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.30) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 **preview.29 兼容修正：** preview.28 将 Windows 26300 排除在开始接管范围之外，这个版本的系统开始按钮没有进入 iStart 的缓存流程。preview.29 补充 26300 的主动能力检测试用；仍须先发现有效按钮才能安装钩子，其他未知版本继续原生模式。可取得原生 Start 子窗口时优先使用，未取得时再用 UIAutomation。本机 26300 只读发现 1 个 UIAutomation 按钮，真实输入验收仍待完成。详见[Windows 兼容说明](WINDOWS_COMPATIBILITY.md)。
 
 **preview.29 任务栏唤醒修正：** Windows 任务栏上的 iStart 应用图标按单击处理。新启动入口在加载 WPF 和界面资源前通知常驻实例，原生恢复命令也进入缓存菜单显示流程；连续请求合并，过期恢复不会把已收起的菜单重新拉回。第一次启动仍需初始化一次。真实任务栏和焦点效果仍待验收。
 
 **preview.25 修复：**补充无开始菜单快捷方式的已使用软件，读取 FreeCAD 保存的最近文档，避免失效旧路径占据有效发现名额，隔离历史来源错误，文件夹先搜索后限额，并在返回“我的软件”时刷新活动。详见[活动视图](ACTIVITY_VIEWS.md)。既有[双风格](THEME_VALIDATION.md)、[升级](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)继续保留。
+
+**preview.30 调整：** 不再创建右下角托盘图标。“×”只收起到后台，可通过快捷方式、任务栏图标或已接入的开始入口重新打开；设置中关闭接管，菜单的退出按钮结束程序。
 
 ## 当前功能
 
@@ -26,7 +28,7 @@ preview.21 加固 Win10/11 开始入口：输入钩子使用专用消息线程�
 
 同版修复从 iStart 图标打开时被其他窗口遮挡：原生模式也使用临时浮层和有界焦点重试，切到其他窗口后收起。重复运行快捷方式会向已有实例转交前台权限。底部“启用接入”可主动接管系统开始按钮；未启用时系统开始按钮仍打开原生菜单。
 
-**preview.27 定位调整：** 首次启动、图标/重复运行、托盘和已接管的开始入口都从所选屏幕工作区的左下角弹出，保留最多 8 个物理像素间距。原生模式也会定位，不跟随居中的开始按钮或上次拖动的窗口位置。开始/托盘点击选择所在屏幕；其他入口在激活 iStart 前记录前台窗口屏幕。后台启动仍保持隐藏。
+**preview.27 定位调整：** 首次启动、图标/重复运行和已接管的开始入口都从所选屏幕工作区的左下角弹出，保留最多 8 个物理像素间距。原生模式也会定位，不跟随居中的开始按钮或上次拖动的窗口位置。开始按钮点击选择所在屏幕；其他入口在激活 iStart 前记录前台窗口屏幕。后台启动仍保持隐藏。
 
 **先显示缓存：** iStart 保持后台运行时，重新打开先显示上次的页面、列表、搜索、选中项和滚动位置；界面空闲延迟 200 毫秒后再读取活动。此次刷新的文件检查和排序在后台执行，内容不变就复用原列表，刷新失败保留原内容。缓存仅在本机内存中，完全退出应用后不保留。
 
@@ -47,9 +49,9 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 活动记录是有限的本机依据，不是全系统完整统计；FreeCAD 来源使用保存的 MRU 列表，不能凭空恢复缺失或尚未保存的记录。详见[读取范围](ACTIVITY_VIEWS.md)。
 
 - Windows 11 Fluent / Google 两种风格，在设置中即时切换并保存。
-- 桌面、任务栏、窗口、托盘、安装器和菜单使用统一 iStart 图标。
+- 桌面、任务栏、窗口、安装器和菜单使用统一 iStart 图标。
 - 软件和文件夹可拖入添加；支持图标/列表显示、搜索和隐藏。
-- 保留 Windows 原生菜单恢复、账户、电源和托盘入口。
+- 保留 Windows 原生菜单恢复、账户和电源入口。
 - 已移除独立软件推荐区、未分类、新建分类和分类名称输入框；旧入口数据保留兼容。
 
 ![五个入口与我的电脑](../prototypes/computer.png)
@@ -71,8 +73,8 @@ preview.19 新增“截屏”：菜单顶部点击后隐藏 iStart，拖选当�
 ## 原生菜单与退出
 
 - 底部“Windows 原生菜单”：临时打开系统菜单。
-- 托盘“切回 Windows 原生菜单”：停用自定义接入，恢复默认原生模式。
-- 右上角“×”：收起到托盘；菜单或托盘的“退出”才结束程序并释放接入。
+- 设置中取消“使用自定义开始菜单”：停用接入，恢复默认原生模式。
+- 右上角“×”：收起到后台，不创建托盘图标；快捷方式、任务栏图标或已接入的开始入口可重新打开。菜单里的“退出”才结束程序并释放接入。
 - 上次异常退出时，普通启动恢复原生模式；明确的 --enable-menu 请求可重新启用，包括已有后台实例。正常注销/关机时先释放接入、清理标记并保留偏好。卸载默认保留个人配置。
 
 账户与电源操作遵循系统能力和策略，注销、关机等需要确认；登录认证、Windows Hello 和安全桌面仍由 Windows 管理。
@@ -122,7 +124,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.29.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.30.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 安装包及 SHA256 输出到 `artifacts/setup/`。QA 安装器使用隔离身份；验证输出目录必须位于 `artifacts/` 且尚不存在。

@@ -1,4 +1,4 @@
-#define AppVersion "0.2.0-preview.29"
+#define AppVersion "0.2.0-preview.30"
 #ifndef Payload
   #define Payload "..\artifacts\preview-win-x64"
 #endif
@@ -41,12 +41,12 @@ Name: "zhcn"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 WelcomeLabel1=欢迎安装 iStart
 WelcomeLabel2=把常用软件、文件和文件夹集中整理，让桌面更清爽。%n%n这是试用版。默认保留 Windows 开始菜单，安装后可在设置中选择启用自定义入口。Win10/11 已知版本可在定位成功后试用接入，当前仅 Win11 26200 完成基本实机验证。%n%n安装仅用于当前账户，无需管理员权限；收藏数据留在本机。%n%n默认自动检查和升级新版，可在设置中取消勾选，改为手动升级。
 FinishedHeadingLabel=iStart 已安装
-FinishedLabel=安装已完成。常用软件、最近文件、文件夹和网站各有独立入口；文件夹和网站可切换常用与最近排序。%n%n开始按钮接入需在设置中启用，通过兼容检查后生效。随时可从菜单或托盘切回原生菜单。%n%n卸载默认保留个人收藏与最近记录。
+FinishedLabel=安装已完成。常用软件、最近文件、文件夹和网站各有独立入口；文件夹和网站可切换常用与最近排序。%n%n开始按钮接入需在设置中启用，通过兼容检查后生效。随时可在设置中关闭接入，切回原生菜单。%n%n卸载默认保留个人收藏与最近记录。
 
 [Tasks]
 Name: "desktopicon"; Description: "创建桌面快捷方式"; Flags: unchecked
 #ifndef TestInstall
-Name: "startup"; Description: "登录 Windows 后在托盘启动 iStart"; Flags: unchecked
+Name: "startup"; Description: "登录 Windows 后在后台启动 iStart"; Flags: unchecked
 Name: "custommenu"; Description: "首次启动尝试接入开始按钮（Win10/11 已知版本试用，失败保留原生菜单）"; Flags: unchecked
 #endif
 
@@ -116,7 +116,7 @@ begin
 #else
   Result := Exec(ExpandConstant('{app}\IStart.App.exe'), '--exit', '', SW_HIDE, ewWaitUntilTerminated, ExitCode);
   Result := Result and (ExitCode = 0);
-  if not Result then MsgBox('iStart 尚未退出。请从托盘退出后重试卸载，个人收藏保持不变。', mbError, MB_OK);
+  if not Result then MsgBox('iStart 尚未退出。请打开 iStart 菜单，点击退出后重试卸载，个人收藏保持不变。', mbError, MB_OK);
 #endif
 end;
 
@@ -128,7 +128,7 @@ begin
 #ifndef TestInstall
   if FileExists(ExpandConstant('{app}\IStart.App.exe')) then
     if not Exec(ExpandConstant('{app}\IStart.App.exe'), '--exit', '', SW_HIDE, ewWaitUntilTerminated, ExitCode) or (ExitCode <> 0) then
-      Result := 'iStart 尚未退出。请从托盘退出后重试安装。';
+      Result := 'iStart 尚未退出。请打开 iStart 菜单，点击退出后重试安装。';
 #endif
 end;
 

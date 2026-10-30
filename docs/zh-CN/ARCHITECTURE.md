@@ -10,13 +10,13 @@
 
 ## 状态与约束
 
-当前使用 .NET 10、C# + WPF，单一桌面项目，无额外 NuGet 依赖；Windows Forms 仅提供托盘和显示器/睡眠能力。Inno Setup 7.1.0 构建当前用户的中文自包含安装包。目标是 Win10/11 x64，开发版的开始入口允许 Win10 19041–19045 及 Win11 22000/22621/22631/26100/26200/26300 能力检测试用，其他版本保持原生模式；只有 26200 做过基本实机接入验证，26300 目前仅有按钮只读发现和夹具证据。实际证据见 [验证记录](P0_VALIDATION.md)。
+当前使用 .NET 10、C# + WPF，单一桌面项目，无额外 NuGet 依赖；Windows Forms 仅提供显示器/睡眠能力，不创建 NotifyIcon 或托盘菜单。Inno Setup 7.1.0 构建当前用户的中文自包含安装包。目标是 Win10/11 x64，开发版的开始入口允许 Win10 19041–19045 及 Win11 22000/22621/22631/26100/26200/26300 能力检测试用，其他版本保持原生模式；只有 26200 做过基本实机接入验证，26300 目前仅有按钮只读发现和夹具证据。实际证据见 [验证记录](P0_VALIDATION.md)。
 
 ## 模块边界
 
 Program 在创建 Application 和加载资源前检查当前 SID 的常驻通道；成功唤醒、启用或退出时不初始化 WPF。互斥锁缺失、未占用或异常遗留时进入完整启动，保留崩溃恢复；App 按实际取得所有权判断实例，避免把仅存在的名称误判为运行实例。同路径、同会话前台权限转交保留，显示信号合并为一个 Input 优先级请求。诊断参数不走此快速路径；QA 只使用 GUID 隔离命名，错误入口必须直接失败，不能通知用户实例。
 
-本窗口 HwndSource 将任务栏 SC_RESTORE 送入 ShowMenu，复用缓存并恢复普通尺寸、左下角位置；显示代数取消随后已被收起覆盖的旧恢复。局部窗口消息和收起清理不依赖全局接入，测试可不创建托盘或输入钩子；已退出/关闭窗口忽略迟到显示请求。托盘与菜单列表的双击绑定保持原样。
+本窗口 HwndSource 将任务栏 SC_RESTORE 送入 ShowMenu，复用缓存并恢复普通尺寸、左下角位置；显示代数取消随后已被收起覆盖的旧恢复。局部窗口消息和收起清理不依赖全局接入，测试可不创建全局输入钩子；已退出/关闭窗口忽略迟到显示请求。菜单列表的双击绑定保持原样。
 
 常驻菜单复用同一界面树、列表、搜索、选中项和滚动位置。ShowMenu 只处理定位、显示和焦点，再安排 200 毫秒 ContextIdle 计时器，不调用活动读取、目标检查或排序。Loaded 不再启动软件发现；文件夹尺寸变化改为排队刷新，不在弹出布局中重新生成列表。收起时取消计时器并使旧显示结果失效；缓存仅存本机进程内存，不把外部历史保存到磁盘，也不跨完全退出保留。
 
@@ -24,7 +24,7 @@ MainWindow.Refresh 将可见刷新合并为一条流水线。来源读取只更�
 
 替换 ItemsSource 前比较目标、名称、分类与真实固定项 ID；建议项重新生成随机 ID 不再导致控件重建。内容变化时按目标保留选中项与当前滚动位置。“我的电脑”也复用未变化的卡片，保留展开和滚动状态。主动软件搜索仍复用分类缓存；后台构建使用独立分类实例，避免跨线程共享可变字典。
 
-ShowMenu 的浮层与焦点处理不再依赖 adapter.Enabled，覆盖桌面图标、托盘和二次启动显示路径；窗口隐藏解除 Topmost，失去焦点后收起。焦点失败时最多重试 4 次，每次间隔 60 毫秒，并使用显示代数避免隐藏后的重试把旧窗口拉回。搜索焦点使用 Input 优先级，避免被背景加载拖延。二次启动仅向同路径、同会话的已有 iStart 进程调用 AllowSetForegroundWindow，再发送显示信号，不向任意进程开放。首次启用仍需用户操作底部“启用接入”或设置开关；不自动替换用户选择的原生模式。
+ShowMenu 的浮层与焦点处理不再依赖 adapter.Enabled，覆盖桌面图标和二次启动显示路径；窗口隐藏解除 Topmost，失去焦点后收起。焦点失败时最多重试 4 次，每次间隔 60 毫秒，并使用显示代数避免隐藏后的重试把旧窗口拉回。搜索焦点使用 Input 优先级，避免被背景加载拖延。二次启动仅向同路径、同会话的已有 iStart 进程调用 AllowSetForegroundWindow，再发送显示信号，不向任意进程开放。首次启用仍需用户操作底部“启用接入”或设置开关；不自动替换用户选择的原生模式。
 
 InputHookThread 在独立 STA 消息循环安装和卸载低级键鼠钩子，回调仅识别手势、校验本机 HWND 并向 UI Dispatcher 投递；同一待处理打开请求合并，生命周期代数阻止停用前的队列请求在重新启用后执行。UI 心跳超过 2 秒时键盘放行并清理 Win 手势，鼠标后续按下不拦截；已拦截的抬起仍消费，避免半个鼠标手势传给 Explorer。Win10 StartTarget 带真实 ButtonWindow，点击时检查类名、父任务栏、可见性、实时边界；UIAutomation 仍使用 1.5 秒新鲜度限制。主窗口接收 TaskbarCreated、WM_DISPLAYCHANGE、WM_SETTINGCHANGE 后清空快照，并通过快照代数拒绝变化前的扫描覆盖新状态；COM 检测超时尝试纯原生窗口枚举，不累积挂起自动化任务。启用共享同一个待完成任务，有限重试仍失败时保留原生入口。专用线程不注入 Explorer，不添加服务或驱动。
 
@@ -34,7 +34,7 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 
 | 模块 | 已实现职责与边界 |
 | --- | --- |
-| MainWindow / Refresh / Editing / Shell / Websites / Computer | 五个固定入口、菜单状态缓存、延后后台刷新、搜索、图标/列表、添加与隐藏、同页活动排序、设置、托盘与定位；普通用户运行 |
+| MainWindow / Refresh / Editing / Shell / Websites / Computer | 五个固定入口、菜单状态缓存、延后后台刷新、搜索、图标/列表、添加与隐藏、同页活动排序、设置与定位；普通用户运行 |
 | LibraryStore | 收藏、分类、偏好、最近记录；复制后修改，临时写入与原子替换，保留一份上一版本；失败不替换内存 |
 | Localization / Strings.en.json | 集中管理产品文字与英文翻译；读取当前用户 Windows 显示语言，WPF 绑定即时更新固定文字，导航与快捷键使用稳定标识 |
 | SoftwareDiscovery / ShellShortcut | 异步发现用户与公共开始菜单 `.lnk`；IShellLinkW/IPersistFile Unicode 解析；有效 exe 目标去重，过滤安装维护与失效入口 |
@@ -75,7 +75,7 @@ AdapterRecoveryTest 的取消/合并夹具分别固定 26200 和 26300，避免�
 - 偏好：隐藏软件、历史读取、常用/最近顺序、自定义入口、开机启动、截屏快捷键、图标视图、Theme（Windows/Google；缺失或未知值回退 Google）。
 - Language：`System` / `zh-CN` / `en`，缺失、空值和未知值回退 `System`，沿用 schema 2。系统模式使用 `GetUserDefaultUILanguage` 读取当前用户显示语言，中文映射简体中文，其他语言回退英文；不修改 Windows 语言或进程区域格式。
 
-界面切换先通过 LibraryStore 保存偏好，再更新语言绑定和当前导航、搜索结果、托盘及系统内容。设置面板保持原控件，保留尚未保存的复选项；不重启 StartMenuAdapter、不重新注册截图快捷键，不改写入口名称、隐私或开机启动。截图快捷键选项的显示文字与持久化标识分离；导航图标按固定 GUID 判断。控制面板的七个标题按类别 ID 本地化，磁盘卷标保持用户原文。外部 Shell 名称、原生对话框、安装向导和 GitHub 发布说明保留其自身语言。详见 [界面语言](LOCALIZATION.md)。
+界面切换先通过 LibraryStore 保存偏好，再更新语言绑定和当前导航、搜索结果及系统内容。设置面板保持原控件，保留尚未保存的复选项；不重启 StartMenuAdapter、不重新注册截图快捷键，不改写入口名称、隐私或开机启动。截图快捷键选项的显示文字与持久化标识分离；导航图标按固定 GUID 判断。控制面板的七个标题按类别 ID 本地化，磁盘卷标保持用户原文。外部 Shell 名称、原生对话框、安装向导和 GitHub 发布说明保留其自身语言。详见 [界面语言](LOCALIZATION.md)。
 
 配置仅保存在本机；移除入口不删除源文件。存储层保留旧分类迁移与恢复能力，删除分类时将入口移至未分类标识。商店应用补充 AppsFolder 发现，无有效 Shell 入口的软件不保证发现。当前软件排序与来源限制见[活动视图](ACTIVITY_VIEWS.md)；独立推荐区和分类编辑已移除。
 
@@ -109,11 +109,11 @@ Windows CI 保存核心结果、布局图、安装校验值及安装结果 7 天
 
 当前系统的真实鼠标、重新定位与完整菜单进程恢复证据见 [实机验收](CURRENT_SYSTEM_VALIDATION.md)；按键人工反馈和会话中断项目仍待完成。
 
-窗口 Closing 默认取消关闭并 Hide 到托盘；显式 RequestExit（菜单、托盘、升级/卸载信号）和系统会话结束允许退出。RuntimeLog 记录生命周期与适配器状态，每份约 64 KiB，仅保留一份旧日志，不记录按键或文件路径。接入修复证据见 [恢复记录](RESIDENT_VALIDATION.md)。
+窗口 Closing 默认取消关闭并 Hide 到后台，不创建通知区域图标；快捷方式/任务栏启动和已接入的开始入口可重新打开，设置可关闭接管。显式 RequestExit（菜单、升级/卸载信号）和系统会话结束允许退出。RuntimeLog 记录生命周期与适配器状态，每份约 64 KiB，仅保留一份旧日志，不记录按键或文件路径。接入修复证据见 [恢复记录](RESIDENT_VALIDATION.md)。
 
 ShowMenu 为用户触发的统一显示入口：恢复 Normal、开启 ShowActivated、临时提升层级并请求 SetForegroundWindow，再聚焦搜索。所有用户触发的菜单显示均保持临时浮层至隐藏，不再依赖是否接入开始按钮。呈现期间避免同步 Deactivated 误隐藏；隐藏时清除 Topmost。后台启动的隐藏在首次 Show 后同步完成，不放在异步接入初始化的末尾。前台权限可能被 Windows 拒绝，日志只记录成功标志，不修改系统焦点锁定策略、不借用其他线程输入队列。
 
-主窗口使用 Manual 初始定位，首次可见启动和重复显示信号均调用 ShowMenu。托盘传入鼠标所在屏幕，键盘/重复打开在显示及激活前记录前台窗口屏幕。PlaceMenu 不依赖 adapter.Enabled，在 Show 前后分别定位，适应移动屏幕后 DPI 的变化；MenuPlacement 按物理工作区限制尺寸，固定左下边缘并保留最多 8 像素间距，不沿用开始按钮的居中坐标或上次拖动位置。SetWindowPos 仅定位、不激活；ShowInBackground 共用定位、禁用激活并同步隐藏。调整只影响菜单窗口位置，不扩大系统接管试用名单。
+主窗口使用 Manual 初始定位，首次可见启动和重复显示信号均调用 ShowMenu。键盘/重复打开在显示及激活前记录前台窗口屏幕。PlaceMenu 不依赖 adapter.Enabled，在 Show 前后分别定位，适应移动屏幕后 DPI 的变化；MenuPlacement 按物理工作区限制尺寸，固定左下边缘并保留最多 8 像素间距，不沿用开始按钮的居中坐标或上次拖动位置。SetWindowPos 仅定位、不激活；ShowInBackground 共用定位、禁用激活并同步隐藏。调整只影响菜单窗口位置，不扩大系统接管试用名单。
 
 搜索呈现完成后在本线程设置原生 HWND 焦点，再同步 WPF 键盘与逻辑焦点；焦点重试只做有界直接请求，preview.26 已移除模拟 Alt/Ctrl 后备。菜单位置按所选屏幕物理工作区左下角计算；快捷方式图标读取资源或目标，启动路径不变。
 
@@ -143,7 +143,7 @@ Windows 11 Fluent（preview.13）：Appearance 继续统一管理双主题，增
 
 GitHub 发布边界：build.yml 将 ProductVersion 绑定检出 SHA；release.yml 手动接收最新 main SHA、成功 push/main 构建编号与授权记录，仅下载安装包允许清单。Publish-GitHubRelease.ps1 校验版本、SHA256 和源工作流，先草稿后公开，并下载公开文件复验；release-manifest.json 保存精确来源和保护状态。发布串行、GitHub Token 最小权限，无远程服务器或新增生产密钥。当前缺少强制分支/环境审批，本次使用会话授权，详见 docs/GITHUB_RELEASE.md。
 
-统一品牌资源（preview.14）：Assets/Brand 保存 Figma 矢量源与透明 PNG、九档 ICO。MainWindow 在双主题中共用品牌 PNG，窗口 Icon 与托盘使用嵌入 ICO，ApplicationIcon 将同一图标编译进 EXE；安装器使用该 ICO，并将独立 istart.ico 安装给桌面/开始菜单快捷方式和卸载列表。托盘退出时释放克隆图标。SVG 仅在维护时转换，无新增运行时依赖，详见 docs/BRAND_ICON.md。
+统一品牌资源（preview.14）：Assets/Brand 保存 Figma 矢量源与透明 PNG、九档 ICO。MainWindow 在双主题中共用品牌 PNG，窗口 Icon 使用嵌入 ICO，ApplicationIcon 将同一图标编译进 EXE；安装器使用该 ICO，并将独立 istart.ico 安装给桌面/开始菜单快捷方式和卸载列表。SVG 仅在维护时转换，无新增运行时依赖，详见 docs/BRAND_ICON.md。
 
 最近文件与文件夹（preview.15）：RecentDocuments.Files 在合并前过滤自身及外部记录，仅让有效文档进入最近视图。FrequentFolders 复用 ShellShortcut 与 JumpListDocuments 的文件夹读取模式，独立读取有效本机目录；主窗口在现有 5 秒异步任务中刷新文件和目录缓存。常用文件夹视图保留手动项，再以打开次数/近期文档目录活动和近似时间补充空位；建议与本次隐藏仅驻留内存，固定时才保存入口。沿用外部历史开关，关闭时两类缓存一起清空；无配置 schema 变更。见 docs/RECENT_FILES_FOLDERS.md。
 

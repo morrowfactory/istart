@@ -9,11 +9,11 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/Brand/istart.ico</ApplicationIcon>
-    <Version>0.2.0-preview.29</Version>
+    <Version>0.2.0-preview.30</Version>
     <!-- 英文来自框架中性资源；仅附带当前支持的简体中文语言资源。 -->
     <SatelliteResourceLanguages>en;zh-Hans</SatelliteResourceLanguages>
     <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
-    <!-- WPF 主程序通过清单控制 DPI；WinForms 仅提供托盘组件。 -->
+    <!-- WPF 主程序通过清单控制 DPI；WinForms 提供显示器信息与睡眠能力。 -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
   <ItemGroup><Resource Include="Assets/Fluent/*.png" /></ItemGroup>

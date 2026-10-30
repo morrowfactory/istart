@@ -9,8 +9,6 @@ namespace IStart;
 public partial class MainWindow
 {
     private StartMenuAdapter? adapter;
-    private Forms.NotifyIcon? tray;
-    private System.Drawing.Icon? trayIcon;
     private bool exitRequested;
     private bool presentingMenu;
     private bool searchFocusPending;
@@ -24,16 +22,6 @@ public partial class MainWindow
         InitializeScreenshotHotkey();
         adapter = new StartMenuAdapter(Dispatcher, ToggleMenu);
         adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add(L.T("打开 iStart"), null, (_, _) => ShowFromTray());
-        menu.Items.Add(L.T("切回 Windows 原生菜单"), null, (_, _) => { SetNativeMode(); OpenNative(this, new RoutedEventArgs()); });
-        menu.Items.Add(L.T("设置"), null, (_, _) => { ShowFromTray(); OpenSettings(this, new RoutedEventArgs()); });
-        menu.Items.Add(L.T("退出 iStart"), null, (_, _) => RequestExit("tray"));
-        using (var stream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/Brand/istart.ico")).Stream)
-        using (var icon = new System.Drawing.Icon(stream, 16, 16))
-            trayIcon = (System.Drawing.Icon)icon.Clone();
-        tray = new Forms.NotifyIcon { Icon = trayIcon, Text = L.T("iStart · 个人开始菜单"), ContextMenuStrip = menu, Visible = true };
-        tray.DoubleClick += (_, _) => ShowFromTray();
         Loaded += async (_, _) => await InitializeStartMenu(App.EnableMenuRequested);
         Deactivated += (_, _) =>
         {
@@ -47,14 +35,12 @@ public partial class MainWindow
             if (exitRequested || App.IsSessionEnding) return;
             e.Cancel = true;
             Hide();
-            RuntimeLog.Write("window-hidden-to-tray");
+            RuntimeLog.Write("window-hidden");
         };
         Closed += (_, _) =>
         {
             RuntimeLog.Write("window-closed");
             adapter.Dispose();
-            tray.Dispose();
-            trayIcon.Dispose();
             undoTimer?.Stop();
             ClearSessionMarker();
         };
@@ -173,7 +159,6 @@ public partial class MainWindow
         if (capturing) return;
         if (IsVisible && WinInput.GetForegroundWindow() == new WindowInteropHelper(this).Handle) Hide(); else ShowMenu(point);
     }
-    private void ShowFromTray() => ShowMenu(WinInput.GetCursorPos(out var point) ? point : null);
     private void PlaceMenu(Forms.Screen screen, nint handle)
     {
         var area = screen.WorkingArea;
@@ -425,12 +410,6 @@ public partial class MainWindow
         ModeStatus.Text = adapter?.Enabled == true ? L.T("已接入") : L.T("原生菜单模式");
         ScreenshotButton.ToolTip = screenshotHotkey?.Status ?? L.T("隐藏菜单后拖选范围，支持彩色标注");
         RefreshUpdateIndicators();
-        if (tray is not null)
-        {
-            tray.Text = L.T("iStart · 个人开始菜单");
-            var labels = new[] { "打开 iStart", "切回 Windows 原生菜单", "设置", "退出 iStart" };
-            for (var i = 0; i < labels.Length; i++) tray.ContextMenuStrip!.Items[i].Text = L.T(labels[i]);
-        }
         computer = null;
         if (computerView) { RenderComputer(); QueueMenuRefresh(true); }
     }

@@ -4,19 +4,21 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.29**
+**Version: 0.2.0-preview.30**
 
-This version hands repeated app launches to the resident menu before loading WPF resources, routes taskbar restoration through cached display, and adds a capability-checked Windows build 26300 integration trial. Reopening still shows retained content before refreshing activity in the background. It retains bottom-left placement, background icons, Windows/Google layouts, and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
+This version removes the notification-area icon while preserving taskbar/shortcut launches, integrated Start entry points, background operation, and native-menu recovery. It retains cached opening, bottom-left placement, Windows/Google layouts, and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
-The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, tray, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
+The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.29/iStart-Setup-0.2.0-preview.29.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.29) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.30/iStart-Setup-0.2.0-preview.30.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.30) · [All releases](https://github.com/morrowfactory/istart/releases)
 
 **Compatibility in preview.29:** preview.28 excludes Windows build 26300 from Start integration, so its resident-menu cache does not handle the system Start button on that build. Preview.29 permits an explicit, capability-checked 26300 trial. A valid Start button is still required before hooks are installed; other unknown builds remain native. Native Start child windows are preferred when available, with UI Automation as fallback. Current 26300 read-only discovery found one UI Automation button; live input acceptance is pending. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
 
 **Taskbar fix in preview.29:** the iStart application icon on the Windows taskbar uses a single click. A new entry point hands requests to a resident instance before loading WPF or app resources, and native restore commands use the cached-menu display path. Rapid requests are coalesced; stale restore requests cannot reopen a subsequently hidden menu. First startup still initializes the application once. Real taskbar/focus acceptance remains pending.
 
 **Fixed in preview.25:** discover used apps without Start-menu shortcuts, include FreeCAD's saved recent documents, prevent stale paths from consuming valid discovery slots, isolate history-source errors, search folders before limiting results, and refresh activity when returning to My Apps. See [Activity views](docs/ACTIVITY_VIEWS.md). Existing [themes](docs/THEME_VALIDATION.md), [updates](docs/UPDATES.md), and [integration recovery](docs/RESIDENT_VALIDATION.md) remain available.
+
+**Changed in preview.30:** iStart no longer creates a notification-area icon. Close hides the menu in the background; reopen it from its shortcut/taskbar icon or integrated Start entry points. Use Settings to disable integration or the menu's Exit button to quit.
 
 ## Features
 
@@ -29,9 +31,9 @@ The interface follows the Windows display language by default. You can select Si
 | My Computer | Disk partitions, available space, Recycle Bin, Network, and seven expandable Control Panel categories, excluding Ease of Access | Open the corresponding Windows page; search within this view |
 
 - Switch between Windows 11 Fluent and Google styles in Settings. The choice is applied immediately and saved.
-- A consistent iStart icon is used for the desktop shortcut, taskbar, window, tray, installer, and menu.
+- A consistent iStart icon is used for the desktop shortcut, taskbar, window, installer, and menu.
 - Drag apps and folders into the menu; switch between icons and a list, search, and hide items.
-- Windows Start menu recovery, account actions, power options, and the tray remain available.
+- Windows Start menu recovery, account actions, and power options remain available.
 - The separate app recommendation panel, Uncategorized view, category creation, and category-name field have been removed. Legacy item data remains compatible.
 - While iStart remains running, reopening shows the retained page, rows, search, selection, and scroll position first. Activity refresh starts after a 200 ms idle delay; file checks and ranking for that refresh run in the background. Unchanged rows are reused, and a failed refresh keeps the previous content. This memory cache does not survive exiting the application.
 
@@ -47,7 +49,7 @@ Since preview.21, input hooks run on a dedicated message thread to reduce failur
 
 Opening iStart from its icon also uses a temporary topmost window and bounded focus retries, even in native-menu mode. Switching to another window hides it. Reopening the shortcut hands foreground permission to the existing instance. Use Enable integration at the bottom of the menu to opt in; otherwise, the system Start button continues to open Windows Start.
 
-**Placement in preview.27:** the first launch, app icon/repeated launch, tray, and integrated Start entry points open at the bottom left of the selected monitor's working area, with up to eight physical pixels of spacing. Placement also applies in native-menu mode and does not follow a centered Start button or a previously dragged window position. Start/tray clicks select their monitor; other opens capture the foreground monitor before activating iStart. Background startup remains hidden.
+**Placement in preview.27:** the first launch, app icon/repeated launch, and integrated Start entry points open at the bottom left of the selected monitor's working area, with up to eight physical pixels of spacing. Placement also applies in native-menu mode and does not follow a centered Start button or a previously dragged window position. Start clicks select their monitor; other opens capture the foreground monitor before activating iStart. Background startup remains hidden.
 
 ### Screenshots
 
@@ -78,8 +80,8 @@ The installer is currently unsigned. Upgrades retain items, history, and valid s
 ## Windows Start and exit behavior
 
 - Windows Start menu at the bottom temporarily opens the system menu.
-- Switch to Windows Start menu in the tray disables integration and restores native mode as the default.
-- The window's × button hides iStart to the tray. Exit in the menu or tray ends the process and releases integration.
+- Uncheck Use custom Start menu in Settings to disable integration and restore native mode as the default.
+- The window's × button hides iStart in the background without a notification-area icon. Reopen it from its shortcut/taskbar icon or integrated Start entry points. Exit in the menu ends the process and releases integration.
 - After an abnormal exit, an ordinary launch restores native mode. An explicit `--enable-menu` request can re-enable integration, including in an existing background instance. Normal session ending releases integration and clears its marker while retaining the preference. Uninstallation keeps personal configuration by default.
 
 Account and power actions follow system capabilities and policies. Sign-out and shutdown require confirmation. Windows continues to manage authentication, Windows Hello, and the secure desktop.
@@ -128,7 +130,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.29.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.30.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 Installers and SHA256 files are written to `artifacts/setup/`. The QA installer uses a separate identity. Its output directory must be inside `artifacts/` and must not already exist.
