@@ -11,7 +11,6 @@ public partial class MainWindow
     private bool readingComputer;
     private Task<ComputerSnapshot>? computerRead;
     internal ComputerSnapshot? computer;
-    private readonly ShellIconConverter computerIcons = new();
 
     private async Task RefreshComputer()
     {
@@ -50,8 +49,9 @@ public partial class MainWindow
             var row = new Grid();
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition());
-            row.Children.Add(new Image { Source = computerIcons.Convert(item.Target, typeof(System.Windows.Media.ImageSource), null!, System.Globalization.CultureInfo.CurrentCulture) as System.Windows.Media.ImageSource,
-                Width = 18, Height = 18, Margin = new Thickness(0, 0, 6, 0) });
+            var icon = new Image { Width = 18, Height = 18, Margin = new Thickness(0, 0, 6, 0) };
+            ShellIcon.SetTarget(icon, item.Target);
+            row.Children.Add(icon);
             var title = new TextBlock { Text = item.Title, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
             Grid.SetColumn(title, 1);
             row.Children.Add(title);

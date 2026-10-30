@@ -15,6 +15,30 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (e.Args.Length == 2 && e.Args[0] == "--window-reliability-test")
+        {
+            IsUITest = true;
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            RuntimeLog.DirectoryPath = Path.GetFullPath(e.Args[1]);
+            RunWindowReliabilityTest(RuntimeLog.DirectoryPath);
+            return;
+        }
+        if (e.Args.Length == 2 && e.Args[0] == "--reliability-test")
+        {
+            IsUITest = true;
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            RuntimeLog.DirectoryPath = Path.GetFullPath(e.Args[1]);
+            RunReliabilityTest(RuntimeLog.DirectoryPath);
+            return;
+        }
+        if (e.Args.Length == 2 && e.Args[0] == "--probe-menu")
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Directory.CreateDirectory(e.Args[1]);
+            File.WriteAllText(Path.Combine(e.Args[1], "menu-windows.json"), System.Text.Json.JsonSerializer.Serialize(MenuWindowProbe.Read()));
+            Shutdown();
+            return;
+        }
         if (e.Args.Length == 2 && e.Args[0] == "--presentation-test")
         {
             IsUITest = true;
@@ -135,6 +159,16 @@ public partial class App : Application
             MessageBox.Show(L.T("暂时无法加载 iStart。请检查本地配置或文件权限。Windows 原生开始菜单仍可正常使用。"), "iStart", MessageBoxButton.OK, MessageBoxImage.Warning);
             Shutdown(1);
         }
+    }
+    private async void RunWindowReliabilityTest(string output)
+    {
+        try { await ReliabilityTest.RunWindows(output); Shutdown(); }
+        catch (Exception ex) { Directory.CreateDirectory(output); File.WriteAllText(Path.Combine(output, "window-failure.txt"), ex.ToString()); Shutdown(1); }
+    }
+    private async void RunReliabilityTest(string output)
+    {
+        try { await ReliabilityTest.Run(output); Shutdown(); }
+        catch (Exception ex) { Directory.CreateDirectory(output); File.WriteAllText(Path.Combine(output, "reliability-failure.txt"), ex.ToString()); Shutdown(1); }
     }
     private async void RunSmokeTests(string output)
     {

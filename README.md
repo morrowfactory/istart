@@ -4,13 +4,13 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.25**
+**Version: 0.2.0-preview.26**
 
-This version fixes missing activity-backed apps and recent files, including portable FreeCAD and STP/STEP models. It improves history-source isolation, folder search, and activity refresh while retaining the compact Windows/Google layouts and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
+This version moves Shell icon loading off the UI thread, shares repeated software scans, protects restored menu dimensions, and removes simulated Alt/Ctrl from focus retries. It retains activity-backed apps and recent files, including portable FreeCAD and STP/STEP models, the Windows/Google layouts, and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, tray, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.25/iStart-Setup-0.2.0-preview.25.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.25) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.26/iStart-Setup-0.2.0-preview.26.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.26) · [All releases](https://github.com/morrowfactory/istart/releases)
 
 **Fixed in preview.25:** discover used apps without Start-menu shortcuts, include FreeCAD's saved recent documents, prevent stale paths from consuming valid discovery slots, isolate history-source errors, search folders before limiting results, and refresh activity when returning to My Apps. See [Activity views](docs/ACTIVITY_VIEWS.md). Existing [themes](docs/THEME_VALIDATION.md), [updates](docs/UPDATES.md), and [integration recovery](docs/RESIDENT_VALIDATION.md) remain available.
 
@@ -35,6 +35,8 @@ Content comes from the current user's local system and activity records. Documen
 Activity records are bounded local evidence, not complete system-wide statistics. FreeCAD reads use its saved MRU list; missing or unsaved records cannot be reconstructed. See [source limits](docs/ACTIVITY_VIEWS.md).
 
 ### Start integration and foreground behavior
+
+**Reliability in preview.26:** repeated opening/focus failures were reported on the current Windows 11 PC, including in native-menu mode. This version moves Shell icon reads off the UI thread, coalesces software scans with a 30-second successful-result cache, protects restored menu dimensions, and removes simulated modifier keys from focus retries. Isolated checks do not establish live Win-key acceptance or the cause of the reported unintended text deletion. Keep the affected copy exited during investigation; installation alone does not complete interaction acceptance. Build 26300 remains in native-menu mode because it is outside the existing integration trial list. See [current investigation and checks](docs/FOREGROUND_VALIDATION.md#current-reliability-investigation--2026-10-29).
 
 Since preview.21, input hooks run on a dedicated message thread to reduce failures caused by a busy UI. On Windows 10, native Start-button clicks revalidate the button bounds and HWND. Taskbar recreation and display or system-setting changes invalidate cached locations. A native-window fallback handles automation timeouts, and startup uses bounded retries. If the UI is unresponsive for about two seconds, subsequent native input is allowed through. These changes target known Windows 10/11 builds; they do not establish Windows 10 hardware acceptance.
 
@@ -118,7 +120,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.25.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.26.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 Installers and SHA256 files are written to `artifacts/setup/`. The QA installer uses a separate identity. Its output directory must be inside `artifacts/` and must not already exist.

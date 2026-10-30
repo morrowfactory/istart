@@ -26,10 +26,10 @@ internal static class MySoftware
     }
 
     internal static List<MenuEntry> Build(IEnumerable<MenuEntry> pinned, IEnumerable<SoftwareCandidate> candidates,
-        IEnumerable<LaunchRecord> launches, IReadOnlyDictionary<string, int> usage, ISet<string> hidden, string query = "")
+        IEnumerable<LaunchRecord> launches, IReadOnlyDictionary<string, int> usage, ISet<string> hidden, string query = "", EntryGroups? groups = null)
     {
         var apps = candidates.ToList();
-        var groups = new EntryGroups();
+        groups ??= new EntryGroups();
         var records = launches.ToDictionary(r => r.Target, StringComparer.OrdinalIgnoreCase);
         var choices = new Dictionary<string, (SoftwareCandidate App, MenuEntry Entry, bool Pinned)>(StringComparer.OrdinalIgnoreCase);
         foreach (var app in apps)

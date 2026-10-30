@@ -13,4 +13,11 @@ if ($LASTEXITCODE -ne 0) {
     throw "验证失败，请查看 $output"
 }
 Get-Content (Join-Path $output 'result.txt')
+& $Dotnet $assembly --reliability-test $output
+if ($LASTEXITCODE -ne 0) {
+    $failure = Join-Path $output 'reliability-failure.txt'
+    if (Test-Path -LiteralPath $failure) { Get-Content -LiteralPath $failure | Write-Output }
+    throw "无输入稳定性检查失败：$output"
+}
+Get-Content (Join-Path $output 'reliability-result.txt')
 Write-Output "界面渲染：$output\menu.png"

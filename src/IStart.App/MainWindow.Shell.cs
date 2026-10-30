@@ -47,6 +47,7 @@ public partial class MainWindow
         };
         IsVisibleChanged += (_, _) => { if (!IsVisible) { Topmost = false; activatingMenu = false; presentation++; } };
         Activated += (_, _) => QueueSearchFocus();
+        ContentRendered += (_, _) => QueueSearchFocus();
         Closing += (_, e) =>
         {
             RuntimeLog.Write($"window-closing explicit={exitRequested} sessionEnding={App.IsSessionEnding}");
@@ -158,11 +159,12 @@ public partial class MainWindow
     private void ToggleMenu(WinInput.Point? point)
     {
         if (capturing) return;
-        if (IsVisible && (IsActive || Topmost)) Hide(); else ShowMenu(point);
+        if (IsVisible && WinInput.GetForegroundWindow() == new WindowInteropHelper(this).Handle) Hide(); else ShowMenu(point);
     }
     internal void ShowMenu(WinInput.Point? point)
     {
         if (capturing) return;
+        var started = System.Diagnostics.Stopwatch.StartNew();
         var request = ++presentation;
         activatingMenu = false;
         presentingMenu = true;
@@ -187,27 +189,22 @@ public partial class MainWindow
                 if (target is not null) screen = Forms.Screen.FromHandle(target.Taskbar);
                 var area = screen.WorkingArea;
                 var handle = new WindowInteropHelper(this).Handle;
-                if (WinInput.GetWindowRect(handle, out var rect))
-                {
-                    var anchor = target?.Bounds ?? new Rect(area.Left, area.Bottom, 0, 0);
-                    if (target is { ButtonWindow: not 0 } && WinInput.GetWindowRect(target.ButtonWindow, out var button)
-                        && WinInput.GetAncestor(target.ButtonWindow, 2) == target.Taskbar)
-                        anchor = new Rect(button.Left, button.Top, Math.Max(0, button.Right - button.Left), Math.Max(0, button.Bottom - button.Top));
-                    var position = MenuPlacement.Calculate(new Rect(area.X, area.Y, area.Width, area.Height),
-                        anchor, new Size(rect.Right - rect.Left, rect.Bottom - rect.Top));
-                    WinInput.SetWindowPos(handle, 0, (int)position.X, (int)position.Y, (int)position.Width, (int)position.Height, 0x4);
-                }
+                var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+                var anchor = target?.Bounds ?? new Rect(area.Left, area.Bottom, 0, 0);
+                if (target is { ButtonWindow: not 0 } && WinInput.GetWindowRect(target.ButtonWindow, out var button)
+                    && WinInput.GetAncestor(target.ButtonWindow, 2) == target.Taskbar)
+                    anchor = new Rect(button.Left, button.Top, Math.Max(0, button.Right - button.Left), Math.Max(0, button.Bottom - button.Top));
+                var position = MenuPlacement.Calculate(new Rect(area.X, area.Y, area.Width, area.Height),
+                    anchor, MenuPlacement.OpeningSize(new Size(Width, Height), new Size(MinWidth, MinHeight), dpi));
+                WinInput.SetWindowPos(handle, 0, (int)position.X, (int)position.Y, (int)position.Width, (int)position.Height, 0x4);
             }
             var windowHandle = new WindowInteropHelper(this).Handle;
             WinInput.SetForegroundWindow(windowHandle);
             Activate();
             QueueSearchFocus();
-            RuntimeLog.Write($"menu-shown foreground={WinInput.GetForegroundWindow() == windowHandle} topmost={Topmost}");
-            if (WinInput.GetForegroundWindow() != windowHandle)
-            {
-                activatingMenu = true;
-                _ = RetryMenuFocus(windowHandle, request);
-            }
+            RuntimeLog.Write($"menu-shown foreground={WinInput.GetForegroundWindow() == windowHandle} topmost={Topmost} elapsedMs={started.ElapsedMilliseconds} size={ActualWidth:0}x{ActualHeight:0}");
+            activatingMenu = WinInput.GetForegroundWindow() != windowHandle;
+            _ = RetryMenuFocus(windowHandle, request);
         }
         finally { presentingMenu = false; }
     }
@@ -222,11 +219,10 @@ public partial class MainWindow
                 if (WinInput.TryForegroundAfterMenuInput(handle))
                 {
                     Activate(); QueueSearchFocus();
-                    RuntimeLog.Write("menu-focus-retry foreground=True");
-                    return;
+                    if (SearchBox.IsKeyboardFocused) return;
                 }
             }
-            RuntimeLog.Write("menu-focus-retry foreground=False");
+            RuntimeLog.Write($"menu-focus-retry foreground={WinInput.GetForegroundWindow() == handle} search={SearchBox.IsKeyboardFocused}");
         }
         finally { if (request == presentation) activatingMenu = false; }
     }
@@ -240,11 +236,13 @@ public partial class MainWindow
             if (!IsVisible || OwnedWindows.Count > 0) return;
             var handle = new WindowInteropHelper(this).Handle;
             if (WinInput.GetForegroundWindow() != handle) return;
+            System.Runtime.InteropServices.Marshal.SetLastPInvokeError(0);
             WinInput.SetFocus(handle);
+            var focusError = System.Runtime.InteropServices.Marshal.GetLastPInvokeError();
             System.Windows.Input.FocusManager.SetFocusedElement(this, SearchBox);
             SearchBox.Focus();
             System.Windows.Input.Keyboard.Focus(SearchBox);
-            RuntimeLog.Write($"search-focus active={IsActive} keyboard={SearchBox.IsKeyboardFocused} native={WinInput.GetFocus() == handle} modifiers={WinInput.ModifiersHeld} win={((WinInput.GetAsyncKeyState(0x5B) | WinInput.GetAsyncKeyState(0x5C)) & 0x8000) != 0}");
+            RuntimeLog.Write($"search-focus active={IsActive} keyboard={SearchBox.IsKeyboardFocused} native={WinInput.GetFocus() == handle} enabled={WinInput.IsWindowEnabled(handle)} visible={WinInput.IsWindowVisible(handle)} error={focusError} modifiers={WinInput.ModifiersHeld} win={((WinInput.GetAsyncKeyState(0x5B) | WinInput.GetAsyncKeyState(0x5C)) & 0x8000) != 0}");
         });
     }
     private void OpenSettings(object sender, RoutedEventArgs e) => CreateSettings().ShowDialog();
