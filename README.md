@@ -14,6 +14,8 @@ The interface follows the Windows display language by default. You can select Si
 
 **Development compatibility fix:** public preview.28 excludes Windows build 26300 from Start integration, so its resident-menu cache does not handle the system Start button on that build. The development code permits an explicit, capability-checked 26300 trial. A valid Start button is still required before hooks are installed; other unknown builds remain native. Native Start child windows are preferred when available, with UI Automation as fallback. Current 26300 read-only discovery found one UI Automation button; live input acceptance is pending. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
 
+**Development taskbar fix:** the iStart application icon on the Windows taskbar uses a single click. A new entry point hands requests to a resident instance before loading WPF or app resources, and native restore commands use the cached-menu display path. Rapid requests are coalesced; stale restore requests cannot reopen a subsequently hidden menu. First startup still initializes the application once. These fixes are not in public preview.28; real taskbar/focus acceptance remains pending.
+
 **Fixed in preview.25:** discover used apps without Start-menu shortcuts, include FreeCAD's saved recent documents, prevent stale paths from consuming valid discovery slots, isolate history-source errors, search folders before limiting results, and refresh activity when returning to My Apps. See [Activity views](docs/ACTIVITY_VIEWS.md). Existing [themes](docs/THEME_VALIDATION.md), [updates](docs/UPDATES.md), and [integration recovery](docs/RESIDENT_VALIDATION.md) remain available.
 
 ## Features

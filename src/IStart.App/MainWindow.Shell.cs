@@ -23,12 +23,6 @@ public partial class MainWindow
     {
         InitializeScreenshotHotkey();
         adapter = new StartMenuAdapter(Dispatcher, ToggleMenu);
-        taskbarCreated = WinInput.RegisterWindowMessage("TaskbarCreated");
-        SourceInitialized += (_, _) =>
-        {
-            shellMessages = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
-            shellMessages.AddHook(ShellMessage);
-        };
         adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add(L.T("打开 iStart"), null, (_, _) => ShowFromTray());
@@ -45,7 +39,6 @@ public partial class MainWindow
         {
             if (!presentingMenu && !activatingMenu && OwnedWindows.Count == 0 && !IsMouseCaptureWithin) Hide();
         };
-        IsVisibleChanged += (_, _) => { if (!IsVisible) { Topmost = false; activatingMenu = false; presentation++; } };
         Activated += (_, _) => QueueSearchFocus();
         ContentRendered += (_, _) => QueueSearchFocus();
         Closing += (_, e) =>
@@ -60,12 +53,21 @@ public partial class MainWindow
         {
             RuntimeLog.Write("window-closed");
             adapter.Dispose();
-            shellMessages?.RemoveHook(ShellMessage);
             tray.Dispose();
             trayIcon.Dispose();
             undoTimer?.Stop();
             ClearSessionMarker();
         };
+    }
+    private void InitializeWindowMessages()
+    {
+        taskbarCreated = WinInput.RegisterWindowMessage("TaskbarCreated");
+        SourceInitialized += (_, _) =>
+        {
+            shellMessages = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+            shellMessages.AddHook(ShellMessage);
+        };
+        Closed += (_, _) => shellMessages?.RemoveHook(ShellMessage);
     }
     internal async Task InitializeStartMenu(bool enableRequested)
     {
@@ -98,6 +100,16 @@ public partial class MainWindow
     }
     private nint ShellMessage(nint window, int message, nint wParam, nint lParam, ref bool handled)
     {
+        if (message == 0x0112 && ((long)wParam & 0xFFF0) == 0xF120 && !presentingMenu)
+        {
+            handled = true;
+            var request = presentation;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
+            {
+                if (request == presentation) ShowMenu(null);
+            });
+            return 0;
+        }
         if (message == 0x007E || message == 0x001A || taskbarCreated != 0 && (uint)message == taskbarCreated)
             adapter?.ShellChanged();
         return 0;
@@ -179,7 +191,7 @@ public partial class MainWindow
     }
     internal void ShowMenu(WinInput.Point? point)
     {
-        if (capturing) return;
+        if (capturing || exitRequested || menuClosed || App.IsSessionEnding) return;
         PauseMenuRefresh();
         // Select the monitor before Show/Activate changes the foreground window.
         var screen = point is WinInput.Point click

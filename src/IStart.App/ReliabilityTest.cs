@@ -95,6 +95,7 @@ internal static partial class ReliabilityTest
         finally { window.Close(); }
         await AdapterRecoveryTest.Run();
         report.Add("PASS: taskbar snapshot invalidation, retry recovery, cancelled enable, and unsupported-build native fallback (no hooks installed).");
+        report.Add(await InstanceChannelTest.Run());
         report.Add("Scope: no windows shown, global input hooks, synthetic keys/clicks, installation, or personal configuration changes. Actual Win/Start opening and reported text deletion remain unverified.");
         File.WriteAllLines(Path.Combine(output, "reliability-result.txt"), report);
     }

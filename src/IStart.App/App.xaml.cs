@@ -6,6 +6,8 @@ namespace IStart;
 public partial class App : Application
 {
     private Mutex? instance;
+    private bool ownsInstance;
+    private int showQueued;
     private EventWaitHandle? showSignal, exitSignal, enableSignal;
     private RegisteredWaitHandle? showWait, exitWait, enableWait;
     internal static bool EnableMenuRequested { get; private set; }
@@ -15,6 +17,8 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        // A broken entry-point selection must fail QA handoff commands closed, never signal the user's instance.
+        if (e.Args.FirstOrDefault() == InstanceChannel.TestArgument) { Shutdown(64); return; }
         if (e.Args.Length == 2 && e.Args[0] == "--window-reliability-test")
         {
             IsUITest = true;
@@ -113,11 +117,13 @@ public partial class App : Application
             var user = System.Security.Principal.WindowsIdentity.GetCurrent().User!.Value;
             EnableMenuRequested = e.Args.Contains("--enable-menu");
             BackgroundRequested = e.Args.Contains("--background");
-            showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\iStart-show-" + user);
-            exitSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\iStart-exit-" + user);
-            enableSignal = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\iStart-enable-" + user);
-            instance = new Mutex(true, "Local\\iStart-" + user, out var first);
-            if (!first)
+            showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, InstanceChannel.SignalName(user, "show"));
+            exitSignal = new EventWaitHandle(false, EventResetMode.AutoReset, InstanceChannel.SignalName(user, "exit"));
+            enableSignal = new EventWaitHandle(false, EventResetMode.AutoReset, InstanceChannel.SignalName(user, "enable"));
+            instance = new Mutex(false, InstanceChannel.MutexName(user));
+            try { ownsInstance = instance.WaitOne(0); }
+            catch (AbandonedMutexException) { ownsInstance = true; }
+            if (!ownsInstance)
             {
                 var exit = e.Args.Contains("--exit");
                 var exitCode = 0;
@@ -147,7 +153,7 @@ public partial class App : Application
                 if (store.Library.StartWithWindows != configured) store.Change(s => s.StartWithWindows = configured);
             }
             var window = new MainWindow(store);
-            showWait = ThreadPool.RegisterWaitForSingleObject(showSignal, (_, _) => Dispatcher.BeginInvoke(() => window.ShowMenu(null)), null, Timeout.Infinite, false);
+            showWait = ThreadPool.RegisterWaitForSingleObject(showSignal, (_, _) => RequestShow(window), null, Timeout.Infinite, false);
             exitWait = ThreadPool.RegisterWaitForSingleObject(exitSignal, (_, _) => Dispatcher.BeginInvoke(() => window.RequestExit("exit-signal")), null, Timeout.Infinite, false);
             enableWait = ThreadPool.RegisterWaitForSingleObject(enableSignal, (_, _) => Dispatcher.BeginInvoke(async () => await window.RequestEnableMenu()), null, Timeout.Infinite, false);
             if (BackgroundRequested) window.ShowInBackground(); else window.ShowMenu(null);
@@ -158,6 +164,15 @@ public partial class App : Application
             MessageBox.Show(L.T("暂时无法加载 iStart。请检查本地配置或文件权限。Windows 原生开始菜单仍可正常使用。"), "iStart", MessageBoxButton.OK, MessageBoxImage.Warning);
             Shutdown(1);
         }
+    }
+    private void RequestShow(MainWindow window)
+    {
+        if (Interlocked.Exchange(ref showQueued, 1) != 0) return;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
+        {
+            Interlocked.Exchange(ref showQueued, 0);
+            if (!IsSessionEnding && !Dispatcher.HasShutdownStarted) window.ShowMenu(null);
+        });
     }
     private async void RunWindowReliabilityTest(string output)
     {
@@ -226,7 +241,7 @@ public partial class App : Application
         showSignal?.Dispose();
         exitSignal?.Dispose();
         enableSignal?.Dispose();
-        instance?.ReleaseMutex();
+        if (ownsInstance) instance?.ReleaseMutex();
         instance?.Dispose();
         base.OnExit(e);
     }

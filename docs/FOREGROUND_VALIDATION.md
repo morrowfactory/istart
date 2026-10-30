@@ -2,6 +2,12 @@
 
 # Foreground and background presentation: 0.2.0-preview.6
 
+## iStart taskbar application icon — development branch
+
+This is distinct from the system Start button and the notification-area tray icon. Windows manages the taskbar application's single click; the old second-instance path initialized WPF/resources before sending its show signal, and native restores did not explicitly use ShowMenu. The development entry point now signals a resident instance before WPF initialization and routes SC_RESTORE through the cached display path. First startup still loads the application once; tray/list bindings are unchanged.
+
+Local Release build passed without warnings. Isolated named-channel child processes verified one-request show/enable/exit and missing/unowned/abandoned receiver fallback, and rejected any WPF/WinForms assembly load in those children. The run measured a 211.0 ms median and 228.1 ms maximum including process start and exit, not physical taskbar latency. Inactive-desktop checks verified one restore command, stale-restore cancellation, and the existing cache/layout/core cases. No synthetic keys/clicks or working-desktop activation were used; real taskbar focus and click acceptance remain pending after installation.
+
 ## System Start button investigation — 2026-10-30, development branch
 
 The user clarified that the slow/unavailable click is on the Windows taskbar Start button. The installed preview.28 began in native mode, and the current build 26300 fails its integration version gate. Its native Start path does not invoke iStart's cached display. Existing menu-shown timings measure only the iStart display call, so they cannot establish system-button responsiveness or end-to-end latency.

@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         Appearance.Apply(store.Library.Theme);
         L.Apply(store.Library.Language);
         InitializeComponent();
+        InitializeWindowMessages();
         ApplyThemeLayout();
         Updates.Changed += RefreshUpdateIndicators;
         ready = true;
@@ -51,7 +52,10 @@ public partial class MainWindow : Window
         RefreshCategories();
         refreshTimer.Tick += async (_, _) => await RefreshVisibleContent();
         EntryList.SizeChanged += (_, _) => { if (folderView) QueueMenuRefresh(false); };
-        IsVisibleChanged += (_, _) => { if (!IsVisible) PauseMenuRefresh(); };
+        IsVisibleChanged += (_, _) =>
+        {
+            if (!IsVisible) { PauseMenuRefresh(); Topmost = false; activatingMenu = false; presentation++; }
+        };
         if (store.Recovered) StatusText.Text = L.T("主配置损坏，已读取上一份配置。请核对收藏后再修改。");
         Closed += (_, _) => { menuClosed = true; PauseMenuRefresh(); discovery?.Cancel(); Updates.Dispose(); };
         if (enableShell) Loaded += (_, _) => { if (UpdateInstallation.IsInstalled) Updates.Start(); };

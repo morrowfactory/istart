@@ -31,6 +31,10 @@ jobs:
           $process = Start-Process 'artifacts/preview-win-x64/IStart.App.exe' -ArgumentList @('--smoke-test', $output) -WindowStyle Hidden -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "自包含发布目录验证失败：$output" }
           Get-Content (Join-Path $output 'result.txt')
+          $startupOutput = Join-Path $output 'startup-reliability'
+          $process = Start-Process 'artifacts/preview-win-x64/IStart.App.exe' -ArgumentList @('--reliability-test', $startupOutput) -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "自包含启动与信号验证失败：$startupOutput" }
+          Get-Content (Join-Path $startupOutput 'reliability-result.txt')
       - name: 保存技术验证输出
         if: always()
         uses: actions/upload-artifact@v4
@@ -40,6 +44,7 @@ jobs:
             artifacts/smoke-*/result.txt
             artifacts/smoke-*/reliability-result.txt
             artifacts/smoke-*/reliability-failure.txt
+            artifacts/smoke-*/startup-reliability/reliability-*.txt
             artifacts/smoke-*/failure.txt
             artifacts/smoke-*/menu.png
             artifacts/smoke-*/menu-icons.png
