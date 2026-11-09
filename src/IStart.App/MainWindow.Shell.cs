@@ -23,10 +23,6 @@ public partial class MainWindow
         adapter = new StartMenuAdapter(Dispatcher, ToggleMenu);
         adapter.StatusChanged += message => { RuntimeLog.Write("adapter-status " + message); StatusText.Text = message; };
         Loaded += async (_, _) => await InitializeStartMenu(App.EnableMenuRequested);
-        Deactivated += (_, _) =>
-        {
-            if (!presentingMenu && !activatingMenu && OwnedWindows.Count == 0 && !IsMouseCaptureWithin) Hide();
-        };
         Activated += (_, _) => QueueSearchFocus();
         ContentRendered += (_, _) => QueueSearchFocus();
         Closing += (_, e) =>
@@ -154,16 +150,40 @@ public partial class MainWindow
         try { await SetCustomMode(); }
         finally { EnableMenuButton.IsEnabled = true; }
     }
-    private void ToggleMenu(WinInput.Point? point)
+    internal void ToggleMenu(WinInput.Point? point)
     {
         if (capturing) return;
-        if (IsVisible && WinInput.GetForegroundWindow() == new WindowInteropHelper(this).Handle) Hide(); else ShowMenu(point);
+        var source = point.HasValue ? "start-button" : "win-key";
+        var handle = new WindowInteropHelper(this).Handle;
+        if (IsVisible && WinInput.IsWindowVisible(handle) && !WinInput.IsIconic(handle))
+        {
+            RuntimeLog.Write($"menu-dismissed source={source}");
+            Hide();
+        }
+        else ShowMenu(point, source);
+    }
+    protected override void OnDeactivated(EventArgs e)
+    {
+        base.OnDeactivated(e);
+        if (presentingMenu || activatingMenu) return;
+        var request = presentation;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+        {
+            if (request != presentation || !IsVisible || OwnedWindows.Count > 0 || IsMouseCaptureWithin) return;
+            var foreground = WinInput.GetForegroundWindow();
+            if (foreground == 0 || foreground == new WindowInteropHelper(this).Handle) return;
+            RuntimeLog.Write("menu-dismissed source=deactivated");
+            Hide();
+        });
     }
     private void PlaceMenu(Forms.Screen screen, nint handle)
     {
         var area = screen.WorkingArea;
         var position = MenuPlacement.Calculate(new Rect(area.X, area.Y, area.Width, area.Height),
             MenuPlacement.OpeningSize(new Size(Width, Height), new Size(MinWidth, MinHeight), System.Windows.Media.VisualTreeHelper.GetDpi(this)));
+        if (WinInput.GetWindowRect(handle, out var current)
+            && current.Left == (int)position.X && current.Top == (int)position.Y
+            && current.Right - current.Left == (int)position.Width && current.Bottom - current.Top == (int)position.Height) return;
         WinInput.SetWindowPos(handle, 0, (int)position.X, (int)position.Y, (int)position.Width, (int)position.Height, 0x14);
     }
     internal void ShowInBackground()
@@ -174,7 +194,7 @@ public partial class MainWindow
         Show();
         Hide();
     }
-    internal void ShowMenu(WinInput.Point? point)
+    internal void ShowMenu(WinInput.Point? point, string source = "launcher")
     {
         if (capturing || exitRequested || menuClosed || App.IsSessionEnding) return;
         PauseMenuRefresh();
@@ -184,44 +204,45 @@ public partial class MainWindow
             : Forms.Screen.FromHandle(WinInput.GetForegroundWindow());
         var started = System.Diagnostics.Stopwatch.StartNew();
         var request = ++presentation;
-        activatingMenu = false;
+        activatingMenu = true;
         presentingMenu = true;
         try
         {
             WindowState = WindowState.Normal;
-            ShowActivated = true;
+            ShowActivated = false;
             // 菜单显示期间使用浮层，收起时解除；不修改系统前台锁定策略。
             Topmost = true;
             var windowHandle = new WindowInteropHelper(this).EnsureHandle();
             PlaceMenu(screen, windowHandle);
+            var placementMs = started.ElapsedMilliseconds;
             Show();
             // Moving across displays can change the window DPI during the first placement.
             PlaceMenu(screen, windowHandle);
-            WinInput.SetForegroundWindow(windowHandle);
-            Activate();
-            QueueSearchFocus();
-            RuntimeLog.Write($"menu-shown foreground={WinInput.GetForegroundWindow() == windowHandle} topmost={Topmost} elapsedMs={started.ElapsedMilliseconds} size={ActualWidth:0}x{ActualHeight:0}");
-            activatingMenu = WinInput.GetForegroundWindow() != windowHandle;
-            _ = RetryMenuFocus(windowHandle, request);
+            var foreground = WinInput.GetForegroundWindow() == windowHandle;
+            RuntimeLog.Write($"menu-shown source={source} foreground={foreground} topmost={Topmost} elapsedMs={started.ElapsedMilliseconds} placementMs={placementMs} size={ActualWidth:0}x{ActualHeight:0}");
+            _ = RetryMenuFocus(windowHandle, request, foreground);
         }
         finally { presentingMenu = false; }
         QueueMenuRefresh(true);
     }
-    private async Task RetryMenuFocus(nint handle, int request)
+    private async Task RetryMenuFocus(nint handle, int request, bool hadForeground)
     {
         try
         {
-            for (var attempt = 0; attempt < 4; attempt++)
+            // Let WPF paint the retained menu before a cross-process foreground request.
+            await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Background);
+            for (var attempt = 0; attempt < 5; attempt++)
             {
-                await Task.Delay(60);
+                if (attempt > 0) await Task.Delay(60);
                 if (request != presentation || !IsVisible || exitRequested || OwnedWindows.Count > 0 || capturing) return;
-                if (WinInput.TryForegroundAfterMenuInput(handle))
-                {
-                    Activate(); QueueSearchFocus();
-                    if (SearchBox.IsKeyboardFocused) return;
-                }
+                // Give the shell's activation transition time to settle. Once Windows
+                // activates the menu, avoid taking focus back from the user's next app.
+                var foreground = WinInput.GetForegroundWindow() == handle;
+                if (!foreground && !hadForeground) foreground = WinInput.TryForegroundAfterMenuInput(handle);
+                hadForeground |= foreground;
+                if (foreground && !SearchBox.IsKeyboardFocused) QueueSearchFocus();
             }
-            RuntimeLog.Write($"menu-focus-retry foreground={WinInput.GetForegroundWindow() == handle} search={SearchBox.IsKeyboardFocused}");
+            RuntimeLog.Write($"menu-focus-settled foreground={WinInput.GetForegroundWindow() == handle} search={SearchBox.IsKeyboardFocused}");
         }
         finally { if (request == presentation) activatingMenu = false; }
     }
@@ -235,9 +256,12 @@ public partial class MainWindow
             if (!IsVisible || OwnedWindows.Count > 0) return;
             var handle = new WindowInteropHelper(this).Handle;
             if (WinInput.GetForegroundWindow() != handle) return;
-            System.Runtime.InteropServices.Marshal.SetLastPInvokeError(0);
-            WinInput.SetFocus(handle);
-            var focusError = System.Runtime.InteropServices.Marshal.GetLastPInvokeError();
+            var focusError = 0;
+            if (WinInput.GetFocus() != handle)
+            {
+                WinInput.SetFocus(handle);
+                focusError = System.Runtime.InteropServices.Marshal.GetLastPInvokeError();
+            }
             System.Windows.Input.FocusManager.SetFocusedElement(this, SearchBox);
             SearchBox.Focus();
             System.Windows.Input.Keyboard.Focus(SearchBox);

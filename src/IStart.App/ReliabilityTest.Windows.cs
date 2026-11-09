@@ -98,8 +98,40 @@ internal static partial class ReliabilityTest
         }
         finally { background.Close(); }
         await VerifyTaskbarRestore(output);
+        await VerifyStartPresentation(output);
         await VerifyCachedOpening(output);
         SmokeTest.Run(Path.Combine(output, "core"));
+    }
+
+    private sealed class StartPresentationWindow(LibraryStore store) : MainWindow(store, false)
+    {
+        internal void LoseActivationDuringOpen() => OnDeactivated(EventArgs.Empty);
+    }
+
+    private static async Task VerifyStartPresentation(string output)
+    {
+        var window = new StartPresentationWindow(new LibraryStore(Path.Combine(output, "start-presentation", "library.json")));
+        try
+        {
+            foreach (var point in new WinInput.Point?[] { null, new() { X = 1, Y = 1 } })
+            {
+                window.ToggleMenu(point);
+                window.LoseActivationDuringOpen();
+                await Task.Delay(350);
+                Check(window.IsVisible && window.Topmost && window.WindowState == WindowState.Normal,
+                    "a deactivation during opening must not hide the Start menu");
+                window.WindowState = WindowState.Minimized;
+                window.ToggleMenu(point);
+                Check(window.IsVisible && window.WindowState == WindowState.Normal,
+                    "a minimized menu must be reopened by either Start entry");
+                window.ToggleMenu(point);
+                Check(!window.IsVisible && !window.Topmost,
+                    "a repeated Start gesture must dismiss a shown menu, even without foreground focus");
+            }
+            File.AppendAllText(Path.Combine(output, "window-result.txt"),
+                "PASS: both Start presentation callbacks survive transient deactivation, reopen a minimized window, and dismiss a visible menu without focus.\n");
+        }
+        finally { window.Close(); }
     }
 
     private static async Task VerifyTaskbarRestore(string output)

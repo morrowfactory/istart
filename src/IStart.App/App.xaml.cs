@@ -75,7 +75,7 @@ public partial class App : Application
         }
         DispatcherUnhandledException += (_, args) => RuntimeLog.Write($"unhandled-ui {args.Exception.GetType().Name} 0x{args.Exception.HResult:X8}");
         AppDomain.CurrentDomain.UnhandledException += (_, args) => RuntimeLog.Write($"unhandled-process {args.ExceptionObject.GetType().Name}");
-        if (e.Args.Length == 2 && e.Args[0] == "--ui-test")
+        if (e.Args.Length is 2 or 3 && e.Args[0] == "--ui-test" && (e.Args.Length == 2 || e.Args[2] == "--background"))
         {
             IsUITest = true;
             // 独立配置用于交互验收，不读取或替换个人收藏。
@@ -83,7 +83,8 @@ public partial class App : Application
             RuntimeLog.DirectoryPath = output;
             RuntimeLog.Write("startup ui-test");
             Directory.CreateDirectory(output);
-            new MainWindow(new LibraryStore(Path.Combine(output, "library.json"))) { Title = "iStart · 交互验收" }.ShowMenu(null);
+            var window = new MainWindow(new LibraryStore(Path.Combine(output, "library.json"))) { Title = "iStart · 交互验收" };
+            if (e.Args.Length == 3) window.ShowInBackground(); else window.ShowMenu(null);
             return;
         }
         if (e.Args.Length == 2 && e.Args[0] == "--hook-child")

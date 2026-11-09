@@ -4,15 +4,15 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.31**
+**Version: 0.2.0-preview.32**
 
-This version removes the notification-area icon while preserving taskbar/shortcut launches, integrated Start entry points, background operation, and native-menu recovery. It retains cached opening, bottom-left placement, Windows/Google layouts, and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
+This version improves opening from the Windows key and the system Start button. On Windows 11 build 26300, both entry points passed physical input checks. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.31/iStart-Setup-0.2.0-preview.31.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.31) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.32/iStart-Setup-0.2.0-preview.32.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.32) · [All releases](https://github.com/morrowfactory/istart/releases)
 
-**Compatibility in preview.29:** preview.28 excludes Windows build 26300 from Start integration, so its resident-menu cache does not handle the system Start button on that build. Preview.29 permits an explicit, capability-checked 26300 trial. A valid Start button is still required before hooks are installed; other unknown builds remain native. Native Start child windows are preferred when available, with UI Automation as fallback. Current 26300 read-only discovery found one UI Automation button; live input acceptance is pending. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
+**Compatibility since preview.29:** Windows build 26300 supports an opt-in integration trial. Integration requires a valid Start button before installing input hooks. Detection prefers native Start child windows and falls back to UI Automation. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
 
 **Taskbar fix in preview.29:** the iStart application icon on the Windows taskbar uses a single click. A new entry point hands requests to a resident instance before loading WPF or app resources, and native restore commands use the cached-menu display path. Rapid requests are coalesced; stale restore requests cannot reopen a subsequently hidden menu. First startup still initializes the application once. Real taskbar/focus acceptance remains pending.
 
@@ -45,7 +45,9 @@ Activity records are bounded local evidence, not complete system-wide statistics
 
 ### Start integration and foreground behavior
 
-**Reliability in preview.26:** repeated opening/focus failures were reported on the current Windows 11 PC, including in native-menu mode. This version moves Shell icon reads off the UI thread, coalesces software scans with a 30-second successful-result cache, protects restored menu dimensions, and removes simulated modifier keys from focus retries. Isolated checks do not establish live Win-key acceptance or the cause of the reported unintended text deletion. Keep the affected copy exited during investigation; installation alone does not complete interaction acceptance. In public preview.26–28, build 26300 stays in native mode because it is outside that release policy; the preview.29 correction above is a separate, unaccepted trial. See [current investigation and checks](docs/FOREGROUND_VALIDATION.md#current-reliability-investigation--2026-10-29).
+Preview.32 shows the cached view before requesting focus and rechecks taskbar bounds against the saved Start-button position. The runtime log records which entry point opened the menu.
+
+**Reliability work in preview.26:** moved Shell icon reads off the UI thread, reused successful software scans for 30 seconds, protected restored menu dimensions, and removed simulated modifier keys from focus retries. The reported unintended text deletion remains unexplained. See [historical investigation and checks](docs/FOREGROUND_VALIDATION.md#current-reliability-investigation--2026-10-29).
 
 Since preview.21, input hooks run on a dedicated message thread to reduce failures caused by a busy UI. On Windows 10, native Start-button clicks revalidate the button bounds and HWND. Taskbar recreation and display or system-setting changes invalidate cached locations. A native-window fallback handles automation timeouts, and startup uses bounded retries. If the UI is unresponsive for about two seconds, subsequent native input is allowed through. These changes target known Windows 10/11 builds; they do not establish Windows 10 hardware acceptance.
 
@@ -95,7 +97,7 @@ The target is Windows 10/11 x64. This remains a preview, with incomplete cross-v
 | System | Verified scope |
 | --- | --- |
 | Windows 11 25H2 x64, 26200.9457 | Historical Start-button, standalone Win-key, Win+R, and basic recovery checks; discovery used UI Automation |
-| Windows 11 26300 (preview.29) | Opt-in after valid button detection; one UI Automation button found read-only on the current PC; live input acceptance pending |
+| Windows 11 26300 (preview.32) | Opt-in after valid button detection. Physical Win key and Start-button clicks passed on one PC |
 | Windows 10 19041–19045; Windows 11 22000, 22621, 22631, 26100 | Opt-in compatibility trials; hooks are installed only after a valid Start button is found; hardware acceptance is pending |
 | Other builds, failed detection, or abnormal recovery | Keep native Start; do not guess button coordinates |
 

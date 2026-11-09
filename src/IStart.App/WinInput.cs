@@ -38,6 +38,7 @@ internal static class WinInput
     [DllImport("user32.dll")] internal static extern nint GetFocus();
     [DllImport("user32.dll", SetLastError = true)] internal static extern nint SetFocus(nint window);
     [DllImport("user32.dll")] internal static extern bool IsWindowEnabled(nint window);
+    [DllImport("user32.dll")] internal static extern bool IsIconic(nint window);
     [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window, out uint process);
     [DllImport("user32.dll")] internal static extern bool GetCursorPos(out Point point);
     [DllImport("user32.dll")] internal static extern bool SetCursorPos(int x, int y);

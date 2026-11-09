@@ -4,17 +4,19 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**版本：0.2.0-preview.31 预览版**
+**0.2.0-preview.32 预览版**
 
-本版移除右下角托盘图标，保留任务栏/快捷方式、已接入的开始入口、后台运行和原生菜单恢复。继续保留缓存优先显示、左下角定位、Windows/Google 风格及自动/手动升级。安装包包含离线运行环境和中英文资源；体积优化边界见[安装包优化](PACKAGE_SIZE.md)。
+本版改善 Win 键和系统开始按钮的弹出流程。两种入口已在一台 Windows 11 build 26300 电脑上通过实测。安装包包含离线运行环境和中英文资源。详见[安装包优化](PACKAGE_SIZE.md)。
 
 界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.31/iStart-Setup-0.2.0-preview.31.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.31) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.32/iStart-Setup-0.2.0-preview.32.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.32) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
-**preview.29 兼容修正：** preview.28 将 Windows 26300 排除在开始接管范围之外，这个版本的系统开始按钮没有进入 iStart 的缓存流程。preview.29 补充 26300 的主动能力检测试用；仍须先发现有效按钮才能安装钩子，其他未知版本继续原生模式。可取得原生 Start 子窗口时优先使用，未取得时再用 UIAutomation。本机 26300 只读发现 1 个 UIAutomation 按钮，真实输入验收仍待完成。详见[Windows 兼容说明](WINDOWS_COMPATIBILITY.md)。
+**preview.29 起的兼容策略。** Windows build 26300 可主动启用接管试用。接入前须找到有效的开始按钮，检测优先使用原生 Start 子窗口，必要时使用 UIAutomation。详见[Windows 兼容说明](WINDOWS_COMPATIBILITY.md)。
 
 **preview.29 任务栏唤醒修正：** Windows 任务栏上的 iStart 应用图标按单击处理。新启动入口在加载 WPF 和界面资源前通知常驻实例，原生恢复命令也进入缓存菜单显示流程；连续请求合并，过期恢复不会把已收起的菜单重新拉回。第一次启动仍需初始化一次。真实任务栏和焦点效果仍待验收。
+
+preview.32 先显示缓存界面，再请求焦点，并在处理开始按钮点击时核对缓存位置与实时任务栏边界。运行日志记录打开菜单的入口。
 
 **preview.25 修复：**补充无开始菜单快捷方式的已使用软件，读取 FreeCAD 保存的最近文档，避免失效旧路径占据有效发现名额，隔离历史来源错误，文件夹先搜索后限额，并在返回“我的软件”时刷新活动。详见[活动视图](ACTIVITY_VIEWS.md)。既有[双风格](THEME_VALIDATION.md)、[升级](UPDATES.md)和[接入恢复](RESIDENT_VALIDATION.md)继续保留。
 
@@ -24,7 +26,7 @@
 
 ## 当前功能
 
-**preview.26 稳定性改进：** 当前 Win11 电脑报告反复打开、焦点失败，原生菜单模式也出现过。本版将 Shell 图标移到后台、合并软件扫描并复用 30 秒内的成功结果，保护恢复后的菜单尺寸，取消焦点重试的模拟修饰键。隔离检查不能替代真实 Win 键验收，也未查明误删文字原因；排查期间保持受影响安装版退出，安装完成不等于交互验收通过。公开 preview.26–28 将 26300 保持为原生模式；上方 preview.29 修正属于单独的兼容试用，尚未完成真实输入验收。详见[当前排查与检查](FOREGROUND_VALIDATION.md#当前稳定性排查2026-10-29)。
+**preview.26 稳定性改进。** Shell 图标移到后台，软件扫描复用 30 秒内的成功结果，恢复窗口时保护菜单尺寸，焦点重试取消模拟修饰键。此前报告的误删文字仍未查明原因。详见[历史排查与检查](FOREGROUND_VALIDATION.md#当前稳定性排查2026-10-29)。
 
 preview.21 加固 Win10/11 开始入口：输入钩子使用专用消息线程，减少主界面卡顿导致的失效；Win10 原生 Start 按钮点击时重新验证位置和 HWND。任务栏重建、显示与系统设置变化会丢弃旧定位，自动化检测超时可使用原生窗口后备；启动时短暂重试。界面超过约 2 秒不响应时放行后续原生输入。目标仍是已知 Win10/11 版本，尚不代表 Win10 实机通过。
 
