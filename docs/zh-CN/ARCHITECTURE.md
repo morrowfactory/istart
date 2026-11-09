@@ -37,7 +37,7 @@ ScreenshotHotkey 在主窗口 HWND 创建后使用 RegisterHotKey（MOD_NOREPEAT
 | MainWindow / Refresh / Editing / Shell / Websites / Computer | 五个固定入口、菜单状态缓存、延后后台刷新、搜索、图标/列表、添加与隐藏、同页活动排序、设置与定位；普通用户运行 |
 | LibraryStore | 收藏、分类、偏好、最近记录；复制后修改，临时写入与原子替换，保留一份上一版本；失败不替换内存 |
 | Localization / Strings.en.json | 集中管理产品文字与英文翻译；读取当前用户 Windows 显示语言，WPF 绑定即时更新固定文字，导航与快捷键使用稳定标识 |
-| SoftwareDiscovery / ShellShortcut | 异步发现用户与公共开始菜单 `.lnk`；IShellLinkW/IPersistFile Unicode 解析；有效 exe 目标去重，过滤安装维护与失效入口 |
+| SoftwareDiscovery / ShellShortcut | 后台读取开始菜单和桌面快捷方式、AppsFolder、应用注册及 EXE 活动，解析有效本机启动目标并保留独立应用标识 |
 | FreeCadDocuments | 有界只读 FreeCAD 最近文件配置；仅纳入本机有效文件，经 RecentDocuments 合并并沿用外部历史开关 |
 | ShellIcon / IconReader / ShellIconConverter | 立即显示嵌入占位图，两个后台 STA 线程、有界队列/缓存、冻结 Shell 图像及界面线程更新；UNC 使用通用图标 |
 | StartMenuAdapter / ShellCompatibility / WinInput | 版本策略、UIAutomation/原生 Start 子窗口定位；低级键盘/鼠标钩子处理单独 Win 和开始按钮；组合键保留，原生注入使用自有标记避免递归 |
@@ -62,6 +62,8 @@ preview.25 活动读取修复：MainWindow 先读取 AppSwitched，同一快照�
 兼容验收工具 `scripts/Test-WindowsVm.ps1` 独立于产品运行路径，只在已识别的 Win10 x64 虚拟机调用既有诊断/回归/交互入口，配置和报告按轮隔离。只读预检可在宿主运行；实际键鼠输入、窗口抢焦点和恢复验证留在虚拟机。VirtualBox 是测试环境依赖，不随 iStart 安装，虚拟机镜像、磁盘、账户凭据和本地报告不进入仓库或发行包。
 
 Appearance 通过 DynamicResource 提供双主题资源；ApplyThemeLayout 移动同一个导航控件，保留搜索框、入口列表和状态。Windows 使用顶部导航、平面六列网格、4 DIP 控件和整条系统操作栏；Google 使用左侧胶囊导航、圆角搜索、24 DIP 内容卡片及五列网格。UniformGrid 顶部对齐，少量项目不拉伸填满空白。MenuIcons.xaml 复用 WPF 按钮，使用原始 Figma SVG 转换的嵌入式 PNG 透明遮罩；Prepare-MenuIcons.cjs 只用于维护，不引入运行时 SVG 或网络依赖。软件/文件图标仍来自真实 Shell 数据。图标操作保留事件、翻译的悬停说明、无障碍名称和焦点提示；普通帮助放入标题悬停说明，空状态、错误和操作反馈仍可见。保留原生标题栏、边框、阴影及系统决定的外窗圆角，不增加透明分层窗口或 Mica。换肤不重启适配器、不改隐私和开机启动；输入框保留 PART_ContentHost。详见[双风格验证](THEME_VALIDATION.md)。
+
+每个本机桌面目录读取最多 128 个顶层快捷方式。已注册程序路径和文件、协议关联来自当前用户和计算机的注册表视图。关联命令用于识别可执行文件，启动时使用经验证的快捷方式或 EXE。MySoftware 在应用标识相同的入口之间共享可见性和活动依据，优先保留有明确标识的快捷方式。共用程序的不同应用仍可独立显示。图标读取失败后，后续绑定可通过有上限的后台队列重试。
 
 ## 本地数据
 

@@ -24,7 +24,11 @@ internal sealed class IconReader : IDisposable
     {
         lock (cache)
         {
-            if (cache.TryGetValue(path, out var found)) return found;
+            if (cache.TryGetValue(path, out var found))
+            {
+                if (!found.IsCompletedSuccessfully || found.Result is not null) return found;
+                cache.Remove(path);
+            }
             if (queue.IsAddingCompleted) return Task.FromResult<ImageSource?>(null);
             if (cache.Count >= 256)
             {

@@ -17,6 +17,7 @@ internal static partial class ReliabilityTest
         using var release = new ManualResetEventSlim();
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var slowReads = 0;
+        var retryReads = 0;
         using var icons = new IconReader(path =>
         {
             if (path == "slow")
@@ -26,6 +27,7 @@ internal static partial class ReliabilityTest
                 if (!release.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException();
             }
             if (path == "broken") throw new IOException("fixture failure");
+            if (path == "retry" && Interlocked.Increment(ref retryReads) == 1) return null;
             var image = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, new byte[4], 4);
             image.Freeze();
             return image;
@@ -43,6 +45,8 @@ internal static partial class ReliabilityTest
             Check(fast?.IsFrozen == true && !slow.IsCompleted, "one stalled icon must not block all other icons");
             report.Add($"PASS: UI dispatcher and another icon remain responsive during a stalled icon read ({watch.ElapsedMilliseconds} ms).");
             Check(await icons.Get("broken").WaitAsync(TimeSpan.FromSeconds(3)) is null, "unreadable icons use the placeholder");
+            Check(await icons.Get("retry").WaitAsync(TimeSpan.FromSeconds(3)) is null
+                && await icons.Get("retry").WaitAsync(TimeSpan.FromSeconds(3)) is not null, "a later binding can retry an unavailable icon");
             Check(await icons.Get("after-error").WaitAsync(TimeSpan.FromSeconds(3)) is not null, "icon worker survives a failed Shell read");
             release.Set();
             await slow.WaitAsync(TimeSpan.FromSeconds(3));

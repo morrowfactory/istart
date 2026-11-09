@@ -1,24 +1,44 @@
 using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace IStart;
 
-internal sealed record SoftwareCandidate(string Title, string Shortcut, string? Executable = null, string? AppId = null);
+internal sealed record SoftwareCandidate(string Title, string Shortcut, string? Executable = null, string? AppId = null, IReadOnlyList<string>? RegisteredIds = null)
+{
+    internal string Identity => (AppId ?? (RegisteredIds is { Count: 1 } ? RegisteredIds[0] : null)) is { Length: > 0 } id
+        ? "app-id:" + id : Executable ?? Shortcut;
+}
 
 internal static class SoftwareDiscovery
 {
     public static List<SoftwareCandidate> Read(CancellationToken token, IEnumerable<string>? roots = null,
         IReadOnlyDictionary<string, int>? usage = null)
     {
-        var includePackagedApps = roots is null;
+        var useSystemSources = roots is null;
         var found = new Dictionary<string, SoftwareCandidate>(StringComparer.OrdinalIgnoreCase);
         roots ??= new[] { Environment.GetFolderPath(Environment.SpecialFolder.Programs), Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms) };
-        foreach (var root in roots)
+        foreach (var root in roots) ReadShortcuts(found, root, true, token);
+        if (useSystemSources)
         {
-            if (!Directory.Exists(root)) continue;
-            var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
-            foreach (var shortcut in Directory.EnumerateFiles(root, "*.lnk", options))
+            ReadShortcuts(found, Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), false, token);
+            ReadShortcuts(found, Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory), false, token);
+            ReadPackagedApps(found, token);
+            ReadRegisteredExecutables(found, token);
+        }
+        if (usage is not null) ReadUsedExecutables(found, usage, token);
+        return found.Values.OrderBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+    private static void ReadShortcuts(Dictionary<string, SoftwareCandidate> found, string root, bool recursive, CancellationToken token)
+    {
+        try
+        {
+            if (!Path.IsPathFullyQualified(root) || root.StartsWith(@"\\", StringComparison.Ordinal)
+                || new DriveInfo(Path.GetPathRoot(root)!).DriveType == DriveType.Network || !Directory.Exists(root)) return;
+            var options = new EnumerationOptions { RecurseSubdirectories = recursive, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
+            var shortcuts = Directory.EnumerateFiles(root, "*.lnk", options);
+            foreach (var shortcut in recursive ? shortcuts : shortcuts.Take(128))
             {
                 token.ThrowIfCancellationRequested();
                 var title = Path.GetFileNameWithoutExtension(shortcut);
@@ -27,21 +47,145 @@ internal static class SoftwareDiscovery
                 try
                 {
                     var target = ShellShortcut.ReadTarget(shortcut);
-                    if (!string.Equals(Path.GetExtension(target), ".exe", StringComparison.OrdinalIgnoreCase) || !File.Exists(target)) continue;
+                    if (!IsLocalExecutable(target)) continue;
                     // Keep the original shortcut so application arguments and working directory survive.
-                    found.TryAdd(Path.GetFullPath(target), new(title, shortcut, target, ReadAppId(shortcut)));
+                    var app = new SoftwareCandidate(title, shortcut, Path.GetFullPath(target), ReadAppId(shortcut));
+                    found.TryAdd(app.Identity, app);
                 }
                 catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException or ArgumentException) { }
             }
         }
-        if (includePackagedApps) ReadPackagedApps(found, token);
-        if (usage is not null) ReadUsedExecutables(found, usage, token);
-        return found.Values.OrderBy(c => c.Title, StringComparer.CurrentCultureIgnoreCase).ToList();
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Security.SecurityException) { }
+    }
+
+    private static void ReadRegisteredExecutables(Dictionary<string, SoftwareCandidate> found, CancellationToken token)
+    {
+        const string appPaths = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var windowsApps = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps") + Path.DirectorySeparatorChar;
+        foreach (var hive in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
+        foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+        {
+            try
+            {
+                using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+                using var key = baseKey.OpenSubKey(appPaths);
+                if (key is null) continue;
+                foreach (var name in key.GetSubKeyNames().Take(512))
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (!name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) continue;
+                    using var entry = key.OpenSubKey(name);
+                    if (entry?.GetValue(null) is not string value) continue;
+                    var path = Environment.ExpandEnvironmentVariables(value.Trim().Trim('"'));
+                    if (!name.Equals(Path.GetFileName(path), StringComparison.OrdinalIgnoreCase)
+                        || path.StartsWith(windowsApps, StringComparison.OrdinalIgnoreCase) || IsMaintenanceExecutable(path)
+                        || !IsLocalExecutable(path)) continue;
+                    paths.Add(Path.GetFullPath(path));
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Security.SecurityException) { }
+        }
+        var existing = found.Values.Where(c => c.Executable is not null).ToLookup(c => c.Executable!, StringComparer.OrdinalIgnoreCase);
+        var ids = ReadRegisteredIds(paths, token);
+        foreach (var path in paths)
+        {
+            token.ThrowIfCancellationRequested();
+            var registeredIds = ids[path].ToArray();
+            if (!existing.Contains(path)) found.TryAdd(path, new(ExecutableTitle(path), path, path, RegisteredIds: registeredIds));
+            else foreach (var app in existing[path]) found[app.Identity] = app with { RegisteredIds = registeredIds };
+        }
+    }
+
+    private static ILookup<string, string> ReadRegisteredIds(HashSet<string> paths, CancellationToken token)
+    {
+        var targets = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+        {
+            using var classes = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, view);
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var hive in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
+            {
+                try
+                {
+                    using var root = RegistryKey.OpenBaseKey(hive, view);
+                    using var registered = root.OpenSubKey(@"SOFTWARE\RegisteredApplications");
+                    if (registered is null) continue;
+                    foreach (var name in registered.GetValueNames().Take(256))
+                    {
+                        token.ThrowIfCancellationRequested();
+                        if (registered.GetValue(name) is not string capabilities || string.IsNullOrWhiteSpace(capabilities)) continue;
+                        foreach (var kind in new[] { "FileAssociations", "URLAssociations" })
+                        {
+                            using var associations = root.OpenSubKey(capabilities + "\\" + kind);
+                            if (associations is null) continue;
+                            foreach (var extension in associations.GetValueNames().Take(128))
+                            {
+                                token.ThrowIfCancellationRequested();
+                                if (associations.GetValue(extension) is not string progId || !seen.Add(progId)) continue;
+                                using var type = classes.OpenSubKey(progId);
+                                if (type?.GetValue("AppUserModelID") is not string id || string.IsNullOrWhiteSpace(id)) continue;
+                                using var command = type.OpenSubKey(@"shell\open\command");
+                                if (command?.GetValue(null) is not string value) continue;
+                                var executable = CommandExecutable(Environment.ExpandEnvironmentVariables(value));
+                                if (!paths.Contains(executable)) continue;
+                                if (!targets.TryGetValue(id, out var matches)) targets[id] = matches = new(StringComparer.OrdinalIgnoreCase);
+                                matches.Add(executable);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or System.Security.SecurityException) { }
+            }
+        }
+        var idsPerExecutable = targets.Values.SelectMany(matches => matches).ToLookup(path => path, StringComparer.OrdinalIgnoreCase);
+        return targets.Select(pair => (Id: pair.Key, Target: ResolveRegisteredTarget(pair.Value, idsPerExecutable)))
+            .Where(pair => pair.Target is not null).ToLookup(pair => pair.Target!, pair => pair.Id, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string? ResolveRegisteredTarget(HashSet<string> candidates, ILookup<string, string> idsPerExecutable)
+    {
+        if (candidates.Count == 1) return candidates.Single();
+        // A suite can register the same module ID for its common launcher and a module EXE.
+        if (candidates.Select(Path.GetDirectoryName).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1) return null;
+        var shared = candidates.Where(path => idsPerExecutable[path].Skip(1).Any()).Take(2).ToArray();
+        return shared.Length == 1 ? shared[0] : null;
+    }
+
+    private static string CommandExecutable(string command)
+    {
+        command = command.TrimStart();
+        if (command.StartsWith('"'))
+        {
+            var end = command.IndexOf('"', 1);
+            return end > 1 ? command[1..end] : "";
+        }
+        var space = command.IndexOfAny([' ', '\t']);
+        return space < 0 ? command : command[..space];
+    }
+
+    private static bool IsLocalExecutable(string path) => Path.IsPathFullyQualified(path)
+        && !path.StartsWith(@"\\", StringComparison.Ordinal) && Path.GetExtension(path).Equals(".exe", StringComparison.OrdinalIgnoreCase)
+        && new DriveInfo(Path.GetPathRoot(path)!).DriveType != DriveType.Network && File.Exists(path);
+
+    private static bool IsMaintenanceExecutable(string path)
+    {
+        var name = Path.GetFileNameWithoutExtension(path);
+        return new[] { "setup", "install", "unins", "update", "crash", "卸载", "安装" }.Any(word => name.Contains(word, StringComparison.OrdinalIgnoreCase))
+            || new[] { "rundll32", "dllhost", "conhost", "msiexec", "werfault", "applicationframehost", "unopkg" }.Contains(name, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string ExecutableTitle(string path)
+    {
+        var version = FileVersionInfo.GetVersionInfo(path);
+        return !string.IsNullOrWhiteSpace(version.FileDescription) ? version.FileDescription.Trim()
+            : !string.IsNullOrWhiteSpace(version.ProductName) ? version.ProductName.Trim() : Path.GetFileNameWithoutExtension(path);
     }
     private static void ReadUsedExecutables(Dictionary<string, SoftwareCandidate> found,
         IReadOnlyDictionary<string, int> usage, CancellationToken token)
     {
         // Portable apps may have activity evidence without any Start-menu shortcut.
+        var known = found.Values.Select(c => c.Executable).OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
         var added = 0;
         foreach (var item in usage.Where(p => p.Value > 0).OrderByDescending(p => p.Value).Take(2048))
         {
@@ -52,16 +196,8 @@ internal static class SoftwareDiscovery
             try
             {
                 path = Path.GetFullPath(path);
-                if (found.ContainsKey(path) || new DriveInfo(Path.GetPathRoot(path)!).DriveType == DriveType.Network) continue;
-                var name = Path.GetFileNameWithoutExtension(path);
-                if (new[] { "setup", "install", "unins", "update", "crash", "卸载", "安装" }
-                    .Any(word => name.Contains(word, StringComparison.OrdinalIgnoreCase))
-                    || new[] { "rundll32", "dllhost", "conhost", "msiexec", "werfault", "applicationframehost" }
-                        .Contains(name, StringComparer.OrdinalIgnoreCase) || !File.Exists(path)) continue;
-                var version = FileVersionInfo.GetVersionInfo(path);
-                var title = !string.IsNullOrWhiteSpace(version.FileDescription) ? version.FileDescription.Trim()
-                    : !string.IsNullOrWhiteSpace(version.ProductName) ? version.ProductName.Trim() : name;
-                if (found.TryAdd(path, new(title, path, path)) && ++added == 128) break;
+                if (known.Contains(path) || IsMaintenanceExecutable(path) || !IsLocalExecutable(path)) continue;
+                if (found.TryAdd(path, new(ExecutableTitle(path), path, path)) && ++added == 128) break;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException
                 or System.Security.SecurityException) { }
