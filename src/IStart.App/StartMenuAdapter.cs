@@ -5,7 +5,7 @@ using System.Windows.Threading;
 
 namespace IStart;
 
-internal sealed record StartTarget(nint Taskbar, Rect Bounds, string Source = "UIAutomation", nint ButtonWindow = 0);
+internal sealed record StartTarget(nint Taskbar, Rect Bounds, string Source = "UIAutomation", nint ButtonWindow = 0, Rect TaskbarBounds = default);
 
 internal sealed class WinKeyGesture
 {
@@ -136,7 +136,7 @@ internal sealed class StartMenuAdapter : IDisposable
     }
     private void SetWaitingForTaskbar(bool waiting)
     {
-        // UIAutomation 使用 1.5 秒有效期；原生按钮在点击时实时校验 HWND 和边界。
+        // UIAutomation 快照只能短期使用，且任务栏范围必须和扫描时相同。
         // 短暂 UIAutomation 空结果不能撤销用户偏好或停用独立的键盘接入。
         if (waitingForTaskbar == waiting) return;
         waitingForTaskbar = waiting;
@@ -167,14 +167,15 @@ internal sealed class StartMenuAdapter : IDisposable
             try
             {
                 var root = AutomationElement.FromHandle(bar);
-                var found = root.FindAll(TreeScope.Descendants, new AndCondition(
+                var request = new CacheRequest { AutomationElementMode = AutomationElementMode.None };
+                request.Add(AutomationElement.BoundingRectangleProperty);
+                request.Add(AutomationElement.IsOffscreenProperty);
+                using var cache = request.Activate();
+                var element = root.FindFirst(TreeScope.Descendants, new AndCondition(
                     new PropertyCondition(AutomationElement.AutomationIdProperty, "StartButton"),
                     new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button)));
-                foreach (AutomationElement element in found)
-                {
-                    var rect = element.Current.BoundingRectangle;
-                    if (!element.Current.IsOffscreen && ShellCompatibility.ValidBounds(rect, barBounds)) result.Add(new(bar, rect));
-                }
+                if (element is not null && !element.Cached.IsOffscreen && ShellCompatibility.ValidBounds(element.Cached.BoundingRectangle, barBounds))
+                    result.Add(new(bar, element.Cached.BoundingRectangle, TaskbarBounds: barBounds));
             }
             catch (Exception ex) when (ex is COMException or ElementNotAvailableException or InvalidOperationException) { }
             if (result.Count == before) FindNativeStart(bar, barBounds, result);
@@ -225,13 +226,19 @@ internal sealed class StartMenuAdapter : IDisposable
                 QueueToggle(point);
                 return 1;
             }
-            if (message == 0x201 && !WinInput.ModifiersHeld && UiResponsive)
+            if (message == 0x201)
             {
+                var snapshot = targets;
+                if (snapshot.Length == 0) return CallNextHookEx(0, code, message, data);
                 var root = WinInput.GetAncestor(WinInput.WindowFromPoint(point), 2);
-                if (targets.Any(t => t.Taskbar == root && HitTarget(t, point)
-                    && WinInput.IsWindowVisible(t.Taskbar) && WinInput.GetWindowRect(t.Taskbar, out var bounds)
-                    && point.X >= bounds.Left && point.X < bounds.Right && point.Y >= bounds.Top && point.Y < bounds.Bottom))
+                var valid = snapshot.Any(t => t.Taskbar == root && WinInput.IsWindowVisible(t.Taskbar) && HitTarget(t, point));
+                var responsive = UiResponsive;
+                var modifiers = valid && WinInput.ModifiersHeld;
+                if (valid && responsive && !modifiers)
                 { suppressMouseUp = true; return 1; }
+                if (snapshot.Any(t => t.Bounds.Contains(point.X, point.Y)))
+                    dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+                        RuntimeLog.Write($"start-button-passthrough valid={valid} responsive={responsive} modifiers={modifiers}"));
             }
         }
         return CallNextHookEx(0, code, message, data);
@@ -252,7 +259,11 @@ internal sealed class StartMenuAdapter : IDisposable
     }
     internal bool HitTarget(StartTarget target, WinInput.Point point)
     {
-        if (target.ButtonWindow == 0) return Environment.TickCount64 - Volatile.Read(ref updated) < 1500 && target.Bounds.Contains(point.X, point.Y);
+        if (target.ButtonWindow == 0)
+            return Environment.TickCount64 - Volatile.Read(ref updated) < 4000
+                && target.Bounds.Contains(point.X, point.Y)
+                && WinInput.GetWindowRect(target.Taskbar, out var bounds)
+                && target.TaskbarBounds == new Rect(bounds.Left, bounds.Top, bounds.Right - bounds.Left, bounds.Bottom - bounds.Top);
         // Win10 原生 Start HWND 在点击时重新读取，检测慢或任务栏移动不会令旧坐标生效。
         var name = new System.Text.StringBuilder(128);
         GetClassName(target.ButtonWindow, name, name.Capacity);
