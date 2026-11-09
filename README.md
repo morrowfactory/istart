@@ -4,13 +4,13 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.30**
+**Version: 0.2.0-preview.31**
 
 This version removes the notification-area icon while preserving taskbar/shortcut launches, integrated Start entry points, background operation, and native-menu recovery. It retains cached opening, bottom-left placement, Windows/Google layouts, and automatic/manual upgrades. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.30/iStart-Setup-0.2.0-preview.30.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.30) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.31/iStart-Setup-0.2.0-preview.31.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.31) · [All releases](https://github.com/morrowfactory/istart/releases)
 
 **Compatibility in preview.29:** preview.28 excludes Windows build 26300 from Start integration, so its resident-menu cache does not handle the system Start button on that build. Preview.29 permits an explicit, capability-checked 26300 trial. A valid Start button is still required before hooks are installed; other unknown builds remain native. Native Start child windows are preferred when available, with UI Automation as fallback. Current 26300 read-only discovery found one UI Automation button; live input acceptance is pending. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
 
@@ -20,11 +20,13 @@ The interface follows the Windows display language by default. You can select Si
 
 **Changed in preview.30:** iStart no longer creates a notification-area icon. Close hides the menu in the background; reopen it from its shortcut/taskbar icon or integrated Start entry points. Use Settings to disable integration or the menu's Exit button to quit.
 
+**Changed in preview.31:** My Apps reads local desktop shortcuts and Windows app registrations. Chrome, Edge, and LibreOffice can appear by usage when their Start shortcuts are missing. Apps with the same ID are grouped, while web apps that share an executable keep separate entries.
+
 ## Features
 
 | View | Contents | Ordering and limits |
 | --- | --- | --- |
-| My Apps | Installed or portable apps with local activity evidence and apps you add | Most used first; at most 30 apps, including search results |
+| My Apps | Apps with local activity, found through Windows registration, Start and desktop shortcuts, or executable paths, plus apps you add | Most used first, at most 30 apps including search results |
 | Recently Opened | Valid files recorded by iStart, Windows, WPS, LibreOffice, FreeCAD, and other supported sources | Most recent first, deduplicated, at most 100 files; folders and programs are excluded |
 | Frequent Folders | Added folders and folders found in local activity | Frequent first by default; switch to recent folders on the same page; suggestions fill available space |
 | My Websites | Bounded Chrome and Edge history, combined by domain | Frequent first by default; switch to recent websites on the same page; at most 30 sites |
@@ -130,7 +132,7 @@ dotnet run --project src/IStart.App/IStart.App.csproj
 ./scripts/Publish-Preview.ps1
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish
 ./scripts/Build-Installer.ps1 -Compiler 'C:\path\ISCC.exe' -SkipPublish -TestInstall
-./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.30.exe" -Output "$PWD\artifacts\install-test"
+./scripts/Test-Installer.ps1 -Package "$PWD\artifacts\setup\iStart-QA-Setup-0.2.0-preview.31.exe" -Output "$PWD\artifacts\install-test"
 ```
 
 Installers and SHA256 files are written to `artifacts/setup/`. The QA installer uses a separate identity. Its output directory must be inside `artifacts/` and must not already exist.

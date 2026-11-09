@@ -352,5 +352,20 @@ internal static partial class SmokeTest
         Check(ranked.Count == 2 && ranked[0].Target == portable, "补充程序按真实活动排序并可由精确 exe 路径启动");
         Check(SoftwareDiscovery.Read(CancellationToken.None, [folder], new Dictionary<string, int> { [portable] = 0 }).Count == 1,
             "无活动程序不自动补充");
+
+        var registered = new SoftwareCandidate[]
+        {
+            new("Office shortcut", shortcut, targetBefore, "Office.Main"),
+            new("Office alternate executable", portable, portable, RegisteredIds: ["Office.Main"]),
+            new("Suite launcher", "suite.exe", "suite.exe", RegisteredIds: ["Suite.Writer", "Suite.Calc"]),
+            new("Web app A", "a.lnk", "browser_proxy.exe", "Browser.AppA"),
+            new("Web app B", "b.lnk", "browser_proxy.exe", "Browser.AppB")
+        };
+        var registeredUsage = new Dictionary<string, int> { ["Office.Main"] = 10, ["Suite.Calc"] = 20, ["Browser.AppA"] = 8, ["Browser.AppB"] = 7 };
+        var discovered = MySoftware.Build([], registered, [], registeredUsage, new HashSet<string>());
+        Check(discovered.Select(entry => entry.Target).SequenceEqual(new[] { "suite.exe", shortcut, "a.lnk", "b.lnk" }),
+            "注册应用标识参与排名，保留原快捷方式并区分共用启动程序的应用");
+        Check(MySoftware.Build([], registered, [], registeredUsage, new HashSet<string> { portable }).All(entry => entry.Target != shortcut),
+            "已隐藏的程序仍按已确认的同一应用标识排除");
     }
 }

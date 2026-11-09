@@ -29,27 +29,34 @@ internal static class MySoftware
         IEnumerable<LaunchRecord> launches, IReadOnlyDictionary<string, int> usage, ISet<string> hidden, string query = "", EntryGroups? groups = null)
     {
         var apps = candidates.ToList();
+        var byIdentity = apps.ToLookup(app => app.Identity, StringComparer.OrdinalIgnoreCase);
         groups ??= new EntryGroups();
         var records = launches.ToDictionary(r => r.Target, StringComparer.OrdinalIgnoreCase);
         var choices = new Dictionary<string, (SoftwareCandidate App, MenuEntry Entry, bool Pinned)>(StringComparer.OrdinalIgnoreCase);
-        foreach (var app in apps)
-            choices.TryAdd(app.Executable ?? app.Shortcut, (app, new(Guid.NewGuid(), app.Shortcut, app.Title, Guid.Empty), false));
+        foreach (var group in byIdentity)
+        {
+            var app = group.FirstOrDefault(c => c.AppId is not null) ?? group.First();
+            choices.Add(group.Key, (app, new(Guid.NewGuid(), app.Shortcut, app.Title, Guid.Empty), false));
+        }
         foreach (var entry in pinned.Where(groups.IsApplication).Where(e => e.Target.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal) || File.Exists(e.Target)))
         {
-            var app = apps.FirstOrDefault(c => c.Shortcut.Equals(entry.Target, StringComparison.OrdinalIgnoreCase)
-                || c.Executable?.Equals(entry.Target, StringComparison.OrdinalIgnoreCase) == true) ?? new(entry.Title, entry.Target, entry.Target);
-            choices[app.Executable ?? app.Shortcut] = (app, entry, true);
+            var app = apps.FirstOrDefault(c => c.Shortcut.Equals(entry.Target, StringComparison.OrdinalIgnoreCase))
+                ?? apps.FirstOrDefault(c => c.Executable?.Equals(entry.Target, StringComparison.OrdinalIgnoreCase) == true)
+                ?? new(entry.Title, entry.Target, entry.Target);
+            choices[app.Identity] = (app, entry, true);
         }
         var ranked = choices.Values.Select(item =>
         {
-            var app = item.App;
-            var identities = new[] { app.Shortcut, app.Executable, app.AppId, app.Shortcut.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal) ? app.Shortcut[17..] : null };
-            var system = identities.Where(id => id is not null).Select(id => usage.GetValueOrDefault(id!) ).DefaultIfEmpty().Max();
-            var own = identities.Where(id => id is not null).Select(id => records.GetValueOrDefault(id!)).Where(r => r is not null).ToList();
-            return (item.Entry, item.Pinned, Count: Math.Max(system, own.Select(r => r!.Count).DefaultIfEmpty().Max()),
-                Latest: own.Select(r => r!.OpenedAt).DefaultIfEmpty().Max());
+            var alternatives = byIdentity[item.App.Identity].DefaultIfEmpty(item.App);
+            var paths = alternatives.SelectMany(app => new[] { app.Shortcut, app.Executable }).OfType<string>().Append(item.Entry.Target).ToArray();
+            var ids = alternatives.SelectMany(app => (app.RegisteredIds ?? []).Append(app.AppId)
+                .Append(app.Shortcut.StartsWith("shell:AppsFolder\\", StringComparison.Ordinal) ? app.Shortcut[17..] : null)).OfType<string>();
+            var system = paths.Concat(ids).Select(id => usage.GetValueOrDefault(id)).DefaultIfEmpty().Max();
+            var own = paths.Select(path => records.GetValueOrDefault(path)).OfType<LaunchRecord>().ToArray();
+            return (item.Entry, item.Pinned, Hidden: paths.Any(hidden.Contains), Count: Math.Max(system, own.Select(r => r.Count).DefaultIfEmpty().Max()),
+                Latest: own.Select(r => r.OpenedAt).DefaultIfEmpty().Max());
         });
-        return ranked.Where(item => !hidden.Contains(item.Entry.Target)
+        return ranked.Where(item => !item.Hidden
                 && (query.Length > 0 || item.Pinned || item.Count > 0)
                 && (item.Entry.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || item.Entry.Target.Contains(query, StringComparison.OrdinalIgnoreCase)))
             .OrderByDescending(item => item.Count).ThenByDescending(item => item.Latest)
