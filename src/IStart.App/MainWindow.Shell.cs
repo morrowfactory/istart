@@ -439,6 +439,7 @@ public partial class MainWindow
         ScreenshotButton.ToolTip = screenshotHotkey?.Status ?? L.T("隐藏菜单后拖选范围，支持彩色标注");
         RefreshUpdateIndicators();
         computer = null;
+        RefreshActivityTimestamp();
         if (computerView) { RenderComputer(); QueueMenuRefresh(true); }
     }
     internal void SetTheme(string theme)

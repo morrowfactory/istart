@@ -58,6 +58,7 @@ internal static partial class SmokeTest
         Check(navigation.Items.OfType<MenuCategory>().Select(c => c.Name).SequenceEqual(new[] { "My Apps", "Recent Files", "Folders", "My Websites", "My Computer" }), "五个英文导航");
         Check(((MenuCategory)navigation.SelectedItem).Id == selected && search.Text == "example", "语言切换保留当前页面和搜索词");
         Check(window.Title == "iStart · Personal Start Menu" && System.Windows.Automation.AutomationProperties.GetName((Button)window.FindName("ScreenshotButton")) == "Capture", "主窗口图标操作的无障碍名称即时切换");
+        Check(((TextBlock)window.FindName("ActivityRefreshTime")).Text == "Last refresh: Not recorded", "刷新时间即时切换英文");
         Check(ComputerItems.CategoryName(ComputerItems.ControlPanel + "\\5") == "System and Security", "系统分类按 ID 显示英文");
         var shortcut = panel.Children.OfType<ComboBox>().Single(c => c.Items.OfType<ComboBoxItem>().Any(i => Equals(i.Tag, "Alt+Shift+A")));
         Check(shortcut.SelectedValue!.ToString() == "关闭" && ((ComboBoxItem)shortcut.SelectedItem).Content.ToString() == "Off", "关闭快捷键只翻译显示文字");
@@ -71,7 +72,7 @@ internal static partial class SmokeTest
             RenderLanguage(window.Content as FrameworkElement ?? throw new InvalidOperationException(), 712, 604, Path.Combine(output, "menu-en-" + theme + ".png"));
             var content = (FrameworkElement)window.Content;
             content.Measure(new Size(592, 484)); content.Arrange(new Rect(0, 0, 592, 484)); content.UpdateLayout();
-            foreach (var name in new[] { "SearchBox", "ScreenshotButton", "ModeStatus", "EnableMenuButton", "EntryList" })
+            foreach (var name in new[] { "SearchBox", "ScreenshotButton", "ModeStatus", "EnableMenuButton", "ActivityRefreshTime", "EntryList" })
             {
                 var element = (FrameworkElement)window.FindName(name);
                 var bounds = element.TransformToAncestor(content).TransformBounds(new Rect(element.RenderSize));

@@ -51,6 +51,7 @@ public partial class MainWindow : Window
         Appearance.Apply(store.Library.Theme);
         L.Apply(store.Library.Language);
         InitializeComponent();
+        RefreshActivityTimestamp();
         InitializeWindowMessages();
         ApplyThemeLayout();
         Updates.Changed += RefreshUpdateIndicators;
