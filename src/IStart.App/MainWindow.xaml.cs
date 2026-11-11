@@ -38,6 +38,13 @@ public partial class MainWindow : Window
     {
         this.store = store;
         this.refreshActivity = refreshActivity;
+        activityCache = new(store.DirectoryPath);
+        var savedActivity = activityCache.Load();
+        if (savedActivity is not null)
+        {
+            attemptedActivitySlot = savedActivity.AttemptedSlot <= DateTime.Now ? savedActivity.AttemptedSlot : null;
+            RestoreActivity(savedActivity);
+        }
         Updates = new UpdateService(store, () => UpdateInstallation.IsInstalled && !App.IsSessionEnding && !exitRequested
             && !capturing && !IsVisible && OwnedWindows.Count == 0 && UpdateInstallation.IsIdle(), checkUpdates);
         readWebsiteSources = enableShell;
@@ -59,6 +66,14 @@ public partial class MainWindow : Window
         if (store.Recovered) StatusText.Text = L.T("主配置损坏，已读取上一份配置。请核对收藏后再修改。");
         Closed += (_, _) => { menuClosed = true; PauseMenuRefresh(); discovery?.Cancel(); Updates.Dispose(); };
         if (enableShell) Loaded += (_, _) => { if (UpdateInstallation.IsInstalled) Updates.Start(); };
+        activityTimer.Tick += async (_, _) => await RefreshScheduledActivity(DateTime.Now);
+        if (enableShell) Loaded += (_, _) =>
+        {
+            activityTimer.Start();
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                async () => await RefreshScheduledActivity(DateTime.Now));
+        };
+        Closed += (_, _) => activityTimer.Stop();
         if (enableShell) InitializeShell();
     }
 
@@ -79,18 +94,22 @@ public partial class MainWindow : Window
     private async Task<bool> ReadSoftware()
     {
         var started = System.Diagnostics.Stopwatch.StartNew();
-        var current = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var current = new CancellationTokenSource(TimeSpan.FromSeconds(activityRefreshing ? 30 : 5));
         discovery = current;
         var token = current.Token;
+        var revision = activityRevision;
         try
         {
+            if (softwareRead is { IsFaulted: true } or { IsCanceled: true }) softwareRead = null;
             softwareRead ??= Task.Run(() =>
             {
                 var usage = MySoftware.ReadUsage(token);
                 return (Apps: SoftwareDiscovery.Read(token, usage: usage), Usage: usage);
             }, token);
             var result = await softwareRead.WaitAsync(token);
-            if (discovery != current) return false;
+            if (discovery != current || revision != activityRevision) return false;
+            if (candidates.Count > 0 && (result.Apps.Count == 0 || softwareUsage.Count > 0 && result.Usage.Count == 0))
+                return false;
             candidates = result.Apps;
             softwareUsage = result.Usage;
             applicationGroups = new();
@@ -100,7 +119,7 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException)
         {
-            if (discovery == current) StatusText.Text = L.T("软件整理超时；已添加的软件仍可使用，重新打开菜单会重试。");
+            if (discovery == current) StatusText.Text = L.T("更新未完成，继续显示上次保存的内容。");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
         { if (discovery == current) StatusText.Text = L.T("暂时无法读取软件使用记录，已添加的软件仍可使用。"); }
@@ -148,24 +167,26 @@ public partial class MainWindow : Window
             : store.Library.WebsitesRecentFirst ? L.T("最近打开 · 切换常用") : L.T("常用网站 · 切换最近");
         if (recentView) SearchStatus.Text = EntryList.Items.Count == 0 ? L.T("暂无有效记录。仅显示软件或 Windows 已保存、且仍存在的本机文件。") : L.T("合并 Windows、软件历史与 iStart 记录；外部历史时间为近似排序。");
         else SearchStatus.Text = websiteView ? !store.Library.ShowBrowserHistory ? L.T("浏览器历史已关闭；仅显示通过 iStart 打开的网站。")
-            : websiteHistory.FailedProfiles > 0 ? L.T("部分浏览器历史暂不可读；显示可读取记录，可重新打开此页重试。")
+            : websiteHistory.FailedProfiles > 0 ? L.T("更新未完成，继续显示上次保存的内容。")
             : store.Library.WebsitesRecentFirst ? L.T("Chrome 与 Edge 合并，按最后打开时间排序；同域名显示一项。") : L.T("Chrome 与 Edge 合并，按累计访问次数排序；同域名显示一项。")
             : folderView ? store.Library.FoldersRecentFirst ? L.T("按文件夹最近打开时间排序；外部历史时间可能近似。")
             : L.T("按文件夹打开次数和近期文件活动排序；无完整系统频率统计。")
             : L.T("按本机使用活动排序，最多 30 个软件。");
         if (softwareView && entries.Count == 0 && keyword.Length == 0) SearchStatus.Text = L.T("暂无可用软件活动记录；可以搜索或添加常用软件。");
         if ((recentView || folderView) && store.Library.ShowWindowsRecentDocuments && recentReadFailures > 0)
-            SearchStatus.Text = L.T("部分文件或文件夹历史暂不可读；已显示其他可读取记录，可重新打开此页重试。");
+            SearchStatus.Text = L.T("更新未完成，继续显示上次保存的内容。");
     }
     private async Task<bool> RefreshRecentDocuments()
     {
         if (readingRecent) return false;
         if (!store.Library.ShowWindowsRecentDocuments) return true;
         readingRecent = true;
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(activityRefreshing ? 30 : 5));
         var token = timeout.Token;
+        var revision = activityRevision;
         try
         {
+            if (recentRead is { IsFaulted: true } or { IsCanceled: true }) recentRead = null;
             recentRead ??= Task.Run(() =>
             {
                 var failures = 0;
@@ -174,7 +195,9 @@ public partial class MainWindow : Window
                 return (Files: files, Folders: folders, Failures: failures);
             }, token);
             var records = await recentRead.WaitAsync(token);
-            if (!store.Library.ShowWindowsRecentDocuments) return false;
+            if (!store.Library.ShowWindowsRecentDocuments || revision != activityRevision) return false;
+            if ((records.Failures > 0 || records.Files.Count + records.Folders.Count == 0)
+                && windowsRecent.Count + recentFolders.Count > 0) return false;
             windowsRecent = records.Files;
             recentFolders = records.Folders;
             recentReadFailures = records.Failures;

@@ -4,13 +4,13 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.32**
+**Version: 0.2.0-preview.33**
 
-This version improves opening from the Windows key and the system Start button. On Windows 11 build 26300, both entry points passed physical input checks. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
+This version restores saved activity after restarting and refreshes apps, files, folders, and websites at 12:30 and 18:00 local time. Failed updates keep the last successful records. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.32/iStart-Setup-0.2.0-preview.32.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.32) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.33/iStart-Setup-0.2.0-preview.33.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.33) · [All releases](https://github.com/morrowfactory/istart/releases)
 
 **Compatibility since preview.29:** Windows build 26300 supports an opt-in integration trial. Integration requires a valid Start button before installing input hooks. Detection prefers native Start child windows and falls back to UI Automation. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
 
@@ -37,7 +37,7 @@ The interface follows the Windows display language by default. You can select Si
 - Drag apps and folders into the menu; switch between icons and a list, search, and hide items.
 - Windows Start menu recovery, account actions, and power options remain available.
 - The separate app recommendation panel, Uncategorized view, category creation, and category-name field have been removed. Legacy item data remains compatible.
-- While iStart remains running, reopening shows the retained page, rows, search, selection, and scroll position first. Activity refresh starts after a 200 ms idle delay; file checks and ranking for that refresh run in the background. Unchanged rows are reused, and a failed refresh keeps the previous content. This memory cache does not survive exiting the application.
+- Activity is saved on this PC and restored after restarting. Apps, recent files, folders, and websites refresh at 12:30 and 18:00 in local time. Opening the menu uses saved content. A missing cache is populated once in the background, and missed update slots are caught up once after startup or resume. Failed reads retain saved records.
 
 Content comes from the current user's local system and activity records. Documentation screenshots use test data, including synthetic disk capacities. See [Activity views](docs/ACTIVITY_VIEWS.md) and the [documentation index](docs/INDEX.md).
 

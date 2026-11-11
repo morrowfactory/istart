@@ -100,6 +100,7 @@ internal static partial class ReliabilityTest
         await VerifyTaskbarRestore(output);
         await VerifyStartPresentation(output);
         await VerifyCachedOpening(output);
+        await VerifyScheduledActivity(output);
         SmokeTest.Run(Path.Combine(output, "core"));
     }
 

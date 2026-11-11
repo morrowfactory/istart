@@ -268,5 +268,7 @@
   "账户与锁定": "Account and lock",
   "电源选项": "Power options",
   "退出 iStart，恢复系统开始菜单": "Exit iStart and restore Windows Start",
-  "部分文件或文件夹历史暂不可读；已显示其他可读取记录，可重新打开此页重试。": "Some file or folder history is unavailable. Other readable records are shown; reopen this view to retry."
+  "部分文件或文件夹历史暂不可读；已显示其他可读取记录，可重新打开此页重试。": "Some file or folder history is unavailable. Other readable records are shown; reopen this view to retry.",
+  "活动记录保存在本机，每天 12:30 和 18:00 更新；失败时保留上次内容。": "Activity is saved on this PC and refreshed at 12:30 and 18:00 each day. Failed updates keep the saved content.",
+  "更新未完成，继续显示上次保存的内容。": "The update did not finish. Showing the last saved content."
 }

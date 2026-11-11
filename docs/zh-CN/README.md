@@ -4,13 +4,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**0.2.0-preview.32 预览版**
+**0.2.0-preview.33 预览版**
 
-本版改善 Win 键和系统开始按钮的弹出流程。两种入口已在一台 Windows 11 build 26300 电脑上通过实测。安装包包含离线运行环境和中英文资源。详见[安装包优化](PACKAGE_SIZE.md)。
+本版在重启后恢复已保存的活动记录，按本机时间每天 12:30 和 18:00 更新软件、文件、文件夹和网站。更新失败时沿用上次记录。安装包包含离线运行环境和中英文资源。详见[安装包优化](PACKAGE_SIZE.md)。
 
 界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.32/iStart-Setup-0.2.0-preview.32.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.32) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.33/iStart-Setup-0.2.0-preview.33.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.33) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 **preview.29 起的兼容策略。** Windows build 26300 可主动启用接管试用。接入前须找到有效的开始按钮，检测优先使用原生 Start 子窗口，必要时使用 UIAutomation。详见[Windows 兼容说明](WINDOWS_COMPATIBILITY.md)。
 
@@ -34,7 +34,7 @@ preview.21 加固 Win10/11 开始入口：输入钩子使用专用消息线程�
 
 **preview.27 定位调整：** 首次启动、图标/重复运行和已接管的开始入口都从所选屏幕工作区的左下角弹出，保留最多 8 个物理像素间距。原生模式也会定位，不跟随居中的开始按钮或上次拖动的窗口位置。开始按钮点击选择所在屏幕；其他入口在激活 iStart 前记录前台窗口屏幕。后台启动仍保持隐藏。
 
-**先显示缓存：** iStart 保持后台运行时，重新打开先显示上次的页面、列表、搜索、选中项和滚动位置；界面空闲延迟 200 毫秒后再读取活动。此次刷新的文件检查和排序在后台执行，内容不变就复用原列表，刷新失败保留原内容。缓存仅在本机内存中，完全退出应用后不保留。
+活动缓存保存在本机，重启后恢复列表。软件、最近文件、文件夹和网站按本机时间每天 12:30 和 18:00 更新，打开菜单直接显示已保存的内容。没有缓存时先在后台补读一次，错过的更新时间在启动或恢复后补更新一次。读取失败时沿用上次记录。
 
 preview.20 按企业微信截图习惯调整：默认全局快捷键 **Alt+Shift+A**，后台运行时也可触发；设置中可改用 Ctrl+Alt+A、Ctrl+Shift+S 或关闭。注册失败时明确显示冲突，不抢占其他软件快捷键。工具栏改为紧凑图标，双击选区或 Enter 完成复制，右键先重选、再次右键取消；Ctrl+Z 撤销、Ctrl+Y 重做、Ctrl+C 复制、Ctrl+S 保存、Esc 取消。全局快捷键截取鼠标所在显示器；菜单按钮仍截取菜单所在显示器。
 

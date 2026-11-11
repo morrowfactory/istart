@@ -98,10 +98,16 @@ internal static class WebsiteHistory
         }
     }
 
+    private static Uri? Address(string value) => Uri.TryCreate(value, UriKind.Absolute, out var uri)
+        && uri.Scheme is "https" or "http" && uri.UserInfo.Length == 0 ? uri : null;
+
+    internal static WebsiteHistoryResult ForCache(WebsiteHistoryResult result) => new(
+        result.Visits.Select(v => (Visit: v, Uri: Address(v.Url))).Where(v => v.Uri is not null)
+            .Select(v => v.Visit with { Url = v.Uri!.GetLeftPart(UriPartial.Authority) + "/" }).ToList(),
+        result.ReadProfiles, result.FailedProfiles);
+
     internal static List<MenuEntry> Build(IEnumerable<WebsiteVisit> history, IEnumerable<LaunchRecord> own, bool recent, string query, ISet<string> hidden)
     {
-        static Uri? Address(string value) => Uri.TryCreate(value, UriKind.Absolute, out var uri)
-            && uri.Scheme is "https" or "http" && uri.UserInfo.Length == 0 ? uri : null;
         var sources = history.Concat(own.Select(r => new WebsiteVisit(r.Target, r.Title, r.Count, r.OpenedAt)));
         var sites = sources.Select(v => (Visit: v, Uri: Address(v.Url))).Where(v => v.Uri is not null)
             .GroupBy(v => v.Uri!.IdnHost + (v.Uri.IsDefaultPort ? "" : ":" + v.Uri.Port), StringComparer.OrdinalIgnoreCase)
