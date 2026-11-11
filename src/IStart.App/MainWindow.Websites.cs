@@ -18,20 +18,23 @@ public partial class MainWindow
         if (readingWebsites) return false;
         if (!readWebsiteSources || !store.Library.ShowBrowserHistory) return true;
         readingWebsites = true;
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(activityRefreshing ? 30 : 5));
         var token = timeout.Token;
+        var revision = activityRevision;
         try
         {
+            if (websiteRead is { IsFaulted: true } or { IsCanceled: true }) websiteRead = null;
             websiteRead ??= Task.Run(() => WebsiteHistory.Read(token), token);
             var result = await websiteRead.WaitAsync(token);
-            if (!store.Library.ShowBrowserHistory) return false;
+            if (!store.Library.ShowBrowserHistory || revision != activityRevision) return false;
+            if ((result.FailedProfiles > 0 || result.Visits.Count == 0) && websiteHistory.Visits.Count > 0) return false;
             websiteHistory = result;
             RuntimeLog.Write($"website-history profiles={result.ReadProfiles} failed={result.FailedProfiles} records={result.Visits.Count}");
             return true;
         }
-        catch (OperationCanceledException) { if (websiteView) SearchStatus.Text = L.T("浏览器历史读取超时；已读记录仍可使用，重新打开此页重试。"); }
+        catch (OperationCanceledException) { if (websiteView) SearchStatus.Text = L.T("更新未完成，继续显示上次保存的内容。"); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
-        { if (websiteView) SearchStatus.Text = L.T("暂时无法读取浏览器历史；重新打开此页重试。"); }
+        { if (websiteView) SearchStatus.Text = L.T("更新未完成，继续显示上次保存的内容。"); }
         finally { readingWebsites = false; if (websiteRead?.IsCompleted == true) websiteRead = null; }
         return false;
     }

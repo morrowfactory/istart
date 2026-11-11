@@ -23,6 +23,7 @@ public partial class MainWindow
     private void QueueMenuRefresh(bool readSources)
     {
         if (!IsVisible || menuClosed) return;
+        if (readSources && !computerView && refreshActivity is null) return;
         refreshPending = true;
         sourcesPending |= readSources;
         if (!refreshingMenu) { refreshTimer.Stop(); refreshTimer.Start(); }
