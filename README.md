@@ -4,13 +4,13 @@
 
 A compact, personal Windows Start menu for frequently used apps, recent files, folders, and websites. Keep everyday shortcuts together and your desktop clear.
 
-**Version: 0.2.0-preview.33**
+**Version: 0.2.0-preview.34**
 
-This version restores saved activity after restarting and refreshes apps, files, folders, and websites at 12:30 and 18:00 local time. Failed updates keep the last successful records. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
+This version displays the last complete activity refresh time at the bottom of the menu. The time survives restarts; partial or failed updates keep it unchanged. Older caches show "Not recorded" until a successful refresh. Apps, files, folders, and websites still refresh at 12:30 and 18:00 local time. The installer includes the offline runtime and both interface languages. See [Package size](docs/PACKAGE_SIZE.md).
 
 The interface follows the Windows display language by default. You can select Simplified Chinese or English in Settings and apply the change immediately. Chinese display languages use Simplified Chinese; English and other currently unsupported languages use English. The menu, Settings, screenshot editor, and updater are localized. App names, filenames, URLs, and release notes retain their original text. See [Interface localization](docs/LOCALIZATION.md).
 
-[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.33/iStart-Setup-0.2.0-preview.33.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.33) · [All releases](https://github.com/morrowfactory/istart/releases)
+[Download the Windows x64 installer](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.34/iStart-Setup-0.2.0-preview.34.exe) · [Release and checksums](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.34) · [All releases](https://github.com/morrowfactory/istart/releases)
 
 **Compatibility since preview.29:** Windows build 26300 supports an opt-in integration trial. Integration requires a valid Start button before installing input hooks. Detection prefers native Start child windows and falls back to UI Automation. See [Windows compatibility](docs/WINDOWS_COMPATIBILITY.md).
 

@@ -8,11 +8,13 @@ public partial class MainWindow
     private readonly ActivityCache activityCache;
     private readonly DispatcherTimer activityTimer = new(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(30) };
     private DateTime? attemptedActivitySlot;
+    private DateTimeOffset? activityRefreshedAt;
     private bool activityRefreshing, activityBootstrapped;
     private int activityRevision;
 
     private void RestoreActivity(ActivitySnapshot snapshot)
     {
+        activityRefreshedAt = snapshot.LastRefreshedAt;
         candidates = snapshot.Apps;
         softwareUsage = new(snapshot.Usage, StringComparer.OrdinalIgnoreCase);
         windowsRecent = store.Library.ShowWindowsRecentDocuments ? snapshot.Files : [];
@@ -24,6 +26,7 @@ public partial class MainWindow
     private ActivitySnapshot CaptureActivity() => new()
     {
         AttemptedSlot = attemptedActivitySlot,
+        LastRefreshedAt = activityRefreshedAt,
         Apps = candidates,
         Usage = softwareUsage,
         Files = store.Library.ShowWindowsRecentDocuments ? windowsRecent : [],
@@ -50,7 +53,9 @@ public partial class MainWindow
                 : await read();
             if (menuClosed || revision != activityRevision) return;
             var snapshot = CaptureActivity();
+            if (completed.All(ok => ok)) snapshot.LastRefreshedAt = DateTimeOffset.Now;
             activityCache.Save(snapshot);
+            activityRefreshedAt = snapshot.LastRefreshedAt;
             RuntimeLog.Write($"activity-cache saved apps={candidates.Count} files={windowsRecent.Count} folders={recentFolders.Count} partial={completed.Any(ok => !ok)}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OperationCanceledException
@@ -73,17 +78,28 @@ public partial class MainWindow
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException)
             { RuntimeLog.Write("activity-view-retained " + ex.GetType().Name); }
-            finally { activityRefreshing = false; }
+            finally { activityRefreshing = false; RefreshActivityTimestamp(); }
         }
+    }
+
+    private void RefreshActivityTimestamp()
+    {
+        ActivityRefreshTime.Text = activityRefreshedAt is { } time
+            ? L.F("上次刷新：{0:MM-dd HH:mm}", time.LocalDateTime)
+            : L.T("上次刷新：尚未记录");
+        ActivityRefreshTime.ToolTip = (activityRefreshedAt is { } refreshed
+            ? L.F("上次完整刷新：{0:yyyy-MM-dd HH:mm:ss}", refreshed.LocalDateTime) + "\n" : "")
+            + L.T("软件、文件、文件夹和网站记录每天按本机时间 12:30、18:00 更新；部分或失败更新不改写此时间。");
     }
 
     private void ResetActivityCache(bool clearSoftware)
     {
         activityRevision++;
         activityCache.Clear();
-        if (clearSoftware) { candidates = []; softwareUsage = new(StringComparer.OrdinalIgnoreCase); }
+        if (clearSoftware) { candidates = []; softwareUsage = new(StringComparer.OrdinalIgnoreCase); activityRefreshedAt = null; }
         if (clearSoftware || !store.Library.ShowWindowsRecentDocuments) { windowsRecent = []; recentFolders = []; }
         if (clearSoftware || !store.Library.ShowBrowserHistory) websiteHistory = new([], 0, 0);
         activityCache.Save(CaptureActivity());
+        RefreshActivityTimestamp();
     }
 }

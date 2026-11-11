@@ -7,6 +7,7 @@ internal sealed class ActivitySnapshot
 {
     public int Version { get; set; } = 1;
     public DateTime? AttemptedSlot { get; set; }
+    public DateTimeOffset? LastRefreshedAt { get; set; }
     public List<SoftwareCandidate> Apps { get; set; } = [];
     public Dictionary<string, int> Usage { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public List<LaunchRecord> Files { get; set; } = [];

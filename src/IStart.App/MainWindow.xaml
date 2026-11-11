@@ -74,10 +74,13 @@
           <Button x:Name="AccountButton" Style="{StaticResource IconButton}" Content="{StaticResource UserIcon}" Background="{DynamicResource AccountSurface}" Foreground="{DynamicResource AccountText}" Click="AccountMenu" ToolTip="{local:Tr '账户与锁定'}"><Button.Resources><CornerRadius x:Key="ActionRadius">20</CornerRadius></Button.Resources></Button>
           <Button x:Name="NativeMenuButton" Style="{StaticResource IconButton}" Content="{StaticResource GridIcon}" Click="OpenNative" ToolTip="{local:Tr 'Windows 原生菜单'}"/>
         </StackPanel>
-        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-          <Image x:Name="IntegrationDot" Source="Assets/Icons/integration-status.png" Width="6" Height="6" Margin="0,0,6,0" Visibility="Collapsed"/>
-          <TextBlock x:Name="ModeStatus" Text="{local:Tr '原生菜单模式'}" FontSize="11" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
-          <Button x:Name="EnableMenuButton" Style="{StaticResource IconButton}" Content="{StaticResource PlusIcon}" Click="EnableStartMenu" ToolTip="{local:Tr '检测开始按钮，成功后使用 iStart；失败保留原生菜单'}" AutomationProperties.Name="{local:Tr '启用接入'}"/>
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Image x:Name="IntegrationDot" Source="Assets/Icons/integration-status.png" Width="6" Height="6" Margin="0,0,6,0" Visibility="Collapsed"/>
+            <TextBlock x:Name="ModeStatus" Text="{local:Tr '原生菜单模式'}" FontSize="11" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center"/>
+            <Button x:Name="EnableMenuButton" Style="{StaticResource IconButton}" Content="{StaticResource PlusIcon}" Click="EnableStartMenu" ToolTip="{local:Tr '检测开始按钮，成功后使用 iStart；失败保留原生菜单'}" AutomationProperties.Name="{local:Tr '启用接入'}"/>
+          </StackPanel>
+          <TextBlock x:Name="ActivityRefreshTime" FontSize="10" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" Margin="0,1,0,0"/>
         </StackPanel>
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
           <Button x:Name="PowerButton" Style="{StaticResource IconButton}" Content="{StaticResource PowerIcon}" Click="PowerMenu" ToolTip="{local:Tr '电源选项'}"/>

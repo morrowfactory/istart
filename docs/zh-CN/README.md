@@ -4,13 +4,13 @@
 
 把常用软件、最近文件、文件夹和网站集中到一个紧凑的 Windows 个人开始菜单，让桌面更清爽。
 
-**0.2.0-preview.33 预览版**
+**0.2.0-preview.34 预览版**
 
-本版在重启后恢复已保存的活动记录，按本机时间每天 12:30 和 18:00 更新软件、文件、文件夹和网站。更新失败时沿用上次记录。安装包包含离线运行环境和中英文资源。详见[安装包优化](PACKAGE_SIZE.md)。
+本版在菜单底部显示上次完整刷新活动记录的时间，重启后保留；部分更新或更新失败不会改写时间。旧缓存没有时间记录时显示“尚未记录”，下次成功刷新后开始显示。软件、文件、文件夹和网站仍按本机时间每天 12:30 和 18:00 更新。安装包包含离线运行环境和中英文资源。详见[安装包优化](PACKAGE_SIZE.md)。
 
 界面默认跟随 Windows 显示语言，可手动选择简体中文或 English，立即应用并保存。中文系统使用简体中文，英文及暂未支持的系统语言使用英文。主菜单、设置、截屏和升级页提供中英文；软件名、文件名、网址及发布说明保持原文。详见[语言说明与验证](LOCALIZATION.md)。
 
-[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.33/iStart-Setup-0.2.0-preview.33.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.33) · [所有版本](https://github.com/morrowfactory/istart/releases)
+[下载 Windows x64 安装包](https://github.com/morrowfactory/istart/releases/download/v0.2.0-preview.34/iStart-Setup-0.2.0-preview.34.exe) · [版本与校验文件](https://github.com/morrowfactory/istart/releases/tag/v0.2.0-preview.34) · [所有版本](https://github.com/morrowfactory/istart/releases)
 
 **preview.29 起的兼容策略。** Windows build 26300 可主动启用接管试用。接入前须找到有效的开始按钮，检测优先使用原生 Start 子窗口，必要时使用 UIAutomation。详见[Windows 兼容说明](WINDOWS_COMPATIBILITY.md)。
 
